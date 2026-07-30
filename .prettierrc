@@ -1,27 +1,9 @@
 {
-  "arrowParens": "always",
-  "bracketSameLine": false,
-  "objectWrap": "preserve",
-  "bracketSpacing": true,
   "semi": true,
-  "experimentalOperatorPosition": "end",
-  "experimentalTernaries": false,
   "singleQuote": true,
-  "jsxSingleQuote": false,
-  "quoteProps": "as-needed",
   "trailingComma": "all",
-  "singleAttributePerLine": false,
-  "htmlWhitespaceSensitivity": "css",
-  "vueIndentScriptAndStyle": false,
-  "proseWrap": "preserve",
-  "endOfLine": "lf",
-  "insertPragma": false,
   "printWidth": 80,
-  "plugins": ["prettier-plugin-tailwindcss"],
-  "requirePragma": false,
   "tabWidth": 2,
-  "tailwindFunctions": ["cn", "cva"],
-  "tailwindStylesheet": "src/styles/global.css",
   "useTabs": false,
-  "embeddedLanguageFormatting": "auto"
+  "endOfLine": "lf"
 }

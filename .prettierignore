@@ -1,0 +1,15 @@
+node_modules
+.pnpm-store
+.codex
+.opencode
+.turbo
+.next
+.vercel
+
+dist
+build
+out
+coverage
+
+pnpm-lock.yaml
+*.tsbuildinfo
