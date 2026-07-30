@@ -18,6 +18,8 @@
 - 使用 pnpm 管理依赖，使用 Turbo 执行跨 workspace 任务。
 - 优先从仓库根目录执行命令；单个包使用 `pnpm --filter <name> <script>`。
 - 保持 `web`、`admin`、`server` 的职责边界，跨应用复用代码放到 `packages/*`。
+- Web 和 Admin 的 UI primitives 统一放在 `packages/ui`，通过 `pnpm dlx shadcn@4.16.0 add <component> -c apps/web` 添加。
+- 应用专属 shadcn blocks 从对应应用运行 CLI，不要复制共享 primitives。
 - 文档使用简体中文，代码标识、命令和 API 名称保留英文。
 - 遵循现有 TypeScript、ESLint 和 Prettier 配置，不在业务文件中绕过规则。
 - 不编辑 `node_modules`、`dist`、`build`、`coverage`、`.turbo` 等生成内容。

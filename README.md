@@ -20,7 +20,7 @@ apps/
 packages/
   eslint-config/      共享 ESLint 配置
   typescript-config/  共享 TypeScript 配置
-  ui/                 共享 React 组件
+  ui/                 共享 shadcn/ui 组件与主题
 ```
 
 ## 开始开发
