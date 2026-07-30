@@ -1,3 +1,4 @@
+import { Button } from '@repo/ui/components/button';
 import { useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from './assets/vite.svg';
@@ -21,13 +22,13 @@ function App() {
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>
         </div>
-        <button
+        <Button
           type="button"
-          className="counter"
+          className="mb-6"
           onClick={() => setCount((count) => count + 1)}
         >
           Count is {count}
-        </button>
+        </Button>
       </section>
 
       <div className="ticks"></div>
