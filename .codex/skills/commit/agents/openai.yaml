@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit"
+  short_description: "根据当前项目规范拆分改动并创建中文提交记录"
+  default_prompt: "使用 $commit 分析当前项目改动，并按规范创建范围清晰的中文 Conventional Commits。"
