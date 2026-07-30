@@ -20,6 +20,7 @@
     "typescriptreact"
   ],
   "prettier.requireConfig": true,
+  "tailwindCSS.classFunctions": ["cn", "cva"],
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsdk": "node_modules/typescript/lib"
 }
