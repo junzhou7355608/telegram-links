@@ -23,19 +23,19 @@ Web 和 Admin 当前提供本地演示原型。不要把模拟扫描、浏览器
   `pnpm dlx shadcn@4.16.0 add <component> -c apps/web` 或
   `-c apps/admin` 添加。
 - 应用专属 shadcn blocks 从对应应用运行 CLI，不要复制共享 primitives。
-- Admin 页面路由统一放在 `apps/admin/src/routes/**`；跨组件客户端状态使用
+- Web 和 Admin 页面路由统一放在各自的 `src/routes/**`；跨组件客户端状态使用
   Jotai，服务端异步状态使用 TanStack Query，不要把请求结果复制到 atoms。
-- Admin 请求复用 `apps/admin/src/lib/request.ts`、QueryClient 和 Hey API
+- Web 和 Admin 请求复用各自 `src/lib/request.ts`、QueryClient 和 Hey API
   生成客户端，不要在业务组件中创建新的 Axios 或 QueryClient 实例。
 - 文档使用简体中文，代码标识、命令和 API 名称保留英文。
 - 遵循现有 TypeScript、ESLint 和 Prettier 配置，不在业务文件中绕过规则。
 - 不编辑 `node_modules`、`dist`、`build`、`coverage`、`.turbo` 等生成内容。
 - 不编辑或提交 `apps/server/src/generated/prisma`，通过 Prisma 命令重新生成。
-- 不手工编辑 `apps/admin/src/api/**`、`apps/admin/src/routeTree.gen.ts` 或
-  `apps/admin/openapi.json`。分别通过 `gen:api`、TanStack Router 插件和
-  `sync:api` 更新。
-- Admin OpenAPI 快照只允许包含 `/api/admin/v1/**`，不得将 Web API 方法
-  混入 Admin 客户端。
+- 不手工编辑 Web/Admin 的 `src/api/**`、`src/routeTree.gen.ts` 或
+  `openapi.json`。分别通过 `gen:api`、TanStack Router 插件和 `sync:api`
+  更新。
+- Web OpenAPI 快照只允许包含 `/api/web/v1/**`，Admin 快照只允许包含
+  `/api/admin/v1/**`，不得在两个客户端之间混用接口。
 - 不提交密钥、Telegram 凭据、数据库连接串或本地 `.env*` 文件。
 
 ## 验证
