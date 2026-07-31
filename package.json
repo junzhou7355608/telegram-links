@@ -4,6 +4,10 @@
   "license": "MIT",
   "scripts": {
     "build": "turbo run build",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "db:ps": "docker compose ps",
+    "db:up": "docker compose up -d postgres",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",

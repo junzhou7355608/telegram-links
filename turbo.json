@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["PORT"],
+  "globalEnv": ["DATABASE_URL", "NODE_ENV", "PORT", "SWAGGER_ENABLED"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
