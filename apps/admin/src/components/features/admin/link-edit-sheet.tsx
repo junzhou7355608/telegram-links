@@ -39,7 +39,7 @@ import { Textarea } from '@repo/ui/components/textarea';
 import { Copy, ExternalLink, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { TagPicker } from '@/components/tag-picker';
+import { TagPicker } from '@/components/features/admin/tag-picker';
 
 interface LinkEditSheetProps {
   link: ManagedLinkMock;

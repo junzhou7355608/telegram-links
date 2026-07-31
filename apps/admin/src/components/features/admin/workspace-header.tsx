@@ -2,7 +2,7 @@ import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import { SidebarTrigger } from '@repo/ui/components/sidebar';
 import { LoaderCircle, Play } from 'lucide-react';
-import { ModeToggle } from '@/components/mode-toggle';
+import { ModeToggle } from '@/components/features/admin/mode-toggle';
 
 interface WorkspaceHeaderProps {
   latestScanLabel: string;
