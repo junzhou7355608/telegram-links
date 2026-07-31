@@ -213,7 +213,9 @@ export function ScanDialog({
                   >
                     <SelectTrigger id="scan-project" className="w-full">
                       <SelectValue>
-                        {(value) => (value === 'none' ? '不预设' : String(value))}
+                        {(value) =>
+                          value === 'none' ? '不预设' : String(value)
+                        }
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -239,7 +241,9 @@ export function ScanDialog({
                   >
                     <SelectTrigger id="scan-category" className="w-full">
                       <SelectValue>
-                        {(value) => (value === 'none' ? '不预设' : String(value))}
+                        {(value) =>
+                          value === 'none' ? '不预设' : String(value)
+                        }
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>

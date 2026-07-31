@@ -51,9 +51,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
       return `全部${label}`;
     }
     if (label === '环境' && selectedValue in environmentLabels) {
-      return environmentLabels[
-        selectedValue as keyof typeof environmentLabels
-      ];
+      return environmentLabels[selectedValue as keyof typeof environmentLabels];
     }
     if (label === '状态' && selectedValue in statusLabels) {
       return statusLabels[selectedValue as keyof typeof statusLabels];

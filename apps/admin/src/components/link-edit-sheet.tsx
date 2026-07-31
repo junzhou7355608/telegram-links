@@ -178,9 +178,7 @@ export function LinkEditSheet({
                 >
                   <SelectTrigger id="edit-project" className="w-full">
                     <SelectValue>
-                      {(value) =>
-                        value === 'none' ? '未设置' : String(value)
-                      }
+                      {(value) => (value === 'none' ? '未设置' : String(value))}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -203,9 +201,7 @@ export function LinkEditSheet({
                 >
                   <SelectTrigger id="edit-category" className="w-full">
                     <SelectValue>
-                      {(value) =>
-                        value === 'none' ? '未设置' : String(value)
-                      }
+                      {(value) => (value === 'none' ? '未设置' : String(value))}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
