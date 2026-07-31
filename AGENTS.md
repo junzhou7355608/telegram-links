@@ -26,6 +26,7 @@ Web 和 Admin 当前提供本地演示原型。不要把模拟扫描、浏览器
 - 文档使用简体中文，代码标识、命令和 API 名称保留英文。
 - 遵循现有 TypeScript、ESLint 和 Prettier 配置，不在业务文件中绕过规则。
 - 不编辑 `node_modules`、`dist`、`build`、`coverage`、`.turbo` 等生成内容。
+- 不编辑或提交 `apps/server/src/generated/prisma`，通过 Prisma 命令重新生成。
 - 不提交密钥、Telegram 凭据、数据库连接串或本地 `.env*` 文件。
 
 ## 验证
@@ -44,5 +45,7 @@ pnpm build
 pnpm --filter server test
 pnpm --filter server test:e2e
 ```
+
+Server E2E 测试前先运行 `pnpm db:up`，结束后使用 `pnpm db:down` 保留数据卷。
 
 自动修复命令为 `pnpm lint:fix` 和 `pnpm format`；`pnpm lint`、`pnpm format:check` 必须保持只读。
