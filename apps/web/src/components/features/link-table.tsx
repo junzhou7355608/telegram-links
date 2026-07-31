@@ -23,7 +23,7 @@ import {
   CategoryBadge,
   EnvironmentBadge,
   StatusBadge,
-} from '@/components/link-badges';
+} from '@/components/features/link-badges';
 import { formatCapturedAt, type TelegramLinkMock } from '@/data/links';
 
 interface LinkTableProps {

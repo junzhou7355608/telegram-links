@@ -24,7 +24,7 @@ import {
   SheetTrigger,
 } from '@repo/ui/components/sheet';
 import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
-import type { LinkView } from '@/components/app-sidebar';
+import type { LinkView } from '@/components/features/app-sidebar';
 import {
   categoryLabels,
   environmentLabels,

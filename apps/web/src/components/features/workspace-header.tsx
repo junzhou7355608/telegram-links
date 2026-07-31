@@ -1,6 +1,6 @@
 import { Badge } from '@repo/ui/components/badge';
 import { SidebarTrigger } from '@repo/ui/components/sidebar';
-import { ModeToggle } from '@/components/mode-toggle';
+import { ModeToggle } from '@/components/features/mode-toggle';
 
 interface WorkspaceHeaderProps {
   totalCount: number;

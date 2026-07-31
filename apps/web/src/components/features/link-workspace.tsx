@@ -4,13 +4,16 @@ import { SidebarInset, SidebarProvider } from '@repo/ui/components/sidebar';
 import { SearchX } from 'lucide-react';
 import { useDeferredValue, useMemo, useState, type CSSProperties } from 'react';
 import { toast } from 'sonner';
-import { AppSidebar, type LinkView } from '@/components/app-sidebar';
-import { LinkCard } from '@/components/link-card';
-import { LinkDetailSheet } from '@/components/link-detail-sheet';
-import { LinkPagination } from '@/components/link-pagination';
-import { LinkTable } from '@/components/link-table';
-import { LinkToolbar, type LinkFilters } from '@/components/link-toolbar';
-import { WorkspaceHeader } from '@/components/workspace-header';
+import { AppSidebar, type LinkView } from '@/components/features/app-sidebar';
+import { LinkCard } from '@/components/features/link-card';
+import { LinkDetailSheet } from '@/components/features/link-detail-sheet';
+import { LinkPagination } from '@/components/features/link-pagination';
+import { LinkTable } from '@/components/features/link-table';
+import {
+  LinkToolbar,
+  type LinkFilters,
+} from '@/components/features/link-toolbar';
+import { WorkspaceHeader } from '@/components/features/workspace-header';
 import {
   isRecentLink,
   telegramLinks,
