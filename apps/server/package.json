@@ -21,12 +21,12 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "pretest:e2e": "pnpm prisma:generate",
+    "pretest:e2e": "pnpm prisma:generate && DATABASE_URL=${TEST_DATABASE_URL:-postgresql://telegram_links:telegram_links@localhost:5433/telegram_links?schema=telegram_links_test} prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:validate": "prisma validate",
-    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json"
+    "test:e2e": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://telegram_links:telegram_links@localhost:5433/telegram_links?schema=telegram_links_test} NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -36,10 +36,13 @@
     "@nestjs/swagger": "^11.4.6",
     "@prisma/adapter-pg": "7.6.0",
     "@prisma/client": "7.6.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "telegram": "2.26.22"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",

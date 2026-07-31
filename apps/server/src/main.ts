@@ -10,6 +10,7 @@ async function bootstrap() {
   configureApplication(app);
 
   const port = Number.parseInt(configService.get<string>('PORT') ?? '3000', 10);
-  await app.listen(port);
+  const host = configService.get<string>('HOST') ?? '127.0.0.1';
+  await app.listen(port, host);
 }
 void bootstrap();

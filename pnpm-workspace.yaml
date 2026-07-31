@@ -4,5 +4,9 @@ packages:
 allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': true
+  bufferutil: false
+  es5-ext: false
+  esbuild: true
   prisma: true
   unrs-resolver: true
+  utf-8-validate: false

@@ -7,3 +7,240 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum TelegramChatType {
+  SAVED
+  PRIVATE
+  GROUP
+  CHANNEL
+}
+
+enum LinkEnvironment {
+  PRODUCTION
+  TEST
+  DEVELOPMENT
+  UNKNOWN
+}
+
+enum OrganizationStatus {
+  PENDING
+  ORGANIZED
+}
+
+enum SyncJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  PARTIALLY_SUCCEEDED
+  FAILED
+  INTERRUPTED
+}
+
+enum SyncStage {
+  CONNECTING
+  READING
+  EXTRACTING
+  DEDUPLICATING
+  SAVING
+}
+
+enum SyncRangeMode {
+  SINCE_LAST
+  LAST_7_DAYS
+  CUSTOM
+  ALL_HISTORY
+}
+
+enum SyncJobChatStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model TelegramAccount {
+  id                String         @id
+  telegramUserId    String?        @unique
+  phoneNumber       String?
+  username          String?
+  displayName       String?
+  sessionCiphertext String?        @db.Text
+  sessionIv         String?
+  sessionAuthTag    String?
+  authorizedAt      DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  chats             TelegramChat[]
+}
+
+model TelegramChat {
+  id                  String            @id @default(uuid()) @db.Uuid
+  accountId           String
+  telegramPeerId      String
+  type                TelegramChatType
+  title               String
+  username            String?
+  isEnabled           Boolean           @default(false)
+  isAvailable         Boolean           @default(true)
+  lastSyncedMessageId Int?
+  lastSyncedAt        DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  account             TelegramAccount   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  messages            TelegramMessage[]
+  syncJobChats        SyncJobChat[]
+
+  @@unique([accountId, telegramPeerId])
+  @@index([isEnabled, isAvailable])
+  @@index([type])
+}
+
+model TelegramMessage {
+  id                String       @id @default(uuid()) @db.Uuid
+  chatId            String       @db.Uuid
+  telegramMessageId Int
+  senderTelegramId  String?
+  senderName        String?
+  text              String       @db.Text
+  sentAt            DateTime
+  messageUrl        String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  chat              TelegramChat @relation(fields: [chatId], references: [id], onDelete: Restrict)
+  linkSources       LinkSource[]
+
+  @@unique([chatId, telegramMessageId])
+  @@index([sentAt])
+}
+
+model Project {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  normalizedName String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  links          Link[]
+}
+
+model Category {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  normalizedName String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  links          Link[]
+}
+
+model Tag {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String
+  normalizedName String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  links          LinkTag[]
+}
+
+model Link {
+  id                String             @id @default(uuid()) @db.Uuid
+  url               String             @db.Text
+  normalizedUrl     String             @unique @db.Text
+  domain            String
+  title             String
+  purpose           String?            @db.Text
+  environment       LinkEnvironment    @default(UNKNOWN)
+  status            OrganizationStatus @default(PENDING)
+  projectId         String?            @db.Uuid
+  categoryId        String?            @db.Uuid
+  isFavorite        Boolean            @default(false)
+  archivedAt        DateTime?
+  firstDiscoveredAt DateTime           @default(now())
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  project           Project?           @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  category          Category?          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tags              LinkTag[]
+  sources           LinkSource[]
+
+  @@index([archivedAt, createdAt])
+  @@index([status])
+  @@index([environment])
+  @@index([projectId])
+  @@index([categoryId])
+  @@index([domain])
+}
+
+model LinkTag {
+  linkId    String   @db.Uuid
+  tagId     String   @db.Uuid
+  createdAt DateTime @default(now())
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([linkId, tagId])
+  @@index([tagId])
+}
+
+model SyncJob {
+  id                String        @id @default(uuid()) @db.Uuid
+  status            SyncJobStatus @default(QUEUED)
+  stage             SyncStage?
+  progress          Int           @default(0)
+  rangeMode         SyncRangeMode
+  rangeFrom         DateTime?
+  rangeTo           DateTime?
+  defaultProjectId  String?       @db.Uuid
+  defaultCategoryId String?       @db.Uuid
+  defaultTagIds     Json
+  messageCount      Int           @default(0)
+  foundCount        Int           @default(0)
+  newCount          Int           @default(0)
+  duplicateCount    Int           @default(0)
+  error             String?       @db.Text
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  chats             SyncJobChat[]
+  linkSources       LinkSource[]
+
+  @@index([status, createdAt])
+}
+
+model SyncJobChat {
+  id                    String            @id @default(uuid()) @db.Uuid
+  syncJobId             String            @db.Uuid
+  chatId                String            @db.Uuid
+  chatTitle             String
+  status                SyncJobChatStatus @default(PENDING)
+  messageCount          Int               @default(0)
+  foundCount            Int               @default(0)
+  newCount              Int               @default(0)
+  duplicateCount        Int               @default(0)
+  maxProcessedMessageId Int?
+  error                 String?           @db.Text
+  startedAt             DateTime?
+  finishedAt            DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  syncJob               SyncJob           @relation(fields: [syncJobId], references: [id], onDelete: Cascade)
+  chat                  TelegramChat      @relation(fields: [chatId], references: [id], onDelete: Restrict)
+
+  @@unique([syncJobId, chatId])
+  @@index([chatId])
+}
+
+model LinkSource {
+  id        String          @id @default(uuid()) @db.Uuid
+  linkId    String          @db.Uuid
+  messageId String          @db.Uuid
+  syncJobId String?         @db.Uuid
+  rawUrl    String          @db.Text
+  createdAt DateTime        @default(now())
+  link      Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  message   TelegramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  syncJob   SyncJob?        @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
+
+  @@unique([linkId, messageId])
+  @@index([messageId])
+  @@index([syncJobId])
+}
