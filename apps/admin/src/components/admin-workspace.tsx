@@ -57,6 +57,16 @@ const initialFilters: LinkFilters = {
   status: 'all',
 };
 
+const SIDEBAR_COOKIE_NAME = 'sidebar_state';
+
+function loadSidebarDefaultOpen() {
+  const sidebarCookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+
+  return sidebarCookie?.split('=')[1] !== 'false';
+}
+
 const stageTimeline: {
   delay: number;
   stage: ScanStage;
@@ -155,6 +165,7 @@ function StatCard({
 }
 
 export function AdminWorkspace() {
+  const [sidebarDefaultOpen] = useState(loadSidebarDefaultOpen);
   const [store, setStore] = useState<AdminStoreV1>(loadAdminStore);
   const storeRef = useRef(store);
   const timersRef = useRef<number[]>([]);
@@ -474,7 +485,10 @@ export function AdminWorkspace() {
   }
 
   return (
-    <SidebarProvider style={{ '--sidebar-width': '15rem' } as CSSProperties}>
+    <SidebarProvider
+      defaultOpen={sidebarDefaultOpen}
+      style={{ '--sidebar-width': '15rem' } as CSSProperties}
+    >
       <AdminSidebar
         activeView={view}
         pendingCount={pendingCount}
@@ -493,7 +507,7 @@ export function AdminWorkspace() {
           id="admin-content"
           className="scroll-mt-16 px-4 py-5 sm:px-6 sm:py-6 lg:px-8"
         >
-          <div className="mx-auto grid max-w-[1480px] gap-5">
+          <div className="mx-auto grid min-w-0 max-w-[1480px] gap-5 [&>*]:min-w-0">
             <section
               aria-label="工作台概览"
               className="grid grid-cols-2 gap-3 xl:grid-cols-4"
