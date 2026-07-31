@@ -1,13 +1,26 @@
+import '@/styles/global.css';
+
+import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ThemeProvider } from '@/components/theme-provider';
-import './index.css';
-import App from './App.tsx';
 
-createRoot(document.getElementById('root')!).render(
+import { client } from '@/api/client.gen';
+import { axiosInstance } from '@/lib/request';
+import { router } from '@/lib/router';
+
+client.setConfig({
+  axios: axiosInstance,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+});
+
+const rootElement = document.getElementById('root');
+
+if (!rootElement) {
+  throw new Error('Root element #root was not found.');
+}
+
+createRoot(rootElement).render(
   <StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <RouterProvider router={router} />
   </StrictMode>,
 );
