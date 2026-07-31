@@ -12,8 +12,8 @@ monorepo。它帮助用户快速确认链接属于哪个项目、用于什么场
 | `server` | 提供后端接口，并将检索结果和整理信息持久化到数据库 |
 
 Web 当前提供个人链接检索原型；Admin 提供本地可持久化的扫描与整理原型。
-两端都使用演示数据，不会请求 Server。Server 已接入 Prisma、PostgreSQL 和
-Swagger，但尚无业务模型与接口。真实 Telegram 扫描及前后端联调尚未实现。
+两端仍使用演示数据，不会请求 Server。Server 已实现 Telegram 个人账号授权、
+聊天同步、链接持久化、搜索和管理 API，前后端联调尚未开始。
 
 ## 目录
 
@@ -33,7 +33,7 @@ packages/
 环境要求：
 
 - Node.js 20.19 或更高版本
-- pnpm 9
+- pnpm 11
 
 ```bash
 corepack enable
@@ -50,6 +50,7 @@ Server 使用独立的 PostgreSQL 17 容器，宿主机默认端口为 `5433`：
 
 ```bash
 cp apps/server/.env.example apps/server/.env
+# 在 apps/server/.env 中填写 Telegram API 凭据和会话加密密钥
 pnpm db:up
 pnpm --filter server start:dev
 ```
@@ -59,7 +60,7 @@ pnpm --filter server start:dev
 - Swagger UI：<http://localhost:3000/docs>
 - OpenAPI JSON：<http://localhost:3000/docs-json>
 
-当前 OpenAPI 文档不包含业务路径。更多说明见
+接口按 `/api/web/v1` 和 `/api/admin/v1` 分区。更多环境变量、授权和同步说明见
 [Server README](./apps/server/README.md)。
 
 ## 常用命令
