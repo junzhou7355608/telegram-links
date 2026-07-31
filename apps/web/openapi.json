@@ -1,0 +1,612 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/web/v1/overview": {
+      "get": {
+        "operationId": "WebApiController_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Web 链接工作台概览。"
+          }
+        },
+        "tags": ["Web - Links"]
+      }
+    },
+    "/api/web/v1/links": {
+      "get": {
+        "operationId": "WebApiController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 8,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["all", "recent", "favorites", "pending"]
+            }
+          },
+          {
+            "name": "projectId",
+            "required": false,
+            "in": "query",
+            "description": "UUID 或 unassigned",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["production", "test", "development", "unknown"]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "organized"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["newest", "oldest", "title"]
+            }
+          },
+          {
+            "name": "sourceChatId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "tagIds",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "includeArchived",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLinksResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Web - Links"]
+      }
+    },
+    "/api/web/v1/links/{id}": {
+      "get": {
+        "operationId": "WebApiController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Web - Links"]
+      }
+    }
+  },
+  "info": {
+    "title": "Telegram Links Web API",
+    "description": "Telegram Links 服务端 API 文档",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "TaxonomyReferenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "LinkSourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chatId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chatName": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "number"
+          },
+          "messagePreview": {
+            "type": "string"
+          },
+          "messageText": {
+            "type": "string"
+          },
+          "messageUrl": {
+            "type": "object",
+            "nullable": true
+          },
+          "rawUrl": {
+            "type": "string"
+          },
+          "senderName": {
+            "type": "object",
+            "nullable": true
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "chatId",
+          "chatName",
+          "messageId",
+          "messagePreview",
+          "rawUrl",
+          "capturedAt"
+        ]
+      },
+      "LinkResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["production", "test", "development", "unknown"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "organized"]
+          },
+          "project": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+              }
+            ]
+          },
+          "category": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+            }
+          },
+          "purpose": {
+            "type": "object",
+            "nullable": true
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "sourceCount": {
+            "type": "number"
+          },
+          "latestSource": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LinkSourceResponseDto"
+              }
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkSourceResponseDto"
+            }
+          },
+          "firstDiscoveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": "object",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "url",
+          "domain",
+          "environment",
+          "status",
+          "project",
+          "category",
+          "tags",
+          "purpose",
+          "isFavorite",
+          "sourceCount",
+          "latestSource",
+          "firstDiscoveredAt",
+          "createdAt",
+          "updatedAt",
+          "archivedAt"
+        ]
+      },
+      "PaginationMetaResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": ["page", "pageSize", "total", "totalPages"]
+      },
+      "PaginatedLinksResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkResponseDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetaResponseDto"
+          }
+        },
+        "required": ["items", "pagination"]
+      },
+      "BatchLinkPatchDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "object",
+            "nullable": true
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["production", "test", "development", "unknown"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "organized"]
+          },
+          "projectId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "format": "uuid"
+            }
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "addTagIds": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "BatchUpdateLinksDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "format": "uuid"
+            }
+          },
+          "patch": {
+            "$ref": "#/components/schemas/BatchLinkPatchDto"
+          }
+        },
+        "required": ["ids", "patch"]
+      },
+      "UpdateLinkDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "object",
+            "nullable": true
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["production", "test", "development", "unknown"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "organized"]
+          },
+          "projectId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "format": "uuid"
+            }
+          },
+          "isFavorite": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateSyncJobDto": {
+        "type": "object",
+        "properties": {
+          "chatIds": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "format": "uuid"
+            }
+          },
+          "rangeMode": {
+            "type": "string",
+            "enum": ["sinceLast", "last7Days", "custom", "allHistory"]
+          },
+          "rangeFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rangeTo": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "defaultProjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "defaultCategoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "defaultTagIds": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": ["rangeMode"]
+      },
+      "TaxonomyNameDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
+      "SendCodeDto": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "example": "+8613800000000"
+          }
+        },
+        "required": ["phoneNumber"]
+      },
+      "VerifyCodeDto": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": ["challengeId", "code"]
+      },
+      "VerifyPasswordDto": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": ["challengeId", "password"]
+      },
+      "UpdateChatDto": {
+        "type": "object",
+        "properties": {
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["isEnabled"]
+      }
+    }
+  }
+}
