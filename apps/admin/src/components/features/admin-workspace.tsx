@@ -1,19 +1,19 @@
-import { AdminSidebar } from '@/components/features/admin/admin-sidebar';
+import { AdminSidebar } from '@/components/features/admin-sidebar';
 import {
   BulkActions,
   type BulkPatch,
-} from '@/components/features/admin/bulk-actions';
-import { LinkEditSheet } from '@/components/features/admin/link-edit-sheet';
-import { LinkFiltersBar } from '@/components/features/admin/link-filters';
-import { LinkList } from '@/components/features/admin/link-list';
-import { LinkPagination } from '@/components/features/admin/link-pagination';
-import { ScanDialog } from '@/components/features/admin/scan-dialog';
-import { ScanJobsView } from '@/components/features/admin/scan-jobs-view';
+} from '@/components/features/bulk-actions';
+import { LinkEditSheet } from '@/components/features/link-edit-sheet';
+import { LinkFiltersBar } from '@/components/features/link-filters';
+import { LinkList } from '@/components/features/link-list';
+import { LinkPagination } from '@/components/features/link-pagination';
+import { ScanDialog } from '@/components/features/scan-dialog';
+import { ScanJobsView } from '@/components/features/scan-jobs-view';
 import {
   TaxonomyView,
   type TaxonomyKind,
-} from '@/components/features/admin/taxonomy-view';
-import { WorkspaceHeader } from '@/components/features/admin/workspace-header';
+} from '@/components/features/taxonomy-view';
+import { WorkspaceHeader } from '@/components/features/workspace-header';
 import { scanCandidates, telegramChats } from '@/data/mock-data';
 import {
   PAGE_SIZE,

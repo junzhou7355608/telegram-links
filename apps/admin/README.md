@@ -11,13 +11,20 @@ Query、Axios、Hey API、Jotai 和共享 shadcn/ui 构建。
 ```text
 src/
 ├── api/                    # Hey API 生成物
+├── assets/icons/           # Admin 专属静态图标资源
 ├── components/
-│   ├── features/admin/     # 管理后台业务组件
+│   ├── features/           # 管理后台业务组件
+│   ├── forms/              # 可复用业务表单
+│   ├── icons/custom/       # Admin 专属 React 图标
 │   ├── layouts/            # 应用布局
+│   ├── modals/             # 应用级弹窗
 │   └── providers/          # Theme、Query、Jotai 等 Provider
+├── constants/              # 应用常量
 ├── data/                   # 本地演示数据
+├── hooks/                  # 可复用 React Hooks
 ├── lib/                    # Router、QueryClient、Axios 与通用工具
 ├── routes/                 # TanStack Router 文件路由
+├── stores/                 # Jotai atoms
 ├── styles/                 # 全局样式
 └── types/                  # 本地演示类型
 ```

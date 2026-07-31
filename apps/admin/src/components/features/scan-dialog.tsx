@@ -34,7 +34,7 @@ import {
 } from '@repo/ui/components/select';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
-import { TagPicker } from '@/components/features/admin/tag-picker';
+import { TagPicker } from '@/components/features/tag-picker';
 
 interface ScanDialogProps {
   open: boolean;

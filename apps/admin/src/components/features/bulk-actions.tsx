@@ -23,7 +23,7 @@ import {
 } from '@repo/ui/components/select';
 import { CheckCheck, ListChecks, X } from 'lucide-react';
 import { useState } from 'react';
-import { TagPicker } from '@/components/features/admin/tag-picker';
+import { TagPicker } from '@/components/features/tag-picker';
 
 export interface BulkPatch {
   project?: string;
