@@ -31,7 +31,12 @@ export function ModeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" size="icon" aria-label="切换颜色主题" />
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="切换颜色主题"
+            className="relative"
+          />
         }
       >
         {activeTheme === 'light' ? <Sun /> : null}
@@ -43,6 +48,7 @@ export function ModeToggle() {
           <DropdownMenuLabel>颜色主题</DropdownMenuLabel>
           {themeOptions.map((option) => {
             const Icon = option.icon;
+
             return (
               <DropdownMenuItem
                 key={option.value}

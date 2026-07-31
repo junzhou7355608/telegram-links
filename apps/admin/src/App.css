@@ -1,3 +1,7 @@
+#root {
+  min-height: 100svh;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

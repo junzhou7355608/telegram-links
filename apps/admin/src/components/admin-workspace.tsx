@@ -4,10 +4,10 @@ import { LinkEditSheet } from '@/components/link-edit-sheet';
 import { LinkFiltersBar } from '@/components/link-filters';
 import { LinkList } from '@/components/link-list';
 import { LinkPagination } from '@/components/link-pagination';
-import { ModeToggle } from '@/components/mode-toggle';
 import { ScanDialog } from '@/components/scan-dialog';
 import { ScanJobsView } from '@/components/scan-jobs-view';
 import { TaxonomyView, type TaxonomyKind } from '@/components/taxonomy-view';
+import { WorkspaceHeader } from '@/components/workspace-header';
 import { scanCandidates, telegramChats } from '@/data/mock-data';
 import {
   PAGE_SIZE,
@@ -29,7 +29,6 @@ import type {
 } from '@/types/admin';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
 import { Badge } from '@repo/ui/components/badge';
-import { Button } from '@repo/ui/components/button';
 import {
   Card,
   CardContent,
@@ -37,21 +36,16 @@ import {
   CardTitle,
 } from '@repo/ui/components/card';
 import { Progress } from '@repo/ui/components/progress';
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@repo/ui/components/sidebar';
+import { SidebarInset, SidebarProvider } from '@repo/ui/components/sidebar';
 import {
   Activity,
   CheckCircle2,
   Database,
   Inbox,
   LoaderCircle,
-  Play,
   Plus,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { toast } from 'sonner';
 
 const initialFilters: LinkFilters = {
@@ -61,13 +55,6 @@ const initialFilters: LinkFilters = {
   environment: 'all',
   sourceChat: 'all',
   status: 'all',
-};
-
-const viewTitles: Record<AdminView, string> = {
-  pending: '待整理',
-  all: '全部链接',
-  jobs: '扫描任务',
-  taxonomy: '基础资料',
 };
 
 const stageTimeline: {
@@ -209,6 +196,11 @@ export function AdminWorkspace() {
   const editingLink =
     store.links.find((link) => link.id === editingLinkId) ?? null;
   const latestJob = store.jobs[0];
+  const latestScanLabel = runningJob
+    ? scanStageLabels[runningJob.stage ?? 'connecting']
+    : latestJob
+      ? `${latestJob.status === 'success' ? '成功' : '失败'} · ${formatDateTime(latestJob.startedAt)}`
+      : '尚未扫描';
 
   function updateStore(next: AdminStoreV1) {
     storeRef.current = next;
@@ -482,7 +474,7 @@ export function AdminWorkspace() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider style={{ '--sidebar-width': '15rem' } as CSSProperties}>
       <AdminSidebar
         activeView={view}
         pendingCount={pendingCount}
@@ -491,169 +483,142 @@ export function AdminWorkspace() {
         onViewChange={changeView}
       />
       <SidebarInset className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur sm:px-5">
-          <SidebarTrigger aria-label="打开导航" />
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate font-heading text-sm font-medium sm:text-base">
-              {viewTitles[view]}
-            </h1>
-            <p className="hidden text-xs text-muted-foreground sm:block">
-              最近扫描：
-              {runningJob
-                ? scanStageLabels[runningJob.stage ?? 'connecting']
-                : latestJob
-                  ? `${latestJob.status === 'success' ? '成功' : '失败'} · ${formatDateTime(latestJob.startedAt)}`
-                  : '尚未扫描'}
-            </p>
-          </div>
-          {runningJob ? (
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              <LoaderCircle className="animate-spin" />
-              扫描中
-            </Badge>
-          ) : null}
-          <Button
-            type="button"
-            disabled={runningJob !== null}
-            onClick={() => setScanDialogOpen(true)}
-          >
-            {runningJob ? <LoaderCircle className="animate-spin" /> : <Play />}
-            <span className="hidden sm:inline">开始扫描</span>
-            <span className="sm:hidden">扫描</span>
-          </Button>
-          <ModeToggle />
-        </header>
+        <WorkspaceHeader
+          latestScanLabel={latestScanLabel}
+          running={runningJob !== null}
+          onStartScan={() => setScanDialogOpen(true)}
+        />
 
         <main
           id="admin-content"
-          className="mx-auto w-full max-w-[1440px] space-y-5 p-3 sm:p-5 lg:p-6"
+          className="scroll-mt-16 px-4 py-5 sm:px-6 sm:py-6 lg:px-8"
         >
-          <section
-            aria-label="工作台概览"
-            className="grid grid-cols-2 gap-3 xl:grid-cols-4"
-          >
-            <StatCard
-              label="待整理"
-              value={pendingCount}
-              detail="需要补充项目与用途"
-              icon={Inbox}
-            />
-            <StatCard
-              label="今日新增"
-              value={todayCount}
-              detail="来自本地扫描演示"
-              icon={Plus}
-            />
-            <StatCard
-              label="链接总数"
-              value={store.links.length}
-              detail={`${store.links.length - pendingCount} 条已整理`}
-              icon={Database}
-            />
-            <StatCard
-              label="最近扫描"
-              value={
-                runningJob
-                  ? `${runningJob.progress}%`
-                  : latestJob?.status === 'failed'
-                    ? '失败'
-                    : '成功'
-              }
-              detail={
-                runningJob
-                  ? scanStageLabels[runningJob.stage ?? 'connecting']
-                  : latestJob
-                    ? formatDateTime(latestJob.startedAt)
-                    : '尚无记录'
-              }
-              icon={runningJob ? Activity : CheckCircle2}
-            />
-          </section>
-
-          {runningJob ? (
-            <Alert>
-              <LoaderCircle className="animate-spin" />
-              <AlertTitle>
-                正在{scanStageLabels[runningJob.stage ?? 'connecting']}
-              </AlertTitle>
-              <AlertDescription className="flex items-center gap-3">
-                <Progress
-                  value={runningJob.progress}
-                  className="max-w-md flex-1"
-                />
-                <span className="font-mono text-xs">
-                  {runningJob.progress}%
-                </span>
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          {view === 'jobs' ? (
-            <ScanJobsView jobs={store.jobs} runningJob={runningJob} />
-          ) : view === 'taxonomy' ? (
-            <TaxonomyView
-              taxonomy={store.taxonomy}
-              links={store.links}
-              onAdd={addTaxonomy}
-              onRename={renameTaxonomy}
-              onDelete={deleteTaxonomy}
-            />
-          ) : (
-            <section aria-labelledby="review-heading" className="space-y-4">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <h2
-                    id="review-heading"
-                    className="font-heading text-lg font-medium"
-                  >
-                    {view === 'pending' ? '待整理队列' : '全部链接'}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {view === 'pending'
-                      ? '补充项目、用途和分类后标记完成。'
-                      : '检索并维护本地演示链接的整理状态。'}
-                  </p>
-                </div>
-                <Badge variant="outline">{filteredLinks.length} 条结果</Badge>
-              </div>
-              <LinkFiltersBar
-                filters={filters}
-                links={store.links}
-                taxonomy={store.taxonomy}
-                showStatus={view === 'all'}
-                onChange={changeFilters}
-                onReset={resetFilters}
+          <div className="mx-auto grid max-w-[1480px] gap-5">
+            <section
+              aria-label="工作台概览"
+              className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+            >
+              <StatCard
+                label="待整理"
+                value={pendingCount}
+                detail="需要补充项目与用途"
+                icon={Inbox}
               />
-              <BulkActions
-                selectedLinks={selectedLinks}
-                taxonomy={store.taxonomy}
-                onClear={() => setSelectedIds(new Set())}
-                onApply={applyBulkPatch}
-                onComplete={completeSelected}
+              <StatCard
+                label="今日新增"
+                value={todayCount}
+                detail="来自本地扫描演示"
+                icon={Plus}
               />
-              <div id="link-results">
-                <LinkList
-                  links={visibleLinks}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                  onOpenLink={(link) => setEditingLinkId(link.id)}
-                  onResetFilters={resetFilters}
-                />
-              </div>
-              <LinkPagination
-                page={safePage}
-                pageCount={pageCount}
-                total={filteredLinks.length}
-                onPageChange={(nextPage) => {
-                  setPage(nextPage);
-                  setSelectedIds(new Set());
-                  document
-                    .getElementById('link-results')
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
+              <StatCard
+                label="链接总数"
+                value={store.links.length}
+                detail={`${store.links.length - pendingCount} 条已整理`}
+                icon={Database}
+              />
+              <StatCard
+                label="最近扫描"
+                value={
+                  runningJob
+                    ? `${runningJob.progress}%`
+                    : latestJob?.status === 'failed'
+                      ? '失败'
+                      : '成功'
+                }
+                detail={
+                  runningJob
+                    ? scanStageLabels[runningJob.stage ?? 'connecting']
+                    : latestJob
+                      ? formatDateTime(latestJob.startedAt)
+                      : '尚无记录'
+                }
+                icon={runningJob ? Activity : CheckCircle2}
               />
             </section>
-          )}
+
+            {runningJob ? (
+              <Alert>
+                <LoaderCircle className="animate-spin" />
+                <AlertTitle>
+                  正在{scanStageLabels[runningJob.stage ?? 'connecting']}
+                </AlertTitle>
+                <AlertDescription className="flex items-center gap-3">
+                  <Progress
+                    value={runningJob.progress}
+                    className="max-w-md flex-1"
+                  />
+                  <span className="font-mono text-xs">
+                    {runningJob.progress}%
+                  </span>
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {view === 'jobs' ? (
+              <ScanJobsView jobs={store.jobs} runningJob={runningJob} />
+            ) : view === 'taxonomy' ? (
+              <TaxonomyView
+                taxonomy={store.taxonomy}
+                links={store.links}
+                onAdd={addTaxonomy}
+                onRename={renameTaxonomy}
+                onDelete={deleteTaxonomy}
+              />
+            ) : (
+              <section aria-labelledby="review-heading" className="space-y-4">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2
+                      id="review-heading"
+                      className="text-xl font-semibold tracking-tight sm:text-2xl"
+                    >
+                      {view === 'pending' ? '待整理队列' : '全部链接'}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {view === 'pending'
+                        ? '补充项目、用途和分类后标记完成。'
+                        : '检索并维护本地演示链接的整理状态。'}
+                    </p>
+                  </div>
+                  <Badge variant="outline">{filteredLinks.length} 条结果</Badge>
+                </div>
+                <LinkFiltersBar
+                  filters={filters}
+                  links={store.links}
+                  taxonomy={store.taxonomy}
+                  showStatus={view === 'all'}
+                  resultCount={filteredLinks.length}
+                  onChange={changeFilters}
+                  onReset={resetFilters}
+                />
+                <BulkActions
+                  selectedLinks={selectedLinks}
+                  taxonomy={store.taxonomy}
+                  onClear={() => setSelectedIds(new Set())}
+                  onApply={applyBulkPatch}
+                  onComplete={completeSelected}
+                />
+                <div id="link-results">
+                  <LinkList
+                    links={visibleLinks}
+                    selectedIds={selectedIds}
+                    onSelectionChange={setSelectedIds}
+                    onOpenLink={(link) => setEditingLinkId(link.id)}
+                    onResetFilters={resetFilters}
+                  />
+                </div>
+                <LinkPagination
+                  page={safePage}
+                  pageCount={pageCount}
+                  total={filteredLinks.length}
+                  onPageChange={(nextPage) => {
+                    setPage(nextPage);
+                    setSelectedIds(new Set());
+                  }}
+                />
+              </section>
+            )}
+          </div>
         </main>
       </SidebarInset>
 

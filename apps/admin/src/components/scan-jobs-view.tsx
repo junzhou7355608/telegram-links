@@ -32,7 +32,7 @@ interface ScanJobsViewProps {
 function JobCard({ job }: { job: ScanJobMock }) {
   const isFailed = job.status === 'failed';
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
@@ -110,9 +110,12 @@ function JobCard({ job }: { job: ScanJobMock }) {
 
 export function ScanJobsView({ jobs, runningJob }: ScanJobsViewProps) {
   return (
-    <section aria-labelledby="scan-jobs-heading" className="space-y-4">
+    <section aria-labelledby="scan-jobs-heading" className="grid gap-5">
       <div>
-        <h2 id="scan-jobs-heading" className="font-heading text-lg font-medium">
+        <h2
+          id="scan-jobs-heading"
+          className="text-xl font-semibold tracking-tight sm:text-2xl"
+        >
           扫描任务
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -121,15 +124,17 @@ export function ScanJobsView({ jobs, runningJob }: ScanJobsViewProps) {
       </div>
       {runningJob ? <JobCard job={runningJob} /> : null}
       {jobs.length > 0 ? (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {jobs.map((job) => (
             <JobCard key={job.id} job={job} />
           ))}
         </div>
       ) : (
         <div className="flex min-h-72 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
-          <ScanSearch className="size-8 text-muted-foreground" />
-          <h3 className="mt-4 font-heading font-medium">还没有扫描记录</h3>
+          <span className="flex size-10 items-center justify-center rounded-lg bg-muted">
+            <ScanSearch className="size-5" aria-hidden="true" />
+          </span>
+          <h3 className="mt-4 font-medium">还没有扫描记录</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             从页面右上角开始第一次模拟扫描。
           </p>

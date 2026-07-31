@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@repo/ui/components/table';
-import { ArrowUpRight, FileQuestion, Pencil } from 'lucide-react';
+import { ArrowUpRight, FileQuestion, Link2, Pencil } from 'lucide-react';
 
 interface LinkListProps {
   links: ManagedLinkMock[];
@@ -38,11 +38,12 @@ function titleFor(link: ManagedLinkMock) {
 
 function StatusBadges({ link }: { link: ManagedLinkMock }) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
+      <Badge variant="outline">{environmentLabels[link.environment]}</Badge>
       <Badge variant={link.status === 'pending' ? 'secondary' : 'outline'}>
         {statusLabels[link.status]}
       </Badge>
-      <Badge variant="outline">{environmentLabels[link.environment]}</Badge>
+      {link.category ? <Badge variant="outline">{link.category}</Badge> : null}
     </div>
   );
 }
@@ -79,10 +80,10 @@ export function LinkList({
   if (links.length === 0) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
-        <FileQuestion className="size-8 text-muted-foreground" />
-        <h3 className="mt-4 font-heading text-base font-medium">
-          没有找到匹配的链接
-        </h3>
+        <span className="flex size-10 items-center justify-center rounded-lg bg-muted">
+          <FileQuestion className="size-5" aria-hidden="true" />
+        </span>
+        <h3 className="mt-4 font-medium">没有找到匹配的链接</h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
           尝试减少筛选条件，或重置后查看全部演示记录。
         </p>
@@ -123,7 +124,16 @@ export function LinkList({
                 <CardTitle
                   className={!link.title ? 'text-muted-foreground' : ''}
                 >
-                  {titleFor(link)}
+                  <button
+                    type="button"
+                    className="max-w-full truncate rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenLink(link);
+                    }}
+                  >
+                    {titleFor(link)}
+                  </button>
                 </CardTitle>
                 <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
                   {link.domain}
@@ -142,9 +152,9 @@ export function LinkList({
                 <Pencil />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="grid gap-3">
               <StatusBadges link={link} />
-              <dl className="mt-3 grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
+              <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
                 <dt className="text-muted-foreground">项目</dt>
                 <dd>{link.project || '未设置'}</dd>
                 <dt className="text-muted-foreground">分类</dt>
@@ -167,8 +177,8 @@ export function LinkList({
       <div className="hidden overflow-hidden rounded-xl border md:block">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-10">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-10 pl-4">
                 <Checkbox
                   checked={allSelected}
                   indeterminate={!allSelected && someSelected}
@@ -176,13 +186,13 @@ export function LinkList({
                   aria-label="选择当前页全部链接"
                 />
               </TableHead>
-              <TableHead>链接</TableHead>
+              <TableHead className="w-[36%]">链接</TableHead>
               <TableHead className="w-28">项目</TableHead>
               <TableHead className="hidden w-28 lg:table-cell">分类</TableHead>
               <TableHead className="w-24">环境</TableHead>
               <TableHead className="hidden w-36 xl:table-cell">来源</TableHead>
               <TableHead className="w-24">状态</TableHead>
-              <TableHead className="w-16">
+              <TableHead className="w-16 pr-4 text-right">
                 <span className="sr-only">操作</span>
               </TableHead>
             </TableRow>
@@ -191,28 +201,49 @@ export function LinkList({
             {links.map((link) => (
               <TableRow
                 key={link.id}
-                className="cursor-pointer"
+                tabIndex={0}
+                aria-label={`编辑 ${titleFor(link)}`}
+                className="cursor-pointer focus-visible:bg-muted focus-visible:outline-none"
                 data-state={selectedIds.has(link.id) ? 'selected' : undefined}
                 onClick={() => onOpenLink(link)}
+                onKeyDown={(event) => {
+                  if (
+                    event.target === event.currentTarget &&
+                    (event.key === 'Enter' || event.key === ' ')
+                  ) {
+                    event.preventDefault();
+                    onOpenLink(link);
+                  }
+                }}
               >
-                <TableCell onClick={(event) => event.stopPropagation()}>
+                <TableCell
+                  className="pl-4"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <Checkbox
                     checked={selectedIds.has(link.id)}
                     onCheckedChange={() => toggleOne(link.id)}
                     aria-label={`选择 ${titleFor(link)}`}
                   />
                 </TableCell>
-                <TableCell className="max-w-72">
-                  <p
-                    className={`truncate font-medium ${
-                      link.title ? '' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {titleFor(link)}
-                  </p>
-                  <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-                    {link.url}
-                  </p>
+                <TableCell className="min-w-0 py-3 whitespace-normal">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50">
+                      <Link2 className="size-3.5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p
+                        className={`truncate font-medium ${
+                          link.title ? '' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {titleFor(link)}
+                      </p>
+                      <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+                        {link.url}
+                      </p>
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{link.project || '—'}</TableCell>
                 <TableCell className="hidden lg:table-cell">
@@ -238,7 +269,7 @@ export function LinkList({
                     {statusLabels[link.status]}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="pr-4 text-right">
                   <Button
                     type="button"
                     variant="ghost"

@@ -1,3 +1,4 @@
+import { Badge } from '@repo/ui/components/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -10,14 +11,14 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
+  SidebarRail,
   useSidebar,
 } from '@repo/ui/components/sidebar';
 import {
   CheckCircle2,
   Database,
   Inbox,
-  ListFilter,
+  Link2,
   ScanSearch,
   Tags,
 } from 'lucide-react';
@@ -61,7 +62,7 @@ export function AdminSidebar({
   jobCount,
   onViewChange,
 }: AdminSidebarProps) {
-  const { setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
   const countByView: Record<AdminView, number | undefined> = {
     pending: pendingCount,
     all: totalCount,
@@ -71,25 +72,27 @@ export function AdminSidebar({
 
   function selectView(view: AdminView) {
     onViewChange(view);
-    setOpenMobile(false);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   }
 
   return (
-    <Sidebar collapsible="offcanvas">
-      <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-8 items-center justify-center rounded-lg border bg-background">
-            <ListFilter className="size-4" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-heading text-sm font-medium">Telegram Links</p>
-            <p className="truncate text-xs text-muted-foreground">
-              链接整理后台
-            </p>
-          </div>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="p-3">
+        <div className="flex h-12 items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Link2 className="size-4" aria-hidden="true" />
+          </span>
+          <span className="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
+            <span className="truncate font-semibold">个人链接库</span>
+            <span className="truncate text-xs text-muted-foreground">
+              管理后台
+            </span>
+          </span>
         </div>
       </SidebarHeader>
-      <SidebarSeparator />
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>工作台</SidebarGroupLabel>
@@ -102,6 +105,7 @@ export function AdminSidebar({
                   <SidebarMenuItem key={item.value}>
                     <SidebarMenuButton
                       type="button"
+                      tooltip={item.label}
                       isActive={activeView === item.value}
                       onClick={() => selectView(item.value)}
                     >
@@ -118,17 +122,26 @@ export function AdminSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <div className="flex items-start gap-2 rounded-lg border bg-background p-3">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <div>
-            <p className="text-xs font-medium">本地演示模式</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-              扫描和编辑结果仅保存在此浏览器。
+      <SidebarFooter className="p-3">
+        <div className="flex items-center gap-2 rounded-lg border border-sidebar-border p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:p-0">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sidebar-accent">
+            <CheckCircle2 className="size-3.5" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <p className="truncate text-xs font-medium">本地演示</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              仅保存在当前浏览器
             </p>
           </div>
+          <Badge
+            variant="outline"
+            className="group-data-[collapsible=icon]:hidden"
+          >
+            本地
+          </Badge>
         </div>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }

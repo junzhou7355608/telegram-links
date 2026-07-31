@@ -1,28 +1,26 @@
 @import '@repo/ui/globals.css';
 
 :root {
-  font-family: var(--font-sans);
+  font: 16px/1.5 var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  min-height: 100svh;
-}
-
 html {
-  scroll-behavior: smooth;
+  min-width: 320px;
+  background: var(--background);
 }
 
 body {
   min-width: 320px;
   min-height: 100svh;
-  overflow-x: hidden;
+  margin: 0;
+  background: var(--background);
 }
 
 button,
-[role='button'] {
-  -webkit-tap-highlight-color: transparent;
+input {
+  font: inherit;
 }

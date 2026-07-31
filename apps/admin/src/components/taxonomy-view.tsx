@@ -132,7 +132,7 @@ function TaxonomySection({
   }
 
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <CardTitle>{copy.plural}</CardTitle>
         <CardDescription>{copy.description}</CardDescription>
@@ -292,9 +292,12 @@ function TaxonomySection({
 
 export function TaxonomyView(props: TaxonomyViewProps) {
   return (
-    <section aria-labelledby="taxonomy-heading" className="space-y-4">
+    <section aria-labelledby="taxonomy-heading" className="grid gap-5">
       <div>
-        <h2 id="taxonomy-heading" className="font-heading text-lg font-medium">
+        <h2
+          id="taxonomy-heading"
+          className="text-xl font-semibold tracking-tight sm:text-2xl"
+        >
           基础资料
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
