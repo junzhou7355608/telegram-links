@@ -1,11 +1,13 @@
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from '@repo/ui/components/pagination';
+import { paginationItems } from '@repo/ui/lib/pagination-items';
 
 interface LinkPaginationProps {
   page: number;
@@ -56,16 +58,20 @@ export function LinkPagination({
             onClick={(event) => handlePageChange(event, page - 1)}
           />
         </PaginationItem>
-        {Array.from({ length: pageCount }, (_, index) => index + 1).map(
-          (pageNumber) => (
-            <PaginationItem key={pageNumber}>
+        {paginationItems(page, pageCount).map((item) =>
+          typeof item === 'number' ? (
+            <PaginationItem key={item}>
               <PaginationLink
-                href={`#page-${pageNumber}`}
-                isActive={pageNumber === page}
-                onClick={(event) => handlePageChange(event, pageNumber)}
+                href={`#page-${item}`}
+                isActive={item === page}
+                onClick={(event) => handlePageChange(event, item)}
               >
-                {pageNumber}
+                {item}
               </PaginationLink>
+            </PaginationItem>
+          ) : (
+            <PaginationItem key={item}>
+              <PaginationEllipsis />
             </PaginationItem>
           ),
         )}

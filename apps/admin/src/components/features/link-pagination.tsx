@@ -1,11 +1,13 @@
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from '@repo/ui/components/pagination';
+import { paginationItems } from '@repo/ui/lib/pagination-items';
 
 interface LinkPaginationProps {
   page: number;
@@ -48,10 +50,13 @@ export function LinkPagination({
 
   return (
     <div className="flex flex-col items-center justify-between gap-3 pt-2 sm:flex-row">
-      <p className="text-xs text-muted-foreground">
+      <p className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
         共 {total} 条，第 {page} / {pageCount} 页
       </p>
-      <Pagination className="mx-0 w-auto" aria-label="链接分页">
+      <Pagination
+        className="mx-0 min-w-0 max-w-full sm:w-auto"
+        aria-label="链接分页"
+      >
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -66,16 +71,20 @@ export function LinkPagination({
               onClick={(event) => handlePageChange(event, page - 1)}
             />
           </PaginationItem>
-          {Array.from({ length: pageCount }, (_, index) => index + 1).map(
-            (pageNumber) => (
-              <PaginationItem key={pageNumber}>
+          {paginationItems(page, pageCount).map((item) =>
+            typeof item === 'number' ? (
+              <PaginationItem key={item}>
                 <PaginationLink
-                  href={`#page-${pageNumber}`}
-                  isActive={pageNumber === page}
-                  onClick={(event) => handlePageChange(event, pageNumber)}
+                  href={`#page-${item}`}
+                  isActive={item === page}
+                  onClick={(event) => handlePageChange(event, item)}
                 >
-                  {pageNumber}
+                  {item}
                 </PaginationLink>
+              </PaginationItem>
+            ) : (
+              <PaginationItem key={item}>
+                <PaginationEllipsis />
               </PaginationItem>
             ),
           )}
