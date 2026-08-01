@@ -40,8 +40,13 @@ enum SyncStage {
   CONNECTING
   READING
   EXTRACTING
+  CLASSIFYING
   DEDUPLICATING
   SAVING
+}
+
+enum AiProvider {
+  KIMI
 }
 
 enum SyncRangeMode {
@@ -159,6 +164,7 @@ model Link {
   category          Category?          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   tags              LinkTag[]
   sources           LinkSource[]
+  aiAnalyses        AiAnalysis[]
 
   @@index([archivedAt, createdAt])
   @@index([status])
@@ -190,6 +196,11 @@ model SyncJob {
   defaultProjectId  String?       @db.Uuid
   defaultCategoryId String?       @db.Uuid
   defaultTagIds     Json
+  aiProvider        AiProvider?
+  aiModel           String?
+  promptTokens      Int           @default(0)
+  completionTokens  Int           @default(0)
+  totalTokens       Int           @default(0)
   messageCount      Int           @default(0)
   foundCount        Int           @default(0)
   newCount          Int           @default(0)
@@ -215,6 +226,11 @@ model SyncJobChat {
   foundCount            Int               @default(0)
   newCount              Int               @default(0)
   duplicateCount        Int               @default(0)
+  aiProvider            AiProvider?
+  aiModel               String?
+  promptTokens          Int               @default(0)
+  completionTokens      Int               @default(0)
+  totalTokens           Int               @default(0)
   maxProcessedMessageId Int?
   error                 String?           @db.Text
   startedAt             DateTime?
@@ -229,17 +245,57 @@ model SyncJobChat {
 }
 
 model LinkSource {
-  id        String          @id @default(uuid()) @db.Uuid
-  linkId    String          @db.Uuid
-  messageId String          @db.Uuid
-  syncJobId String?         @db.Uuid
-  rawUrl    String          @db.Text
-  createdAt DateTime        @default(now())
-  link      Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  message   TelegramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  syncJob   SyncJob?        @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
+  id         String          @id @default(uuid()) @db.Uuid
+  linkId     String          @db.Uuid
+  messageId  String          @db.Uuid
+  syncJobId  String?         @db.Uuid
+  rawUrl     String          @db.Text
+  createdAt  DateTime        @default(now())
+  link       Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  message    TelegramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  syncJob    SyncJob?        @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
+  aiAnalysis AiAnalysis?
 
   @@unique([linkId, messageId])
   @@index([messageId])
   @@index([syncJobId])
+}
+
+model AiSettings {
+  id               String     @id @default("default")
+  provider         AiProvider @default(KIMI)
+  apiKeyCiphertext String?    @db.Text
+  apiKeyIv         String?
+  apiKeyAuthTag    String?
+  selectedModel    String?
+  lastValidatedAt  DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model AiAnalysis {
+  id                    String          @id @default(uuid()) @db.Uuid
+  linkId                String          @db.Uuid
+  linkSourceId          String          @unique @db.Uuid
+  provider              AiProvider
+  model                 String
+  confidence            Float
+  rationale             String          @db.Text
+  resultTitle           String
+  resultPurpose         String?         @db.Text
+  resultEnvironment     LinkEnvironment
+  suggestedProjectName  String?
+  suggestedCategoryName String?
+  suggestedTagNames     Json
+  appliedResult         Json
+  appliedAt             DateTime?
+  promptTokens          Int             @default(0)
+  completionTokens      Int             @default(0)
+  totalTokens           Int             @default(0)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  link                  Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  linkSource            LinkSource      @relation(fields: [linkSourceId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, createdAt])
 }

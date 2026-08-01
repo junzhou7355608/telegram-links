@@ -12,22 +12,27 @@ import {
 } from '@nestjs/common';
 import { ApiNoContentResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { LinksService } from '../links/links.service';
+import { AiService } from '../ai/ai.service';
 import {
+  AdminLinkResponseDto,
   AdminOverviewResponseDto,
   BatchUpdateLinksResponseDto,
   BatchUpdateLinksDto,
   LinkQueryDto,
-  LinkResponseDto,
   PaginatedLinksResponseDto,
   UpdateLinkDto,
 } from './dto/link.dto';
+import { ApplyAiSuggestionsDto } from './dto/ai.dto';
 import { ApiCommonErrorResponses } from './dto/error.dto';
 
 @ApiTags('Admin - Links')
 @ApiCommonErrorResponses()
 @Controller('admin/v1')
 export class AdminLinksController {
-  constructor(private readonly links: LinksService) {}
+  constructor(
+    private readonly ai: AiService,
+    private readonly links: LinksService,
+  ) {}
 
   @Get('overview')
   @ApiOkResponse({ type: AdminOverviewResponseDto })
@@ -61,18 +66,19 @@ export class AdminLinksController {
   }
 
   @Get('links/:id')
-  @ApiOkResponse({ type: LinkResponseDto })
-  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.links.findOne(id);
+  @ApiOkResponse({ type: AdminLinkResponseDto })
+  async findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.adminLink(id);
   }
 
   @Patch('links/:id')
-  @ApiOkResponse({ type: LinkResponseDto })
-  update(
+  @ApiOkResponse({ type: AdminLinkResponseDto })
+  async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() body: UpdateLinkDto,
   ) {
-    return this.links.update(id, body);
+    await this.links.update(id, body);
+    return this.adminLink(id);
   }
 
   @Delete('links/:id')
@@ -84,8 +90,28 @@ export class AdminLinksController {
 
   @Post('links/:id/restore')
   @HttpCode(200)
-  @ApiOkResponse({ type: LinkResponseDto })
-  restore(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    return this.links.restore(id);
+  @ApiOkResponse({ type: AdminLinkResponseDto })
+  async restore(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    await this.links.restore(id);
+    return this.adminLink(id);
+  }
+
+  @Post('links/:id/ai-suggestions/apply')
+  @HttpCode(200)
+  @ApiOkResponse({ type: AdminLinkResponseDto })
+  async applyAiSuggestions(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() body: ApplyAiSuggestionsDto,
+  ) {
+    await this.ai.applySuggestions(id, body);
+    return this.adminLink(id);
+  }
+
+  private async adminLink(id: string) {
+    const [link, aiAnalysis] = await Promise.all([
+      this.links.findOne(id),
+      this.ai.latestAnalysis(id),
+    ]);
+    return { ...link, aiAnalysis };
   }
 }

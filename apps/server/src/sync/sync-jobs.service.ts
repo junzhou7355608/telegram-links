@@ -7,6 +7,13 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import {
+  type AiClassificationResult,
+  type AiRuntime,
+  type AiTaxonomyItem,
+} from '../ai/ai.gateway';
+import { AiService } from '../ai/ai.service';
+import { buildAiContext } from '../ai/ai-context';
+import {
   LinkEnvironment,
   OrganizationStatus,
   Prisma,
@@ -76,6 +83,7 @@ export class SyncJobsService implements OnModuleInit {
   private runningJobId: string | null = null;
 
   constructor(
+    private readonly ai: AiService,
     private readonly auth: TelegramAuthService,
     private readonly chats: TelegramChatsService,
     private readonly gateway: TelegramGateway,
@@ -94,6 +102,7 @@ export class SyncJobsService implements OnModuleInit {
   }
 
   async create(input: CreateSyncJobInput) {
+    const aiRuntime = await this.ai.requireReady();
     this.auth.requireAuthorized();
     if (this.creating) {
       throw this.activeJobConflict();
@@ -129,6 +138,8 @@ export class SyncJobsService implements OnModuleInit {
         data: {
           chats: {
             create: chats.map((chat) => ({
+              aiModel: aiRuntime.model.id,
+              aiProvider: 'KIMI',
               chatId: chat.id,
               chatTitle: chat.title,
             })),
@@ -136,6 +147,8 @@ export class SyncJobsService implements OnModuleInit {
           defaultCategoryId: input.defaultCategoryId,
           defaultProjectId: input.defaultProjectId,
           defaultTagIds: [...new Set(input.defaultTagIds ?? [])],
+          aiModel: aiRuntime.model.id,
+          aiProvider: 'KIMI',
           rangeFrom: input.rangeFrom,
           rangeMode: toRangeMode(input.rangeMode),
           rangeTo: input.rangeTo,
@@ -196,14 +209,15 @@ export class SyncJobsService implements OnModuleInit {
         include: { chats: { include: { chat: true } } },
         where: { id },
       });
+      const aiRuntime = await this.ai.requireReady(job.aiModel ?? undefined);
       let completed = 0;
       for (const jobChat of job.chats) {
-        await this.runChat(job, jobChat);
+        await this.runChat(job, jobChat, aiRuntime);
         completed += 1;
         await this.prisma.syncJob.update({
           data: {
             progress: 10 + Math.round((completed / job.chats.length) * 80),
-            stage: SyncStage.EXTRACTING,
+            stage: SyncStage.CLASSIFYING,
           },
           where: { id },
         });
@@ -250,6 +264,7 @@ export class SyncJobsService implements OnModuleInit {
       };
       id: string;
     },
+    aiRuntime: AiRuntime,
   ): Promise<void> {
     const startedAt = new Date();
     const counters = {
@@ -257,6 +272,9 @@ export class SyncJobsService implements OnModuleInit {
       foundCount: 0,
       messageCount: 0,
       newCount: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
     };
     let maxMessageId = jobChat.chat.lastSyncedMessageId ?? 0;
     await this.prisma.syncJobChat.update({
@@ -266,16 +284,26 @@ export class SyncJobsService implements OnModuleInit {
 
     try {
       const range = this.messageRange(job, jobChat.chat.lastSyncedMessageId);
+      const taxonomy = await this.ai.taxonomy();
       for await (const message of this.gateway.getMessages(
         jobChat.chat.telegramPeerId,
         range,
       )) {
         counters.messageCount += 1;
         maxMessageId = Math.max(maxMessageId, message.messageId);
-        const result = await this.persistMessage(job, jobChat.chat, message);
+        const result = await this.persistMessage(
+          job,
+          jobChat.chat,
+          message,
+          aiRuntime,
+          taxonomy,
+        );
         counters.foundCount += result.foundCount;
         counters.newCount += result.newCount;
         counters.duplicateCount += result.duplicateCount;
+        counters.promptTokens += result.promptTokens;
+        counters.completionTokens += result.completionTokens;
+        counters.totalTokens += result.totalTokens;
       }
       await this.prisma.$transaction(async (transaction) => {
         await transaction.syncJobChat.update({
@@ -317,8 +345,16 @@ export class SyncJobsService implements OnModuleInit {
     },
     chat: {
       id: string;
+      title: string;
+      type: string;
     },
     message: GatewayMessage,
+    aiRuntime: AiRuntime,
+    taxonomy: {
+      categories: AiTaxonomyItem[];
+      projects: AiTaxonomyItem[];
+      tags: AiTaxonomyItem[];
+    },
   ) {
     const urls = new Map<
       string,
@@ -331,8 +367,49 @@ export class SyncJobsService implements OnModuleInit {
       }
     }
     if (urls.size === 0) {
-      return { duplicateCount: 0, foundCount: 0, newCount: 0 };
+      return {
+        completionTokens: 0,
+        duplicateCount: 0,
+        foundCount: 0,
+        newCount: 0,
+        promptTokens: 0,
+        totalTokens: 0,
+      };
     }
+
+    const existing = await this.prisma.link.findMany({
+      select: {
+        _count: { select: { aiAnalyses: true } },
+        archivedAt: true,
+        id: true,
+        normalizedUrl: true,
+        status: true,
+      },
+      where: { normalizedUrl: { in: [...urls.keys()] } },
+    });
+    const existingByUrl = new Map(
+      existing.map((link) => [link.normalizedUrl, link]),
+    );
+    const aiUrls = [...urls.values()].filter((value) => {
+      const link = existingByUrl.get(value.normalizedUrl);
+      return (
+        !link ||
+        (link.archivedAt === null &&
+          link.status === OrganizationStatus.PENDING &&
+          link._count.aiAnalyses === 0)
+      );
+    });
+    const classification =
+      aiUrls.length > 0
+        ? await this.ai.classify(aiRuntime, {
+            ...taxonomy,
+            context: buildAiContext(chat, message),
+            urls: aiUrls.map(({ normalizedUrl, rawUrl }) => ({
+              normalizedUrl,
+              rawUrl,
+            })),
+          })
+        : this.emptyClassification();
 
     return this.prisma.$transaction(async (transaction) => {
       const storedMessage = await transaction.telegramMessage.upsert({
@@ -361,34 +438,80 @@ export class SyncJobsService implements OnModuleInit {
       });
       let newCount = 0;
       let duplicateCount = 0;
+      const classificationByUrl = new Map(
+        classification.items.map((item) => [item.normalizedUrl, item]),
+      );
       for (const value of urls.values()) {
         let link = await transaction.link.findUnique({
+          include: { tags: true },
           where: { normalizedUrl: value.normalizedUrl },
         });
+        const aiResult = classificationByUrl.get(value.normalizedUrl);
+        const aiTagIds = aiResult?.tagIds ?? [];
+        const defaultTagIds = this.defaultTagIds(job.defaultTagIds);
         if (!link) {
           link = await transaction.link.create({
+            include: { tags: true },
             data: {
-              categoryId: job.defaultCategoryId,
+              categoryId: job.defaultCategoryId ?? aiResult?.categoryId,
               domain: value.domain,
-              environment: LinkEnvironment.UNKNOWN,
+              environment: aiResult
+                ? this.aiEnvironment(aiResult.environment)
+                : LinkEnvironment.UNKNOWN,
               firstDiscoveredAt: message.sentAt,
               normalizedUrl: value.normalizedUrl,
-              projectId: job.defaultProjectId,
+              projectId: job.defaultProjectId ?? aiResult?.projectId,
+              purpose: aiResult?.purpose,
               status: OrganizationStatus.PENDING,
               tags: {
-                create: this.defaultTagIds(job.defaultTagIds).map((tagId) => ({
-                  tagId,
-                })),
+                create: [...new Set([...defaultTagIds, ...aiTagIds])].map(
+                  (tagId) => ({ tagId }),
+                ),
               },
-              title: value.domain,
+              title: aiResult?.title ?? value.domain,
               url: value.url,
             },
           });
           newCount += 1;
         } else {
           duplicateCount += 1;
+          if (
+            aiResult &&
+            link.archivedAt === null &&
+            link.status === OrganizationStatus.PENDING
+          ) {
+            const tagIds = [
+              ...new Set([
+                ...link.tags.map(({ tagId }) => tagId),
+                ...defaultTagIds,
+                ...aiTagIds,
+              ]),
+            ];
+            link = await transaction.link.update({
+              include: { tags: true },
+              data: {
+                categoryId:
+                  link.categoryId ??
+                  job.defaultCategoryId ??
+                  aiResult.categoryId,
+                environment:
+                  link.environment === LinkEnvironment.UNKNOWN
+                    ? this.aiEnvironment(aiResult.environment)
+                    : link.environment,
+                projectId:
+                  link.projectId ?? job.defaultProjectId ?? aiResult.projectId,
+                purpose: link.purpose ?? aiResult.purpose,
+                tags: {
+                  create: tagIds.map((tagId) => ({ tagId })),
+                  deleteMany: {},
+                },
+                title: link.title === link.domain ? aiResult.title : link.title,
+              },
+              where: { id: link.id },
+            });
+          }
         }
-        await transaction.linkSource.upsert({
+        const source = await transaction.linkSource.upsert({
           create: {
             linkId: link.id,
             messageId: storedMessage.id,
@@ -400,11 +523,46 @@ export class SyncJobsService implements OnModuleInit {
             linkId_messageId: { linkId: link.id, messageId: storedMessage.id },
           },
         });
+        if (aiResult) {
+          await transaction.aiAnalysis.upsert({
+            create: {
+              appliedResult: {
+                categoryId:
+                  job.defaultCategoryId ?? aiResult.categoryId ?? null,
+                environment: aiResult.environment,
+                projectId: job.defaultProjectId ?? aiResult.projectId ?? null,
+                tagIds: [...new Set([...defaultTagIds, ...aiTagIds])],
+                title: aiResult.title,
+                purpose: aiResult.purpose,
+              },
+              confidence: aiResult.confidence,
+              completionTokens: classification.usage.completionTokens,
+              linkId: link.id,
+              linkSourceId: source.id,
+              model: aiRuntime.model.id,
+              promptTokens: classification.usage.promptTokens,
+              provider: 'KIMI',
+              rationale: aiResult.rationale,
+              resultEnvironment: this.aiEnvironment(aiResult.environment),
+              resultPurpose: aiResult.purpose,
+              resultTitle: aiResult.title,
+              suggestedCategoryName: aiResult.suggestedCategoryName,
+              suggestedProjectName: aiResult.suggestedProjectName,
+              suggestedTagNames: aiResult.suggestedTagNames,
+              totalTokens: classification.usage.totalTokens,
+            },
+            update: {},
+            where: { linkSourceId: source.id },
+          });
+        }
       }
       return {
+        completionTokens: classification.usage.completionTokens,
         duplicateCount,
         foundCount: urls.size,
         newCount,
+        promptTokens: classification.usage.promptTokens,
+        totalTokens: classification.usage.totalTokens,
       };
     });
   }
@@ -432,6 +590,12 @@ export class SyncJobsService implements OnModuleInit {
         foundCount: chats.reduce((sum, chat) => sum + chat.foundCount, 0),
         messageCount: chats.reduce((sum, chat) => sum + chat.messageCount, 0),
         newCount: chats.reduce((sum, chat) => sum + chat.newCount, 0),
+        promptTokens: chats.reduce((sum, chat) => sum + chat.promptTokens, 0),
+        completionTokens: chats.reduce(
+          (sum, chat) => sum + chat.completionTokens,
+          0,
+        ),
+        totalTokens: chats.reduce((sum, chat) => sum + chat.totalTokens, 0),
         progress: 100,
         stage: SyncStage.SAVING,
         status,
@@ -504,12 +668,35 @@ export class SyncJobsService implements OnModuleInit {
       : [];
   }
 
+  private aiEnvironment(
+    value: 'production' | 'test' | 'development' | 'unknown',
+  ): LinkEnvironment {
+    return {
+      development: LinkEnvironment.DEVELOPMENT,
+      production: LinkEnvironment.PRODUCTION,
+      test: LinkEnvironment.TEST,
+      unknown: LinkEnvironment.UNKNOWN,
+    }[value];
+  }
+
+  private emptyClassification(): AiClassificationResult {
+    return {
+      items: [],
+      usage: { completionTokens: 0, promptTokens: 0, totalTokens: 0 },
+    };
+  }
+
   private toResponse(job: SyncJobRecord) {
     return {
       chats: job.chats.map((chat) => ({
+        aiModel: chat.aiModel,
+        aiProvider: chat.aiProvider ? 'kimi' : null,
         chatId: chat.chatId,
         chatTitle: chat.chatTitle,
         duplicateCount: chat.duplicateCount,
+        promptTokens: chat.promptTokens,
+        completionTokens: chat.completionTokens,
+        totalTokens: chat.totalTokens,
         error: chat.error,
         finishedAt: chat.finishedAt?.toISOString() ?? null,
         foundCount: chat.foundCount,
@@ -524,6 +711,11 @@ export class SyncJobsService implements OnModuleInit {
       defaultCategoryId: job.defaultCategoryId,
       defaultProjectId: job.defaultProjectId,
       defaultTagIds: this.defaultTagIds(job.defaultTagIds),
+      aiModel: job.aiModel,
+      aiProvider: job.aiProvider ? 'kimi' : null,
+      promptTokens: job.promptTokens,
+      completionTokens: job.completionTokens,
+      totalTokens: job.totalTokens,
       duplicateCount: job.duplicateCount,
       error: job.error,
       finishedAt: job.finishedAt?.toISOString() ?? null,

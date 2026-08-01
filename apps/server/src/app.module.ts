@@ -7,6 +7,7 @@ import { LinksModule } from './links/links.module';
 import { SyncModule } from './sync/sync.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TelegramModule } from './telegram/telegram.module';
     }),
     PrismaModule,
     TelegramModule,
+    AiModule,
     LinksModule,
     TaxonomyModule,
     SyncModule,

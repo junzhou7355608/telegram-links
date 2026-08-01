@@ -22,6 +22,7 @@ import {
 import { PaginationQueryDto } from '../../common/pagination.dto';
 import { SyncJobStatusDtoValue } from './sync.dto';
 import { PaginationMetaResponseDto } from './pagination.dto';
+import { AiAnalysisResponseDto } from './ai.dto';
 
 export class LinkQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ type: String })
@@ -250,6 +251,11 @@ export class LinkResponseDto {
 
   @ApiProperty({ format: 'date-time', nullable: true, type: String })
   archivedAt!: string | null;
+}
+
+export class AdminLinkResponseDto extends LinkResponseDto {
+  @ApiProperty({ nullable: true, type: AiAnalysisResponseDto })
+  aiAnalysis!: AiAnalysisResponseDto | null;
 }
 
 export class PaginatedLinksResponseDto {

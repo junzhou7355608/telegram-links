@@ -15,6 +15,7 @@ export interface GatewayChat {
 }
 
 export interface GatewayMessage {
+  context: GatewayMessageContext;
   messageId: number;
   messageUrl?: string;
   senderName?: string;
@@ -22,6 +23,19 @@ export interface GatewayMessage {
   sentAt: Date;
   text: string;
   urls: string[];
+}
+
+export interface GatewayContextMessage {
+  sentAt: Date;
+  senderName?: string;
+  text: string;
+}
+
+export interface GatewayMessageContext {
+  forwardSource?: string;
+  next?: GatewayContextMessage;
+  previous: GatewayContextMessage[];
+  reply?: GatewayContextMessage;
 }
 
 export interface MessageRange {

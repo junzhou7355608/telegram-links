@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBadGatewayResponse,
   ApiConflictResponse,
   ApiGoneResponse,
   ApiInternalServerErrorResponse,
@@ -45,6 +46,14 @@ export function ApiTelegramErrorResponses() {
     ApiCommonErrorResponses(),
     ApiUnauthorizedResponse({ type: ApiErrorResponseDto }),
     ApiGoneResponse({ type: ApiErrorResponseDto }),
+    ApiServiceUnavailableResponse({ type: ApiErrorResponseDto }),
+  );
+}
+
+export function ApiAiErrorResponses() {
+  return applyDecorators(
+    ApiCommonErrorResponses(),
+    ApiBadGatewayResponse({ type: ApiErrorResponseDto }),
     ApiServiceUnavailableResponse({ type: ApiErrorResponseDto }),
   );
 }

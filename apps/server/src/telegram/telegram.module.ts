@@ -7,7 +7,12 @@ import { TelegramGateway } from './telegram.gateway';
 
 @Global()
 @Module({
-  exports: [TelegramAuthService, TelegramChatsService, TelegramGateway],
+  exports: [
+    SessionCryptoService,
+    TelegramAuthService,
+    TelegramChatsService,
+    TelegramGateway,
+  ],
   providers: [
     GramJsGateway,
     SessionCryptoService,

@@ -7,6 +7,7 @@ import type {
   GatewayChat,
   GatewayChatType,
   GatewayMessage,
+  GatewayContextMessage,
   MessageRange,
   SendCodeResult,
   SignInResult,
@@ -43,6 +44,18 @@ export function extractMessageUrls(message: Api.Message): string[] {
   }
 
   return [...urls];
+}
+
+function contextMessage(message: Api.Message): GatewayContextMessage {
+  return {
+    sentAt: new Date(message.date * 1000),
+    senderName: message.postAuthor,
+    text: message.message ?? '',
+  };
+}
+
+function withinTenMinutes(left: Api.Message, right: Api.Message): boolean {
+  return Math.abs(left.date - right.date) <= 10 * 60;
 }
 
 @Injectable()
@@ -176,6 +189,8 @@ export class GramJsGateway extends TelegramGateway {
       waitTime: 1,
     });
 
+    const window: Api.Message[] = [];
+    const emitted = new Set<number>();
     for await (const message of messages) {
       if (!(message instanceof Api.Message)) {
         continue;
@@ -188,16 +203,32 @@ export class GramJsGateway extends TelegramGateway {
         break;
       }
 
-      const urls = extractMessageUrls(message);
-      yield {
-        messageId: Number(message.id),
-        messageUrl: this.messageUrl(telegramPeerId, message.id),
-        senderName: message.postAuthor,
-        senderTelegramId: message.senderId?.toString(),
-        sentAt,
-        text: message.message ?? '',
-        urls,
-      };
+      window.push(message);
+      if (window.length >= 3) {
+        const candidate = window.length === 3 ? window[0] : window[1];
+        if (candidate && !emitted.has(candidate.id)) {
+          yield await this.toGatewayMessage(
+            telegramPeerId,
+            entity,
+            candidate,
+            window,
+          );
+          emitted.add(candidate.id);
+        }
+      }
+      if (window.length === 4) {
+        window.shift();
+      }
+    }
+    for (const message of window) {
+      if (!emitted.has(message.id)) {
+        yield await this.toGatewayMessage(
+          telegramPeerId,
+          entity,
+          message,
+          window,
+        );
+      }
     }
   }
 
@@ -286,5 +317,86 @@ export class GramJsGateway extends TelegramGateway {
       return `https://t.me/c/${telegramPeerId.slice(4)}/${messageId}`;
     }
     return undefined;
+  }
+
+  private async toGatewayMessage(
+    telegramPeerId: string,
+    entity: Api.TypeInputPeer,
+    message: Api.Message,
+    window: Api.Message[],
+  ): Promise<GatewayMessage> {
+    const urls = extractMessageUrls(message);
+    const currentIndex = window.indexOf(message);
+    const older = window
+      .slice(currentIndex + 1, currentIndex + 3)
+      .filter((item) => withinTenMinutes(item, message))
+      .toReversed()
+      .map(contextMessage);
+    const newer = currentIndex > 0 ? window[currentIndex - 1] : undefined;
+    const reply =
+      urls.length > 0
+        ? await this.replyContext(entity, message, window)
+        : undefined;
+    return {
+      context: {
+        forwardSource: this.forwardSource(message),
+        next:
+          newer && withinTenMinutes(newer, message)
+            ? contextMessage(newer)
+            : undefined,
+        previous: older,
+        reply,
+      },
+      messageId: Number(message.id),
+      messageUrl: this.messageUrl(telegramPeerId, message.id),
+      senderName: message.postAuthor,
+      senderTelegramId: message.senderId?.toString(),
+      sentAt: new Date(message.date * 1000),
+      text: message.message ?? '',
+      urls,
+    };
+  }
+
+  private async replyContext(
+    entity: Api.TypeInputPeer,
+    message: Api.Message,
+    window: Api.Message[],
+  ): Promise<GatewayContextMessage | undefined> {
+    const header = message.replyTo;
+    if (!(header instanceof Api.MessageReplyHeader)) {
+      return undefined;
+    }
+    if (header.quoteText) {
+      return {
+        sentAt: new Date(message.date * 1000),
+        text: header.quoteText,
+      };
+    }
+    if (!header.replyToMsgId) {
+      return undefined;
+    }
+    const local = window.find((item) => item.id === header.replyToMsgId);
+    if (local) {
+      return contextMessage(local);
+    }
+    const [remote] = await this.requireClient().getMessages(entity, {
+      ids: header.replyToMsgId,
+    });
+    return remote instanceof Api.Message ? contextMessage(remote) : undefined;
+  }
+
+  private forwardSource(message: Api.Message): string | undefined {
+    const forward = message.fwdFrom;
+    if (!forward) {
+      return undefined;
+    }
+    const values = [
+      entityValue(forward, 'fromName'),
+      entityValue(forward, 'postAuthor'),
+      entityValue(forward, 'fromId')?.toString(),
+    ].filter(
+      (value): value is string => typeof value === 'string' && Boolean(value),
+    );
+    return values[0];
   }
 }

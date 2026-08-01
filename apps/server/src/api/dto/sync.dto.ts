@@ -31,6 +31,7 @@ export enum SyncStageDtoValue {
   Connecting = 'connecting',
   Reading = 'reading',
   Extracting = 'extracting',
+  Classifying = 'classifying',
   Deduplicating = 'deduplicating',
   Saving = 'saving',
 }
@@ -106,6 +107,12 @@ export class SyncJobChatResponseDto {
   @ApiProperty({ type: String })
   chatTitle!: string;
 
+  @ApiProperty({ enum: ['kimi', null], nullable: true })
+  aiProvider!: 'kimi' | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  aiModel!: string | null;
+
   @ApiProperty({ enum: SyncJobChatStatusDtoValue })
   status!: SyncJobChatStatusDtoValue;
 
@@ -120,6 +127,15 @@ export class SyncJobChatResponseDto {
 
   @ApiProperty({ type: Number })
   duplicateCount!: number;
+
+  @ApiProperty({ type: Number })
+  promptTokens!: number;
+
+  @ApiProperty({ type: Number })
+  completionTokens!: number;
+
+  @ApiProperty({ type: Number })
+  totalTokens!: number;
 
   @ApiProperty({ nullable: true, type: Number })
   maxProcessedMessageId!: number | null;
@@ -167,6 +183,21 @@ export class SyncJobResponseDto {
 
   @ApiProperty({ format: 'uuid', isArray: true, type: String })
   defaultTagIds!: string[];
+
+  @ApiProperty({ enum: ['kimi', null], nullable: true })
+  aiProvider!: 'kimi' | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  aiModel!: string | null;
+
+  @ApiProperty({ type: Number })
+  promptTokens!: number;
+
+  @ApiProperty({ type: Number })
+  completionTokens!: number;
+
+  @ApiProperty({ type: Number })
+  totalTokens!: number;
 
   @ApiProperty({ type: Number })
   messageCount!: number;

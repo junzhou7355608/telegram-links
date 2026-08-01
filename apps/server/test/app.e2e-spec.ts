@@ -3,7 +3,15 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import {
+  AiGateway,
+  AiGatewayError,
+  type AiClassificationInput,
+  type AiClassificationResult,
+  type AiRuntime,
+} from '../src/ai/ai.gateway';
 import { configureApplication } from '../src/app.setup';
+import { LinkEnvironmentValue } from '../src/common/link-values';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 import { SyncRangeMode } from '../src/generated/prisma/client';
 import { SyncJobsService } from '../src/sync/sync-jobs.service';
@@ -44,10 +52,16 @@ class FakeTelegramGateway extends TelegramGateway {
       title: '异常测试群',
       type: 'group',
     },
+    {
+      telegramPeerId: '-1007777777777',
+      title: 'AI 失败测试群',
+      type: 'group',
+    },
   ];
 
   readonly messages: GatewayMessage[] = [
     {
+      context: { previous: [] },
       messageId: 101,
       messageUrl: 'https://t.me/dev_team/101',
       senderName: 'Jun',
@@ -57,6 +71,20 @@ class FakeTelegramGateway extends TelegramGateway {
       urls: ['https://github.com/example/project/'],
     },
     {
+      context: {
+        previous: [
+          {
+            sentAt: new Date('2026-07-30T08:58:00.000Z'),
+            senderName: 'Jun',
+            text: '这是 Atlas 项目的正式仓库和文档。',
+          },
+        ],
+        reply: {
+          sentAt: new Date('2026-07-30T08:55:00.000Z'),
+          senderName: 'Jun',
+          text: '请归类到研发资料。',
+        },
+      },
       messageId: 102,
       messageUrl: 'https://t.me/dev_team/102',
       senderName: 'Jun',
@@ -69,6 +97,14 @@ class FakeTelegramGateway extends TelegramGateway {
       ],
     },
   ];
+
+  readonly aiFailureMessage: GatewayMessage = {
+    context: { previous: [] },
+    messageId: 201,
+    sentAt: new Date('2026-07-30T10:00:00.000Z'),
+    text: 'AI 失败测试 https://fail.example.com',
+    urls: ['https://fail.example.com'],
+  };
 
   isConfigured(): boolean {
     return true;
@@ -126,7 +162,11 @@ class FakeTelegramGateway extends TelegramGateway {
     if (telegramPeerId === '-1009999999999') {
       throw new Error('Fake Telegram chat failure');
     }
-    for (const message of this.messages) {
+    const messages =
+      telegramPeerId === '-1007777777777'
+        ? [this.aiFailureMessage]
+        : this.messages;
+    for (const message of messages) {
       if (range.minId && message.messageId <= range.minId) {
         continue;
       }
@@ -148,6 +188,61 @@ class FakeTelegramGateway extends TelegramGateway {
   async disconnect(): Promise<void> {}
 }
 
+class FakeAiGateway extends AiGateway {
+  readonly inputs: AiClassificationInput[] = [];
+
+  listModels(apiKey: string) {
+    if (apiKey !== 'test-kimi-key') {
+      throw new Error('invalid fake key');
+    }
+    return Promise.resolve([
+      {
+        contextLength: 262_144,
+        id: 'kimi-k2.5',
+        ownedBy: 'moonshot',
+        supportsReasoning: true,
+      },
+    ]);
+  }
+
+  classify(
+    runtime: AiRuntime,
+    input: AiClassificationInput,
+  ): Promise<AiClassificationResult> {
+    this.inputs.push(input);
+    if (
+      input.urls.some(({ normalizedUrl }) =>
+        normalizedUrl.includes('fail.example.com'),
+      )
+    ) {
+      throw new AiGatewayError('unavailable', 'Fake AI failure');
+    }
+    return Promise.resolve({
+      items: input.urls.map(({ normalizedUrl }) => ({
+        categoryId: input.categories[0]?.id ?? null,
+        confidence: 0.92,
+        environment: LinkEnvironmentValue.Production,
+        normalizedUrl,
+        projectId: input.projects[0]?.id ?? null,
+        purpose: 'Fake AI 识别的项目资源',
+        rationale: '消息上下文包含项目和资源用途。',
+        suggestedCategoryName: null,
+        suggestedProjectName: null,
+        suggestedTagNames: ['AI 建议'],
+        tagIds: input.tags.map(({ id }) => id),
+        title: normalizedUrl.includes('github.com')
+          ? 'Atlas repository'
+          : 'Atlas documentation',
+      })),
+      usage: {
+        completionTokens: 30,
+        promptTokens: 120,
+        totalTokens: 150,
+      },
+    });
+  }
+}
+
 describe('Server API (e2e)', () => {
   async function createTestApplication(
     swaggerEnabled: boolean,
@@ -162,6 +257,8 @@ describe('Server API (e2e)', () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(AiGateway)
+      .useClass(FakeAiGateway)
       .overrideProvider(TelegramGateway)
       .useClass(FakeTelegramGateway)
       .compile();
@@ -173,6 +270,7 @@ describe('Server API (e2e)', () => {
   }
 
   async function clearDatabase(prisma: PrismaService): Promise<void> {
+    await prisma.aiAnalysis.deleteMany();
     await prisma.linkSource.deleteMany();
     await prisma.linkTag.deleteMany();
     await prisma.telegramMessage.deleteMany();
@@ -184,6 +282,7 @@ describe('Server API (e2e)', () => {
     await prisma.project.deleteMany();
     await prisma.telegramChat.deleteMany();
     await prisma.telegramAccount.deleteMany();
+    await prisma.aiSettings.deleteMany();
   }
 
   async function closeApplication(app: INestApplication<App>): Promise<void> {
@@ -219,6 +318,7 @@ describe('Server API (e2e)', () => {
       });
       expect(document.paths).toHaveProperty('/api/web/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/links');
+      expect(document.paths).toHaveProperty('/api/admin/v1/ai/settings');
       expect(document.paths).toHaveProperty('/api/admin/v1/telegram/auth/code');
       expect(JSON.stringify(document)).not.toMatch(/isFavorite|favorites/u);
       for (const [path, pathItem] of Object.entries(document.paths)) {
@@ -304,6 +404,31 @@ describe('Server API (e2e)', () => {
       const categoryBody = responseBody<{ id: string }>(category);
       const tagBody = responseBody<{ id: string }>(tag);
 
+      await request(server)
+        .put('/api/admin/v1/ai/settings/key')
+        .send({ apiKey: 'test-kimi-key' })
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).not.toHaveProperty('apiKey');
+        });
+      const encryptedSettings = await app
+        .get(PrismaService)
+        .aiSettings.findUniqueOrThrow({ where: { id: 'default' } });
+      expect(encryptedSettings.apiKeyCiphertext).not.toBe('test-kimi-key');
+      expect(JSON.stringify(encryptedSettings)).not.toContain('test-kimi-key');
+      await request(server)
+        .put('/api/admin/v1/ai/settings/model')
+        .send({ model: 'kimi-k2.5' })
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({
+              ready: true,
+              selectedModel: 'kimi-k2.5',
+            }),
+          );
+        });
+
       const createdJob = await request(server)
         .post('/api/admin/v1/sync-jobs')
         .send({
@@ -319,11 +444,21 @@ describe('Server API (e2e)', () => {
         responseBody<{ id: string }>(createdJob).id,
       );
       expect(job).toMatchObject({
+        aiModel: 'kimi-k2.5',
         duplicateCount: 1,
         foundCount: 3,
         newCount: 2,
         status: 'succeeded',
+        totalTokens: 300,
       });
+      const aiInputs = app.get<FakeAiGateway>(AiGateway);
+      const contextualInput = aiInputs.inputs.find(
+        ({ context }) => context.reply !== null,
+      );
+      expect(contextualInput?.context.reply?.text).toBe('请归类到研发资料。');
+      expect(
+        contextualInput?.context.neighbors.map(({ text }) => text),
+      ).toContain('这是 Atlas 项目的正式仓库和文档。');
       const partialJob = await request(server)
         .post('/api/admin/v1/sync-jobs')
         .send({
@@ -333,7 +468,21 @@ describe('Server API (e2e)', () => {
         .expect(202);
       await expect(
         waitForJob(server, responseBody<{ id: string }>(partialJob).id),
-      ).resolves.toMatchObject({ status: 'partiallySucceeded' });
+      ).resolves.toMatchObject({
+        chats: expect.arrayContaining([
+          expect.objectContaining({
+            chatTitle: 'AI 失败测试群',
+            status: 'failed',
+          }),
+        ]),
+        status: 'partiallySucceeded',
+      });
+      const aiFailureChat = await app
+        .get(PrismaService)
+        .telegramChat.findFirst({
+          where: { title: 'AI 失败测试群' },
+        });
+      expect(aiFailureChat?.lastSyncedMessageId).toBeNull();
 
       const webLinks = await request(server)
         .get('/api/web/v1/links?q=github')
@@ -356,6 +505,32 @@ describe('Server API (e2e)', () => {
         .expect(200);
       expect(responseBody<{ sourceCount: number }>(detail).sourceCount).toBe(2);
       expect(detail.body).not.toHaveProperty('isFavorite');
+      const adminDetail = await request(server)
+        .get(`/api/admin/v1/links/${linkId}`)
+        .expect(200);
+      const analysis = responseBody<{
+        aiAnalysis: { id: string; suggestedTagNames: string[] };
+      }>(adminDetail).aiAnalysis;
+      expect(analysis.suggestedTagNames).toContain('AI 建议');
+      await request(server)
+        .post(`/api/admin/v1/links/${linkId}/ai-suggestions/apply`)
+        .send({
+          analysisId: analysis.id,
+          applyCategory: false,
+          applyProject: false,
+          tagNames: ['AI 建议'],
+        })
+        .expect(200)
+        .expect((response) => {
+          const body = responseBody<{
+            tags: Array<{ id: string; name: string }>;
+          }>(response);
+          expect(body.tags).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ name: 'AI 建议' }),
+            ]),
+          );
+        });
       const overview = await request(server)
         .get('/api/web/v1/overview')
         .expect(200);
@@ -420,6 +595,7 @@ describe('Server API (e2e)', () => {
       await request(server)
         .delete(`/api/admin/v1/taxonomy/projects/${projectBody.id}`)
         .expect(409);
+      expect(await app.get(PrismaService).aiAnalysis.count()).toBe(2);
     } finally {
       await closeApplication(app);
     }
@@ -451,6 +627,15 @@ describe('Server API (e2e)', () => {
       });
       expect(Array.isArray(validationBody.details)).toBe(true);
       expect(typeof validationBody.timestamp).toBe('string');
+      await request(server)
+        .post('/api/admin/v1/sync-jobs')
+        .send({ rangeMode: 'allHistory' })
+        .expect(503)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'AI_NOT_CONFIGURED' }),
+          );
+        });
       const prisma = app.get(PrismaService);
       const pendingJob = await prisma.syncJob.create({
         data: { defaultTagIds: [], rangeMode: SyncRangeMode.ALL_HISTORY },
