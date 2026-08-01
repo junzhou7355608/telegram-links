@@ -3,8 +3,19 @@
 Telegram Links 的管理端，基于 React、Vite、TanStack Router、TanStack
 Query、Axios、Hey API、Jotai 和共享 shadcn/ui 构建。
 
-当前页面仍使用本地演示数据，支持链接整理、模拟扫描、任务记录和基础资料维护。
-页面不会请求 Server；真实接口接入将在后续单独完成。
+当前页面仍使用本地演示数据，支持链接整理、模拟扫描、任务记录和基础资料维护，
+不会请求 Server。业务 DTO 统一来自 Hey API 生成客户端，本地仅定义表单与路由状态。
+
+## 路由
+
+- `/links/pending`：待整理队列
+- `/links`：全部链接
+- `/sync-jobs`：同步任务
+- `/taxonomy`：项目、分类和标签
+- `/telegram`：Telegram 账号与聊天来源边界
+
+筛选、分页和详情 `linkId` 使用 TanStack Router search params 保存，刷新与前进后退
+可恢复。`/` 自动重定向到 `/links/pending`。
 
 ## 项目结构
 
@@ -20,13 +31,12 @@ src/
 │   ├── modals/             # 应用级弹窗
 │   └── providers/          # Theme、Query、Jotai 等 Provider
 ├── constants/              # 应用常量
-├── data/                   # 本地演示数据
+├── data/                   # 待正式对接后删除的演示数据
 ├── hooks/                  # 可复用 React Hooks
 ├── lib/                    # Router、QueryClient、Axios 与通用工具
 ├── routes/                 # TanStack Router 文件路由
 ├── stores/                 # Jotai atoms
 ├── styles/                 # 全局样式
-└── types/                  # 本地演示类型
 ```
 
 `routeTree.gen.ts` 由 TanStack Router 自动生成。`api/**` 由 Hey API 根据
@@ -50,7 +60,8 @@ pnpm --filter admin gen:api
 pnpm --filter admin sync:api -- http://127.0.0.1:3000/docs-json
 ```
 
-客户端使用 `VITE_API_BASE_URL` 作为可选基础地址，示例见 `.env.example`。
+开发服务器将 `/api` 代理到 `http://127.0.0.1:3000`，因此 Server 无需启用
+CORS。生产环境可通过 `VITE_API_BASE_URL` 指定地址；留空时使用同源请求。
 生成客户端不会自动发起请求。
 
 ## 常用命令
@@ -63,6 +74,7 @@ pnpm --filter admin lint
 pnpm --filter admin lint:fix
 pnpm --filter admin sync:api
 pnpm --filter admin gen:api
+pnpm --filter admin test
 ```
 
 项目级安装、格式化和贡献约定见根目录 [README](../../README.md)。共享 UI

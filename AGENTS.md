@@ -27,6 +27,8 @@ Web 和 Admin 当前提供本地演示原型。不要把模拟扫描、浏览器
   Jotai，服务端异步状态使用 TanStack Query，不要把请求结果复制到 atoms。
 - Web 和 Admin 请求复用各自 `src/lib/request.ts`、QueryClient 和 Hey API
   生成客户端，不要在业务组件中创建新的 Axios 或 QueryClient 实例。
+- Server OpenAPI 是业务 DTO 的唯一来源；Web/Admin 不得复制链接、同步、Telegram
+  或基础资料接口类型，只在组件附近定义表单草稿、选择集合和路由 search 类型。
 - 文档使用简体中文，代码标识、命令和 API 名称保留英文。
 - 遵循现有 TypeScript、ESLint 和 Prettier 配置，不在业务文件中绕过规则。
 - 不编辑 `node_modules`、`dist`、`build`、`coverage`、`.turbo` 等生成内容。
