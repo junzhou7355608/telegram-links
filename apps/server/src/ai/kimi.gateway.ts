@@ -107,10 +107,11 @@ export class KimiGateway extends AiGateway {
         },
         type: 'json_schema',
       },
-      temperature: 0,
     };
     if (runtime.model.supportsReasoning) {
       body.thinking = { type: 'disabled' };
+    } else {
+      body.temperature = 0;
     }
 
     const response = await this.request<KimiChatResponse>(

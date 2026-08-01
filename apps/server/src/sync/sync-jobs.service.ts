@@ -41,6 +41,10 @@ type SyncJobRecord = Prisma.SyncJobGetPayload<{
   include: typeof syncJobInclude;
 }>;
 
+interface AiClassificationState {
+  available: boolean;
+}
+
 export type SyncRangeValue =
   | 'sinceLast'
   | 'last7Days'
@@ -206,9 +210,10 @@ export class SyncJobsService implements OnModuleInit {
         where: { id },
       });
       const aiRuntime = await this.ai.requireReady(job.aiModel ?? undefined);
+      const aiState: AiClassificationState = { available: true };
       let completed = 0;
       for (const jobChat of job.chats) {
-        await this.runChat(job, jobChat, aiRuntime);
+        await this.runChat(job, jobChat, aiRuntime, aiState);
         completed += 1;
         await this.prisma.syncJob.update({
           data: {
@@ -261,6 +266,7 @@ export class SyncJobsService implements OnModuleInit {
       id: string;
     },
     aiRuntime: AiRuntime,
+    aiState: AiClassificationState,
   ): Promise<void> {
     const startedAt = new Date();
     const counters = {
@@ -292,6 +298,7 @@ export class SyncJobsService implements OnModuleInit {
           jobChat.chat,
           message,
           aiRuntime,
+          aiState,
           taxonomy,
         );
         counters.foundCount += result.foundCount;
@@ -346,6 +353,7 @@ export class SyncJobsService implements OnModuleInit {
     },
     message: GatewayMessage,
     aiRuntime: AiRuntime,
+    aiState: AiClassificationState,
     taxonomy: {
       categories: AiTaxonomyItem[];
       projects: AiTaxonomyItem[];
@@ -395,17 +403,24 @@ export class SyncJobsService implements OnModuleInit {
           link._count.aiAnalyses === 0)
       );
     });
-    const classification =
-      aiUrls.length > 0
-        ? await this.ai.classify(aiRuntime, {
-            ...taxonomy,
-            context: buildAiContext(chat, message),
-            urls: aiUrls.map(({ normalizedUrl, rawUrl }) => ({
-              normalizedUrl,
-              rawUrl,
-            })),
-          })
-        : this.emptyClassification();
+    let classification = this.emptyClassification();
+    if (aiUrls.length > 0 && aiState.available) {
+      try {
+        classification = await this.ai.classify(aiRuntime, {
+          ...taxonomy,
+          context: buildAiContext(chat, message),
+          urls: aiUrls.map(({ normalizedUrl, rawUrl }) => ({
+            normalizedUrl,
+            rawUrl,
+          })),
+        });
+      } catch (error) {
+        aiState.available = false;
+        this.logger.warn(
+          `同步任务 ${job.id} 的 Kimi 识别失败：${this.errorMessage(error)}；后续链接将继续保存为待整理项。`,
+        );
+      }
+    }
 
     return this.prisma.$transaction(async (transaction) => {
       const storedMessage = await transaction.telegramMessage.upsert({

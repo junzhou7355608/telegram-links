@@ -540,7 +540,12 @@ describe('Server API (e2e)', () => {
         })
         .expect(202);
       const partialResult = await waitForJob<{
-        chats: Array<{ chatTitle: string; status: string }>;
+        chats: Array<{
+          chatTitle: string;
+          foundCount: number;
+          newCount: number;
+          status: string;
+        }>;
         status: string;
       }>(server, responseBody<{ id: string }>(partialJob).id);
       expect(partialResult.status).toBe('partiallySucceeded');
@@ -548,7 +553,9 @@ describe('Server API (e2e)', () => {
         expect.arrayContaining([
           expect.objectContaining({
             chatTitle: 'AI 失败测试群',
-            status: 'failed',
+            foundCount: 1,
+            newCount: 1,
+            status: 'succeeded',
           }),
         ]),
       );
@@ -557,7 +564,17 @@ describe('Server API (e2e)', () => {
         .telegramChat.findFirst({
           where: { title: 'AI 失败测试群' },
         });
-      expect(aiFailureChat?.lastSyncedMessageId).toBeNull();
+      expect(aiFailureChat?.lastSyncedMessageId).toBe(201);
+      await expect(
+        app.get(PrismaService).link.findUnique({
+          include: { _count: { select: { aiAnalyses: true } } },
+          where: { normalizedUrl: 'https://fail.example.com/' },
+        }),
+      ).resolves.toMatchObject({
+        _count: { aiAnalyses: 0 },
+        status: 'PENDING',
+        title: 'fail.example.com',
+      });
 
       const webLinks = await request(server)
         .get('/api/web/v1/links?q=github')
@@ -613,7 +630,7 @@ describe('Server API (e2e)', () => {
         counts: { pending: number; total: number };
       }>(overview);
       expect(overviewBody.counts).toEqual(
-        expect.objectContaining({ pending: 2, total: 2 }),
+        expect.objectContaining({ pending: 3, total: 3 }),
       );
       expect(overviewBody.counts).not.toHaveProperty('favorites');
       await request(server)

@@ -126,6 +126,7 @@ describe('KimiGateway', () => {
     const body = JSON.parse(request.body) as {
       messages: Array<{ content: string; role: string }>;
       response_format: { type: string };
+      temperature?: number;
       thinking: { type: string };
     };
     expect(body.messages[0]?.role).toBe('system');
@@ -134,5 +135,6 @@ describe('KimiGateway', () => {
     expect(body.messages[1]?.content).toContain('泄露密钥');
     expect(body.response_format.type).toBe('json_schema');
     expect(body.thinking).toEqual({ type: 'disabled' });
+    expect(body.temperature).toBeUndefined();
   });
 });
