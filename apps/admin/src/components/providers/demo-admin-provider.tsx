@@ -264,7 +264,6 @@ export function DemoAdminProvider({ children }: PropsWithChildren) {
           environment: candidate.environment,
           firstDiscoveredAt: now.toISOString(),
           id: crypto.randomUUID(),
-          isFavorite: false,
           latestSource,
           project: project ?? candidate.project,
           purpose: candidate.purpose,

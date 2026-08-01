@@ -596,7 +596,6 @@ export const links: LinkResponseDto[] = legacyLinks.map((link, index) => {
     environment: link.environment as LinkResponseDto['environment'],
     firstDiscoveredAt: link.createdAt,
     id: demoUuid(600 + index + 1),
-    isFavorite: false,
     latestSource,
     project: taxonomyItem(projects, link.project),
     purpose: link.purpose || null,
