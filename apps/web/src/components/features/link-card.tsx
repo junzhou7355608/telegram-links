@@ -1,8 +1,5 @@
 import type { LinkResponseDto } from '@/api/types.gen';
-import {
-  CategoryBadge,
-  StatusBadge,
-} from '@/components/features/link-badges';
+import { CategoryBadge } from '@/components/features/link-badges';
 import { displayLinkTitle, formatCapturedAt } from '@/lib/link-display';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
@@ -45,16 +42,10 @@ export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
         </div>
       </CardHeader>
       <CardContent className="grid gap-3">
-        <div>
-          <p className="text-sm font-medium">
-            {link.category?.name ?? '未分类'}
-          </p>
-          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
-            {link.purpose ?? '尚未补充用途'}
-          </p>
-        </div>
+        <p className="line-clamp-2 text-sm text-muted-foreground">
+          {link.purpose ?? '尚未补充用途'}
+        </p>
         <div className="flex flex-wrap gap-1.5">
-          <StatusBadge status={link.status} />
           <CategoryBadge category={link.category} />
         </div>
         <div className="flex flex-wrap gap-1">

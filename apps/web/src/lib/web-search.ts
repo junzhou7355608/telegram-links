@@ -8,6 +8,14 @@ const optionalText = z
   .optional()
   .catch(undefined);
 const optionalUuid = z.string().uuid().optional().catch(undefined);
+const tagIds = z
+  .union([
+    z.array(z.string().uuid()),
+    z.string().transform((value) => value.split(',').filter(Boolean)),
+  ])
+  .pipe(z.array(z.string().uuid()))
+  .optional()
+  .catch(undefined);
 
 export const webLinksSearchSchema = z.object({
   categoryId: optionalUuid,
@@ -15,8 +23,8 @@ export const webLinksSearchSchema = z.object({
   page: z.coerce.number().int().positive().catch(1).default(1),
   q: optionalText,
   sort: z.enum(['newest', 'oldest', 'title']).catch('newest').default('newest'),
-  status: z.enum(['pending', 'organized']).optional().catch(undefined),
-  view: z.enum(['all', 'recent', 'pending']).catch('all').default('all'),
+  tagIds,
+  view: z.enum(['all', 'recent']).catch('all').default('all'),
 });
 
 export type WebLinksSearch = z.infer<typeof webLinksSearchSchema>;

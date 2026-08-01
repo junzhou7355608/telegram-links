@@ -18,7 +18,6 @@ export const zOverviewCountResponseDto = z.object({
 });
 
 export const zWebOverviewCountsResponseDto = z.object({
-  pending: z.number(),
   recent: z.number(),
   total: z.number(),
 });
@@ -39,6 +38,7 @@ export const zWebOverviewResponseDto = z.object({
   categories: z.array(zOverviewCountResponseDto),
   counts: zWebOverviewCountsResponseDto,
   latestSync: zWebLatestSyncResponseDto.nullable(),
+  tags: z.array(zOverviewCountResponseDto),
 });
 
 export const zTaxonomyReferenceResponseDto = z.object({
@@ -324,13 +324,10 @@ export const zWebApiControllerListQuery = z.object({
   page: z.number().gte(1).optional().default(1),
   pageSize: z.number().gte(1).lte(100).optional().default(8),
   q: z.string().optional(),
-  view: z.enum(['all', 'recent', 'pending']).optional(),
+  view: z.enum(['all', 'recent']).optional(),
   categoryId: z.uuid().optional(),
-  status: z.enum(['pending', 'organized']).optional(),
   sort: z.enum(['newest', 'oldest', 'title']).optional(),
-  sourceChatId: z.uuid().optional(),
   tagIds: z.array(z.uuid()).optional(),
-  includeArchived: z.boolean().optional().default(false),
 });
 
 export const zWebApiControllerListResponse = zPaginatedLinksResponseDto;

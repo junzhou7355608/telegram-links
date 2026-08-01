@@ -13,20 +13,28 @@ describe('Web links search schema', () => {
         linkId: 'invalid',
         page: '-2',
         sort: 'invalid',
-        view: 'favorites',
+        status: 'pending',
+        view: 'pending',
       }),
     ).toEqual({ page: 1, sort: 'newest', view: 'all' });
   });
 
   it('trims search text and accepts UUID filters', () => {
     const categoryId = '00000000-0000-4000-8000-000000000201';
+    const tagId = '00000000-0000-4000-8000-000000000301';
     expect(
-      webLinksSearchSchema.parse({ categoryId, page: '3', q: '  Atlas  ' }),
+      webLinksSearchSchema.parse({
+        categoryId,
+        page: '3',
+        q: '  Atlas  ',
+        tagIds: tagId,
+      }),
     ).toEqual({
       categoryId,
       page: 3,
       q: 'Atlas',
       sort: 'newest',
+      tagIds: [tagId],
       view: 'all',
     });
   });
@@ -37,7 +45,11 @@ describe('Web links search schema', () => {
       linkId: '00000000-0000-4000-8000-000000000601',
       page: 2,
       sort: 'title',
-      view: 'pending',
+      tagIds: [
+        '00000000-0000-4000-8000-000000000301',
+        '00000000-0000-4000-8000-000000000302',
+      ],
+      view: 'recent',
     });
     const parsed = defaultParseSearch(defaultStringifySearch(value));
     expect(webLinksSearchSchema.parse(parsed)).toEqual(value);

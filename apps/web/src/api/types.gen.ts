@@ -20,7 +20,6 @@ export type OverviewCountResponseDto = {
 };
 
 export type WebOverviewCountsResponseDto = {
-  pending: number;
   recent: number;
   total: number;
 };
@@ -40,6 +39,7 @@ export type WebOverviewResponseDto = {
   categories: Array<OverviewCountResponseDto>;
   counts: WebOverviewCountsResponseDto;
   latestSync: WebLatestSyncResponseDto | null;
+  tags: Array<OverviewCountResponseDto>;
 };
 
 export type TaxonomyReferenceResponseDto = {
@@ -352,13 +352,10 @@ export type WebApiControllerListData = {
     page?: number;
     pageSize?: number;
     q?: string;
-    view?: 'all' | 'recent' | 'pending';
+    view?: 'all' | 'recent';
     categoryId?: string;
-    status?: 'pending' | 'organized';
     sort?: 'newest' | 'oldest' | 'title';
-    sourceChatId?: string;
     tagIds?: Array<string>;
-    includeArchived?: boolean;
   };
   url: '/api/web/v1/links';
 };

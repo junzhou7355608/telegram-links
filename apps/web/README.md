@@ -3,8 +3,9 @@
 个人 Telegram 链接查询端，基于 React、Vite、TanStack Router、TanStack
 Query、Axios、Hey API、Jotai、Tailwind CSS 4 和共享 shadcn/ui 构建。
 
-当前 `/links` 使用本地演示数据，支持 URL 驱动的搜索、筛选、排序、分页、
-复制与来源详情；不会请求 Server。链接收藏功能已取消，主题偏好仍保存在浏览器。
+当前 `/links` 通过 `/api/web/v1` 读取 Server 中未归档且已整理的真实链接，支持
+URL 驱动的搜索、分类与标签筛选、排序、分页、复制及完整 Telegram 来源详情。
+Web 保持只读，不提供整理、归档或 Telegram 管理能力，也不使用演示数据回退。
 
 ## 开发
 

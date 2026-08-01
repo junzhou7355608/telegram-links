@@ -1,12 +1,5 @@
 import type { LinkResponseDto } from '@/api/types.gen';
 
-type OrganizationStatus = LinkResponseDto['status'];
-
-export const statusLabels: Record<OrganizationStatus, string> = {
-  pending: '待整理',
-  organized: '已整理',
-};
-
 const capturedAtFormatter = new Intl.DateTimeFormat('zh-CN', {
   month: 'short',
   day: 'numeric',

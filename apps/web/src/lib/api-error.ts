@@ -27,7 +27,7 @@ export function getWebApiError(error: unknown): WebApiError {
     if (!error.response) {
       return {
         code: 'NETWORK_ERROR',
-        message: '无法连接本地 Server，请确认服务已经启动。',
+        message: '无法连接 Server，请确认服务已经启动并可访问。',
         path: '',
         statusCode: 0,
         timestamp: new Date().toISOString(),

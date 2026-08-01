@@ -1,10 +1,11 @@
+import { webApiControllerOverviewOptions } from '@/api/@tanstack/react-query.gen';
 import { Toaster } from '@repo/ui/components/sonner';
 import { SidebarInset, SidebarProvider } from '@repo/ui/components/sidebar';
+import { useQuery } from '@tanstack/react-query';
 import { Outlet } from '@tanstack/react-router';
 import { useState, type CSSProperties } from 'react';
 import { AppSidebar } from '@/components/features/app-sidebar';
 import { WorkspaceHeader } from '@/components/features/workspace-header';
-import { webOverviewFixture } from '@/data/links';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 
@@ -17,6 +18,12 @@ function loadSidebarDefaultOpen() {
 
 export function WebShell() {
   const [sidebarDefaultOpen] = useState(loadSidebarDefaultOpen);
+  const overviewQuery = useQuery(webApiControllerOverviewOptions());
+  const serverState = overviewQuery.error
+    ? ('offline' as const)
+    : overviewQuery.data
+      ? ('online' as const)
+      : ('connecting' as const);
 
   return (
     <SidebarProvider
@@ -29,9 +36,12 @@ export function WebShell() {
       >
         跳到链接列表
       </a>
-      <AppSidebar overview={webOverviewFixture} />
+      <AppSidebar overview={overviewQuery.data} serverState={serverState} />
       <SidebarInset className="min-w-0">
-        <WorkspaceHeader overview={webOverviewFixture} />
+        <WorkspaceHeader
+          overview={overviewQuery.data}
+          serverState={serverState}
+        />
         <Outlet />
       </SidebarInset>
       <Toaster position="top-center" />

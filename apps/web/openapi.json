@@ -103,8 +103,7 @@
               "type": "string",
               "enum": [
                 "all",
-                "recent",
-                "pending"
+                "recent"
               ]
             }
           },
@@ -115,18 +114,6 @@
             "schema": {
               "format": "uuid",
               "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "pending",
-                "organized"
-              ]
             }
           },
           {
@@ -143,15 +130,6 @@
             }
           },
           {
-            "name": "sourceChatId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
             "name": "tagIds",
             "required": false,
             "in": "query",
@@ -161,15 +139,6 @@
                 "type": "string",
                 "format": "uuid"
               }
-            }
-          },
-          {
-            "name": "includeArchived",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": false,
-              "type": "boolean"
             }
           }
         ],
@@ -372,9 +341,6 @@
       "WebOverviewCountsResponseDto": {
         "type": "object",
         "properties": {
-          "pending": {
-            "type": "number"
-          },
           "recent": {
             "type": "number"
           },
@@ -383,7 +349,6 @@
           }
         },
         "required": [
-          "pending",
           "recent",
           "total"
         ]
@@ -433,12 +398,19 @@
                 "$ref": "#/components/schemas/WebLatestSyncResponseDto"
               }
             ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OverviewCountResponseDto"
+            }
           }
         },
         "required": [
           "categories",
           "counts",
-          "latestSync"
+          "latestSync",
+          "tags"
         ]
       },
       "TaxonomyReferenceResponseDto": {

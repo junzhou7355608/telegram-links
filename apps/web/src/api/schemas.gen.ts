@@ -53,9 +53,6 @@ export const OverviewCountResponseDtoSchema = {
 export const WebOverviewCountsResponseDtoSchema = {
   type: 'object',
   properties: {
-    pending: {
-      type: 'number',
-    },
     recent: {
       type: 'number',
     },
@@ -63,7 +60,7 @@ export const WebOverviewCountsResponseDtoSchema = {
       type: 'number',
     },
   },
-  required: ['pending', 'recent', 'total'],
+  required: ['recent', 'total'],
 } as const;
 
 export const WebLatestSyncResponseDtoSchema = {
@@ -110,8 +107,14 @@ export const WebOverviewResponseDtoSchema = {
         },
       ],
     },
+    tags: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OverviewCountResponseDto',
+      },
+    },
   },
-  required: ['categories', 'counts', 'latestSync'],
+  required: ['categories', 'counts', 'latestSync', 'tags'],
 } as const;
 
 export const TaxonomyReferenceResponseDtoSchema = {

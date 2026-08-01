@@ -1,6 +1,6 @@
 import type { WebOverviewResponseDto } from '@/api/types.gen';
+import { TagFilter } from '@/components/features/tag-filter';
 import type { WebLinksSearch } from '@/lib/web-search';
-import { statusLabels } from '@/lib/link-display';
 import { Button } from '@repo/ui/components/button';
 import {
   InputGroup,
@@ -32,12 +32,11 @@ type SearchUpdater = (previous: WebLinksSearch) => WebLinksSearch;
 
 interface LinkToolbarProps {
   search: WebLinksSearch;
+  searchValue: string;
   overview: WebOverviewResponseDto;
   resultCount: number;
-  onSearchChange: (
-    updater: SearchUpdater,
-    options?: { replace?: boolean },
-  ) => void;
+  onSearchChange: (updater: SearchUpdater) => void;
+  onSearchValueChange: (value: string) => void;
   onReset: () => void;
 }
 
@@ -57,13 +56,9 @@ function FilterFields({
   const categoryItems = [
     { label: '全部分类', value: 'all' },
     ...overview.categories.map((category) => ({
-      label: category.name,
+      label: `${category.name}（${category.count}）`,
       value: category.id,
     })),
-  ];
-  const statusItems = [
-    { label: '全部状态', value: 'all' },
-    ...Object.entries(statusLabels).map(([value, label]) => ({ label, value })),
   ];
   const sortItems = [
     { label: '最近添加', value: 'newest' },
@@ -71,7 +66,7 @@ function FilterFields({
     { label: '标题排序', value: 'title' },
   ];
   const fieldClassName = stacked ? 'grid gap-2' : 'contents';
-  const triggerClassName = stacked ? 'w-full' : 'min-w-28';
+  const triggerClassName = stacked ? 'w-full' : 'min-w-32';
 
   function updateFilter<Key extends keyof WebLinksSearch>(
     key: Key,
@@ -124,40 +119,21 @@ function FilterFields({
         </Select>
       </label>
 
-      <label className={fieldClassName}>
+      <label
+        className={stacked ? 'grid gap-2 sm:col-span-2' : 'contents'}
+      >
         {stacked ? (
           <span className="text-xs font-medium text-muted-foreground">
-            整理状态
+            标签（匹配任意所选标签）
           </span>
         ) : null}
-        <Select
-          items={statusItems}
-          value={search.status ?? 'all'}
-          onValueChange={(value) =>
-            updateFilter(
-              'status',
-              value && value !== 'all'
-                ? (value as WebLinksSearch['status'])
-                : undefined,
-            )
+        <TagFilter
+          options={overview.tags}
+          value={search.tagIds ?? []}
+          onChange={(value) =>
+            updateFilter('tagIds', value.length > 0 ? value : undefined)
           }
-        >
-          <SelectTrigger
-            aria-label="按整理状态筛选"
-            className={triggerClassName}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="start">
-            <SelectGroup>
-              {statusItems.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        />
       </label>
 
       <label className={fieldClassName}>
@@ -193,15 +169,17 @@ function FilterFields({
 
 export function LinkToolbar({
   search,
+  searchValue,
   overview,
   resultCount,
   onSearchChange,
+  onSearchValueChange,
   onReset,
 }: LinkToolbarProps) {
   const activeFilterCount = [
     search.view !== 'all',
     search.categoryId,
-    search.status,
+    search.tagIds?.length,
     search.sort !== 'newest',
   ].filter(Boolean).length;
 
@@ -215,31 +193,15 @@ export function LinkToolbar({
           <InputGroupInput
             aria-label="搜索链接"
             placeholder="搜索标题、URL、用途、分类、标签或来源"
-            value={search.q ?? ''}
-            onChange={(event) => {
-              const value = event.target.value;
-              onSearchChange(
-                (previous) => ({
-                  ...previous,
-                  linkId: undefined,
-                  page: 1,
-                  q: value || undefined,
-                }),
-                { replace: true },
-              );
-            }}
+            value={searchValue}
+            onChange={(event) => onSearchValueChange(event.target.value)}
           />
-          {search.q ? (
+          {searchValue ? (
             <InputGroupAddon align="inline-end">
               <InputGroupButton
                 size="icon-xs"
                 aria-label="清空搜索"
-                onClick={() =>
-                  onSearchChange(
-                    (previous) => ({ ...previous, page: 1, q: undefined }),
-                    { replace: true },
-                  )
-                }
+                onClick={() => onSearchValueChange('')}
               >
                 <X />
               </InputGroupButton>
@@ -251,6 +213,7 @@ export function LinkToolbar({
           <SheetTrigger
             render={
               <Button
+                type="button"
                 variant="outline"
                 size="icon-lg"
                 className="md:hidden"
@@ -264,7 +227,7 @@ export function LinkToolbar({
             <SheetHeader>
               <SheetTitle>筛选链接</SheetTitle>
               <SheetDescription>
-                按分类和整理状态缩小查找范围。
+                按分类、标签和排序方式缩小查找范围。
               </SheetDescription>
             </SheetHeader>
             <div className="px-4">
@@ -294,7 +257,7 @@ export function LinkToolbar({
           overview={overview}
           onSearchChange={onSearchChange}
         />
-        {activeFilterCount > 0 || search.q ? (
+        {activeFilterCount > 0 || searchValue ? (
           <Button
             variant="ghost"
             size="sm"
@@ -311,9 +274,9 @@ export function LinkToolbar({
         <span>
           {activeFilterCount > 0
             ? `已启用 ${activeFilterCount} 个筛选条件`
-            : '全部分类'}
+            : '全部分类和标签'}
         </span>
-        {activeFilterCount > 0 || search.q ? (
+        {activeFilterCount > 0 || searchValue ? (
           <Button variant="ghost" size="xs" onClick={onReset}>
             重置
           </Button>

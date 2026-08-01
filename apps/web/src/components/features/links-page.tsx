@@ -1,3 +1,8 @@
+import {
+  webApiControllerFindOneOptions,
+  webApiControllerListOptions,
+  webApiControllerOverviewOptions,
+} from '@/api/@tanstack/react-query.gen';
 import type { LinkResponseDto } from '@/api/types.gen';
 import { LinkCard } from '@/components/features/link-card';
 import { LinkDetailSheet } from '@/components/features/link-detail-sheet';
@@ -5,22 +10,24 @@ import { LinkPagination } from '@/components/features/link-pagination';
 import { LinkTable } from '@/components/features/link-table';
 import { LinkToolbar } from '@/components/features/link-toolbar';
 import {
-  createPaginatedLinksFixture,
-  demoRecentSince,
-  linkDetailFixtures,
-  linkFixtures,
-  webOverviewFixture,
-} from '@/data/links';
-import { displayLinkTitle, formatLatestSync } from '@/lib/link-display';
-import { filterAndSortLinks } from '@/lib/web-links';
+  ApiErrorState,
+  PageSkeleton,
+} from '@/components/layouts/api-state';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { formatLatestSync } from '@/lib/link-display';
+import { createWebLinksQuery } from '@/lib/web-api';
 import { defaultWebLinksSearch, type WebLinksSearch } from '@/lib/web-search';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
+import {
+  keepPreviousData,
+  useQuery,
+} from '@tanstack/react-query';
 import { SearchX } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-const PAGE_SIZE = 8;
+const EMPTY_LINK_ID = '00000000-0000-4000-8000-000000000000';
 
 interface LinksPageProps {
   search: WebLinksSearch;
@@ -31,34 +38,64 @@ interface LinksPageProps {
 }
 
 export function LinksPage({ search, onSearchChange }: LinksPageProps) {
-  const filteredLinks = useMemo(
-    () => filterAndSortLinks(linkFixtures, search, demoRecentSince),
-    [search],
-  );
-  const page = createPaginatedLinksFixture(
-    filteredLinks,
-    search.page,
-    PAGE_SIZE,
-  );
-  const selectedLink = search.linkId
-    ? (linkDetailFixtures.get(search.linkId) ?? null)
-    : null;
+  const [searchDraft, setSearchDraft] = useState({
+    source: search.q,
+    value: search.q ?? '',
+  });
+  const searchValue =
+    searchDraft.source === search.q ? searchDraft.value : (search.q ?? '');
+  const debouncedSearch = useDebouncedValue(searchValue);
+  const overviewQuery = useQuery(webApiControllerOverviewOptions());
+  const linksQuery = useQuery({
+    ...webApiControllerListOptions({
+      query: createWebLinksQuery(search),
+    }),
+    placeholderData: keepPreviousData,
+  });
+  const detailQuery = useQuery({
+    ...webApiControllerFindOneOptions({
+      path: { id: search.linkId ?? EMPTY_LINK_ID },
+    }),
+    enabled: Boolean(search.linkId),
+  });
+  const links = linksQuery.data?.items ?? [];
+  const pagination = linksQuery.data?.pagination;
+
+  useEffect(() => {
+    const nextQuery = debouncedSearch.trim() || undefined;
+    if (nextQuery !== search.q) {
+      onSearchChange(
+        (previous) => ({
+          ...previous,
+          linkId: undefined,
+          page: 1,
+          q: nextQuery,
+        }),
+        { replace: true },
+      );
+    }
+  }, [debouncedSearch, onSearchChange, search.q]);
 
   useEffect(() => {
     const parameters = new URLSearchParams(window.location.search);
-    if (parameters.has('projectId') || parameters.has('environment')) {
+    if (
+      parameters.has('projectId') ||
+      parameters.has('environment') ||
+      parameters.has('status') ||
+      parameters.get('view') === 'pending'
+    ) {
       onSearchChange((previous) => ({ ...previous }), { replace: true });
     }
   }, [onSearchChange]);
 
   useEffect(() => {
-    if (page.pagination.page !== search.page) {
+    if (pagination && search.page > pagination.totalPages) {
       onSearchChange(
-        (previous) => ({ ...previous, page: page.pagination.page }),
+        (previous) => ({ ...previous, page: pagination.totalPages }),
         { replace: true },
       );
     }
-  }, [onSearchChange, page.pagination.page, search.page]);
+  }, [onSearchChange, pagination, search.page]);
 
   function updateSearch(
     updater: (previous: WebLinksSearch) => WebLinksSearch,
@@ -68,6 +105,7 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
   }
 
   function resetFilters() {
+    setSearchDraft({ source: search.q, value: '' });
     onSearchChange(() => defaultWebLinksSearch);
   }
 
@@ -75,10 +113,10 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
     updateSearch((previous) => ({ ...previous, linkId: link.id }));
   }
 
-  async function copyLink(link: LinkResponseDto) {
+  async function copyUrl(url: string) {
     try {
-      await navigator.clipboard.writeText(link.url);
-      toast.success('链接已复制', { description: link.domain });
+      await navigator.clipboard.writeText(url);
+      toast.success('链接已复制');
     } catch {
       toast.error('复制失败', { description: '请检查浏览器的剪贴板权限。' });
     }
@@ -101,60 +139,80 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
                 链接
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                快速确认链接的分类、用途、标签，以及它来自哪条消息。
+                浏览已经整理完成的分类、标签、用途和 Telegram 来源。
               </p>
             </div>
-            <Badge variant="outline" className="shrink-0">
-              演示数据
+            <Badge variant="outline">
+              {pagination ? `${pagination.total} 条结果` : '正在读取'}
             </Badge>
           </div>
 
-          <LinkToolbar
-            search={search}
-            overview={webOverviewFixture}
-            resultCount={filteredLinks.length}
-            onSearchChange={updateSearch}
-            onReset={resetFilters}
-          />
+          {overviewQuery.error ? (
+            <ApiErrorState
+              error={overviewQuery.error}
+              onRetry={() => void overviewQuery.refetch()}
+            />
+          ) : overviewQuery.data ? (
+            <LinkToolbar
+              search={search}
+              searchValue={searchValue}
+              overview={overviewQuery.data}
+              resultCount={pagination?.total ?? 0}
+              onSearchChange={updateSearch}
+              onSearchValueChange={(value) =>
+                setSearchDraft({ source: search.q, value })
+              }
+              onReset={resetFilters}
+            />
+          ) : (
+            <PageSkeleton rows={1} />
+          )}
 
           <div
             className="flex items-center justify-between gap-4 border-t pt-4 text-sm"
             aria-live="polite"
           >
             <p>
-              找到 <span className="font-medium">{filteredLinks.length}</span>{' '}
+              找到 <span className="font-medium">{pagination?.total ?? '—'}</span>{' '}
               条链接
             </p>
             <p className="text-xs text-muted-foreground">
               最近同步：
-              {formatLatestSync(webOverviewFixture.latestSync?.finishedAt)}
+              {formatLatestSync(overviewQuery.data?.latestSync?.finishedAt)}
             </p>
           </div>
 
-          {page.items.length > 0 ? (
+          {linksQuery.error ? (
+            <ApiErrorState
+              error={linksQuery.error}
+              onRetry={() => void linksQuery.refetch()}
+            />
+          ) : linksQuery.isPending ? (
+            <PageSkeleton rows={8} />
+          ) : links.length > 0 ? (
             <>
               <div className="grid gap-3 md:hidden">
-                {page.items.map((link) => (
+                {links.map((link) => (
                   <LinkCard
                     key={link.id}
                     link={link}
                     onSelect={selectLink}
-                    onCopy={copyLink}
+                    onCopy={(item) => void copyUrl(item.url)}
                   />
                 ))}
               </div>
 
               <div className="hidden md:block">
                 <LinkTable
-                  links={page.items}
+                  links={links}
                   onSelect={selectLink}
-                  onCopy={copyLink}
+                  onCopy={(item) => void copyUrl(item.url)}
                 />
               </div>
 
               <LinkPagination
-                page={page.pagination.page}
-                pageCount={page.pagination.totalPages}
+                page={pagination?.page ?? search.page}
+                pageCount={pagination?.totalPages ?? 1}
                 onPageChange={(nextPage) =>
                   updateSearch((previous) => ({
                     ...previous,
@@ -171,7 +229,7 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
               </span>
               <h2 className="mt-4 font-medium">没有找到匹配的链接</h2>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                尝试修改搜索词，或者重置分类和整理状态筛选。
+                尝试修改搜索词，或者重置分类和标签筛选。
               </p>
               <Button variant="outline" className="mt-4" onClick={resetFilters}>
                 重置筛选
@@ -182,16 +240,20 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
       </section>
 
       <LinkDetailSheet
-        link={selectedLink}
+        error={detailQuery.error}
+        isPending={detailQuery.isPending && Boolean(search.linkId)}
+        link={detailQuery.data}
+        open={Boolean(search.linkId)}
+        onCopyUrl={(url) => void copyUrl(url)}
+        onRetry={() => void detailQuery.refetch()}
         onOpenChange={(open) => {
           if (!open) {
-            updateSearch((previous) => ({ ...previous, linkId: undefined }), {
-              replace: true,
-            });
+            updateSearch((previous) => ({
+              ...previous,
+              linkId: undefined,
+            }), { replace: true });
           }
         }}
-        onCopy={copyLink}
-        title={selectedLink ? displayLinkTitle(selectedLink) : undefined}
       />
     </>
   );

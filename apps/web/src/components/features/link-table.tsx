@@ -1,5 +1,4 @@
 import type { LinkResponseDto } from '@/api/types.gen';
-import { StatusBadge } from '@/components/features/link-badges';
 import { displayLinkTitle, formatCapturedAt } from '@/lib/link-display';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -33,7 +32,6 @@ export function LinkTable({ links, onSelect, onCopy }: LinkTableProps) {
             <TableHead>分类</TableHead>
             <TableHead className="hidden xl:table-cell">标签</TableHead>
             <TableHead className="hidden 2xl:table-cell">来源</TableHead>
-            <TableHead>状态</TableHead>
             <TableHead className="w-24 pr-4 text-right">操作</TableHead>
           </TableRow>
         </TableHeader>
@@ -111,9 +109,6 @@ export function LinkTable({ links, onSelect, onCopy }: LinkTableProps) {
                       暂无来源
                     </span>
                   )}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={link.status} />
                 </TableCell>
                 <TableCell className="pr-4">
                   <div

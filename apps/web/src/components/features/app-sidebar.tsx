@@ -19,17 +19,17 @@ import {
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Clock3,
-  Inbox,
   Layers3,
   LibraryBig,
   Link2,
 } from 'lucide-react';
 
 interface AppSidebarProps {
-  overview: WebOverviewResponseDto;
+  overview?: WebOverviewResponseDto;
+  serverState: 'connecting' | 'online' | 'offline';
 }
 
-export function AppSidebar({ overview }: AppSidebarProps) {
+export function AppSidebar({ overview, serverState }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const location = useRouterState({
     select: (state) => state.location,
@@ -40,19 +40,13 @@ export function AppSidebar({ overview }: AppSidebarProps) {
       value: 'all' as const,
       label: '全部链接',
       icon: LibraryBig,
-      count: overview.counts.total,
+      count: overview?.counts.total,
     },
     {
       value: 'recent' as const,
       label: '最近添加',
       icon: Clock3,
-      count: overview.counts.recent,
-    },
-    {
-      value: 'pending' as const,
-      label: '待整理',
-      icon: Inbox,
-      count: overview.counts.pending,
+      count: overview?.counts.recent,
     },
   ];
   const closeMobile = () => {
@@ -108,7 +102,9 @@ export function AppSidebar({ overview }: AppSidebarProps) {
                       <Icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
-                    <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
+                    {item.count === undefined ? null : (
+                      <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 );
               })}
@@ -120,7 +116,7 @@ export function AppSidebar({ overview }: AppSidebarProps) {
           <SidebarGroupLabel>分类</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {overview.categories.map((category) => (
+              {(overview?.categories ?? []).map((category) => (
                 <SidebarMenuItem key={category.id}>
                   <SidebarMenuButton
                     tooltip={category.name}
@@ -152,19 +148,29 @@ export function AppSidebar({ overview }: AppSidebarProps) {
       <SidebarFooter className="p-3">
         <div className="flex items-center gap-2 rounded-lg border border-sidebar-border p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:p-0">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sidebar-accent">
-            <Inbox className="size-3.5" aria-hidden="true" />
+            <LibraryBig className="size-3.5" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-xs font-medium">本地演示</p>
+            <p className="truncate text-xs font-medium">
+              {serverState === 'online'
+                ? 'Server 已连接'
+                : serverState === 'connecting'
+                  ? '正在连接 Server'
+                  : 'Server 连接失败'}
+            </p>
             <p className="truncate text-[11px] text-muted-foreground">
-              当前未连接 Server
+              只读链接库
             </p>
           </div>
           <Badge
-            variant="outline"
+            variant={serverState === 'offline' ? 'destructive' : 'outline'}
             className="group-data-[collapsible=icon]:hidden"
           >
-            本地
+            {serverState === 'online'
+              ? '在线'
+              : serverState === 'connecting'
+                ? '连接中'
+                : '离线'}
           </Badge>
         </div>
       </SidebarFooter>
