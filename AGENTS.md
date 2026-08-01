@@ -11,8 +11,9 @@
 - `packages/eslint-config`：共享 ESLint flat config。
 - `packages/typescript-config`：共享 TypeScript 配置。
 
-Web 和 Admin 当前提供本地演示原型。不要把模拟扫描、浏览器存储或假数据描述为
-真实 Telegram 检索、服务端接口或数据库持久化。
+Web 当前提供本地演示原型，不要把其浏览器状态或假数据描述为真实服务端数据。
+Admin 使用 `/api/admin/v1` 真实接口，Server 负责 Telegram 检索和 PostgreSQL
+持久化；不要在 Admin 中重新加入演示数据回退或业务 DTO。
 
 ## 工作方式
 

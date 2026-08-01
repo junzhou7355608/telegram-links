@@ -11,9 +11,8 @@ monorepo。它帮助用户快速确认链接属于哪个项目、用于什么场
 | `admin`  | 触发消息检索、识别网页链接，并维护标签和分类       |
 | `server` | 提供后端接口，并将检索结果和整理信息持久化到数据库 |
 
-Web 当前提供个人链接检索原型；Admin 提供本地可持久化的扫描与整理原型。
-两端仍使用演示数据，不会请求 Server。Server 已实现 Telegram 个人账号授权、
-聊天同步、链接持久化、搜索和管理 API，前后端联调尚未开始。
+Web 当前仍提供本地演示的个人链接检索原型。Admin 已对接 Server，可完成 Telegram
+个人账号授权、聊天来源配置、扫描任务和链接整理；数据持久化到 PostgreSQL。
 
 ## 目录
 
@@ -40,20 +39,18 @@ corepack enable
 pnpm install
 ```
 
-启动 Web 和 Admin：
-
-```bash
-pnpm dev
-```
-
-Server 使用独立的 PostgreSQL 17 容器，宿主机默认端口为 `5433`：
+Server 使用独立的 PostgreSQL 17 容器，宿主机默认端口为 `5433`。首次启动先准备
+本地环境：
 
 ```bash
 cp apps/server/.env.example apps/server/.env
 # 在 apps/server/.env 中填写 Telegram API 凭据和会话加密密钥
 pnpm db:up
-pnpm --filter server start:dev
+pnpm dev
 ```
+
+`pnpm dev` 会启动 Web、Admin 和 Server。也可以使用
+`pnpm --filter <web|admin|server> dev` 单独启动应用。
 
 启动后可访问：
 
