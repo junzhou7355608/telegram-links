@@ -63,7 +63,7 @@ export function BulkActions({
   }
 
   function apply() {
-    const patch: BatchLinkPatchDto = {};
+    const patch: BatchLinkPatchDto = { status: 'organized' };
     if (categoryId !== 'unchanged') {
       patch.categoryId = categoryId === 'none' ? null : categoryId;
     }
@@ -119,7 +119,7 @@ export function BulkActions({
           <DialogHeader>
             <DialogTitle>批量整理 {selectedLinks.length} 条链接</DialogTitle>
             <DialogDescription>
-              仅填写需要修改的分类；标签会追加到现有标签中。
+              设置分类并追加标签；应用后同时将符合条件的链接标记完成。
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -174,7 +174,7 @@ export function BulkActions({
               取消
             </Button>
             <Button type="button" disabled={isPending} onClick={apply}>
-              应用修改
+              应用并标记完成
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -178,7 +178,7 @@ export function AdminShell() {
               <StatCard
                 label="待整理"
                 value={overview?.pending ?? '—'}
-                detail="需要补充用途与分类"
+                detail="需要补充标题与分类"
                 icon={Inbox}
               />
               <StatCard

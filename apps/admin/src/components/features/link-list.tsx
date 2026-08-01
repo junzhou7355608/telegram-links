@@ -18,7 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@repo/ui/components/table';
-import { ArrowUpRight, FileQuestion, Link2, Pencil } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ExternalLink,
+  FileQuestion,
+  Link2,
+  Pencil,
+} from 'lucide-react';
 
 interface LinkListProps {
   links: LinkResponseDto[];
@@ -121,7 +127,38 @@ export function LinkList({
                 />
               </div>
               <div className="min-w-0">
-                <CardTitle className="font-mono">{link.domain}</CardTitle>
+                <div className="flex min-w-0 items-center gap-1">
+                  <CardTitle className="min-w-0 truncate font-mono">
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={link.url}
+                      className="block truncate underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {link.domain}
+                    </a>
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="shrink-0"
+                    nativeButton={false}
+                    render={
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="打开链接"
+                        aria-label={`打开 ${titleFor(link)}`}
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    }
+                  >
+                    <ExternalLink />
+                  </Button>
+                </div>
               </div>
               <Button
                 type="button"
@@ -216,10 +253,35 @@ export function LinkList({
                     <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50">
                       <Link2 className="size-3.5" aria-hidden="true" />
                     </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-mono font-medium">
+                    <div className="flex min-w-0 items-center gap-1">
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={link.url}
+                        className="min-w-0 truncate rounded-sm font-mono font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {link.domain}
-                      </p>
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="shrink-0"
+                        nativeButton={false}
+                        render={
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="打开链接"
+                            aria-label={`打开 ${titleFor(link)}`}
+                            onClick={(event) => event.stopPropagation()}
+                          />
+                        }
+                      >
+                        <ExternalLink />
+                      </Button>
                     </div>
                   </div>
                 </TableCell>

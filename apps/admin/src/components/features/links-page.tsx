@@ -6,8 +6,14 @@ import {
   adminLinksControllerListOptions,
   adminLinksControllerRestoreMutation,
   adminLinksControllerUpdateMutation,
+  adminTaxonomyControllerCreateMutation,
+  adminTaxonomyControllerListQueryKey,
 } from '@/api/@tanstack/react-query.gen';
-import type { BatchLinkPatchDto, UpdateLinkDto } from '@/api/types.gen';
+import type {
+  BatchLinkPatchDto,
+  TaxonomyItemResponseDto,
+  UpdateLinkDto,
+} from '@/api/types.gen';
 import { BulkActions } from '@/components/features/bulk-actions';
 import { LinkEditSheet } from '@/components/features/link-edit-sheet';
 import { LinkFiltersBar } from '@/components/features/link-filters';
@@ -17,7 +23,11 @@ import { PageSkeleton } from '@/components/layouts/api-state';
 import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTaxonomy } from '@/hooks/use-taxonomy';
-import { createLinksQuery, invalidateLinks } from '@/lib/admin-api';
+import {
+  createLinksQuery,
+  invalidateLinks,
+  type TaxonomyKind,
+} from '@/lib/admin-api';
 import type { LinksSearch } from '@/lib/admin-search';
 import { getAdminApiError } from '@/lib/api-error';
 import { Badge } from '@repo/ui/components/badge';
@@ -75,6 +85,9 @@ export function LinksPage({
     enabled: Boolean(search.linkId),
   });
   const updateMutation = useMutation(adminLinksControllerUpdateMutation());
+  const createTaxonomyMutation = useMutation(
+    adminTaxonomyControllerCreateMutation(),
+  );
   const batchMutation = useMutation(adminLinksControllerBatchMutation());
   const batchArchiveMutation = useMutation(
     adminLinksControllerBatchArchiveMutation(),
@@ -86,6 +99,7 @@ export function LinksPage({
   useApiErrorToast(detailQuery.error);
   const mutationPending =
     updateMutation.isPending ||
+    createTaxonomyMutation.isPending ||
     batchMutation.isPending ||
     batchArchiveMutation.isPending ||
     archiveMutation.isPending ||
@@ -191,6 +205,23 @@ export function LinksPage({
     await invalidateLinks(queryClient, id);
   }
 
+  async function createTaxonomy(kind: TaxonomyKind, name: string) {
+    const created = await createTaxonomyMutation.mutateAsync({
+      body: { name },
+      path: { kind },
+    });
+    const queryKey = adminTaxonomyControllerListQueryKey({ path: { kind } });
+    queryClient.setQueryData<TaxonomyItemResponseDto[]>(
+      queryKey,
+      (current = []) =>
+        [...current.filter((item) => item.id !== created.id), created].toSorted(
+          (left, right) => left.name.localeCompare(right.name, 'zh-CN'),
+        ),
+    );
+    void queryClient.invalidateQueries({ queryKey });
+    return created;
+  }
+
   async function archiveLink() {
     const id = search.linkId;
     if (!id) {
@@ -221,7 +252,7 @@ export function LinksPage({
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {pendingOnly
-              ? '补充用途与分类后标记完成。'
+              ? '补充标题与分类后标记完成。'
               : '检索并维护服务端保存的链接。'}
           </p>
         </div>
@@ -282,6 +313,7 @@ export function LinksPage({
           link={detailQuery.data}
           taxonomy={taxonomyQuery.taxonomy}
           onArchive={archiveLink}
+          onCreateTaxonomy={createTaxonomy}
           onRestore={restoreLink}
           onSave={saveLink}
           onOpenChange={(open) => {

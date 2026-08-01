@@ -1,9 +1,10 @@
 import type {
   AdminLinkResponseDto,
+  TaxonomyItemResponseDto,
   UpdateLinkDto,
 } from '@/api/types.gen';
-import { TagPicker } from '@/components/features/tag-picker';
-import type { TaxonomyCollections } from '@/lib/admin-api';
+import { CreatableTaxonomyPicker } from '@/components/features/creatable-taxonomy-picker';
+import type { TaxonomyCollections, TaxonomyKind } from '@/lib/admin-api';
 import { formatDateTime, isValidHttpUrl } from '@/lib/admin-display';
 import { getAdminApiError } from '@/lib/api-error';
 import {
@@ -26,13 +27,6 @@ import {
   FieldLabel,
 } from '@repo/ui/components/field';
 import { Input } from '@repo/ui/components/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@repo/ui/components/select';
 import {
   Sheet,
   SheetContent,
@@ -66,6 +60,10 @@ interface LinkEditSheetProps {
   link: AdminLinkResponseDto;
   taxonomy: TaxonomyCollections;
   onArchive: () => Promise<void>;
+  onCreateTaxonomy: (
+    kind: TaxonomyKind,
+    name: string,
+  ) => Promise<TaxonomyItemResponseDto>;
   onOpenChange: (open: boolean) => void;
   onRestore: () => Promise<void>;
   onSave: (body: UpdateLinkDto) => Promise<void>;
@@ -76,6 +74,7 @@ export function LinkEditSheet({
   link,
   taxonomy,
   onArchive,
+  onCreateTaxonomy,
   onOpenChange,
   onRestore,
   onSave,
@@ -111,11 +110,8 @@ export function LinkEditSheet({
       setError('URL 必须是有效的 HTTP 或 HTTPS 地址。');
       return;
     }
-    if (
-      status === 'organized' &&
-      (!body.title || !body.purpose || !body.categoryId)
-    ) {
-      setError('完成整理前，请填写标题、合法 URL、用途和分类。');
+    if (status === 'organized' && (!body.title || !body.categoryId)) {
+      setError('完成整理前，请填写标题、合法 URL 和分类。');
       return;
     }
 
@@ -234,44 +230,29 @@ export function LinkEditSheet({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="edit-category">分类</FieldLabel>
-                  <Select
-                    value={draft.categoryId || 'none'}
+                  <CreatableTaxonomyPicker
+                    id="edit-category"
+                    kind="categories"
+                    options={taxonomy.categories}
+                    value={draft.categoryId ? [draft.categoryId] : []}
                     disabled={isPending}
-                    onValueChange={(value) =>
-                      update(
-                        'categoryId',
-                        value === 'none' ? '' : String(value),
-                      )
+                    onChange={(categoryIds) =>
+                      update('categoryId', categoryIds[0] ?? '')
                     }
-                  >
-                    <SelectTrigger id="edit-category" className="w-full">
-                      <SelectValue>
-                        {(value) =>
-                          value === 'none'
-                            ? '未设置'
-                            : (taxonomy.categories.find(
-                                (item) => item.id === value,
-                              )?.name ?? '未知分类')
-                        }
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">未设置</SelectItem>
-                      {taxonomy.categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onCreate={onCreateTaxonomy}
+                  />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="edit-tags">标签</FieldLabel>
-                  <TagPicker
+                  <CreatableTaxonomyPicker
                     id="edit-tags"
+                    kind="tags"
+                    multiple
                     options={taxonomy.tags}
                     value={draft.tagIds}
+                    disabled={isPending}
                     onChange={(tagIds) => update('tagIds', tagIds)}
+                    onCreate={onCreateTaxonomy}
                   />
                 </Field>
               </div>
@@ -289,7 +270,7 @@ export function LinkEditSheet({
               </Field>
               {error ? <FieldError>{error}</FieldError> : null}
               <FieldDescription>
-                保存草稿允许字段不完整；标记完成时会检查标题、URL、用途和分类。
+                用途可选；标记完成时会检查标题、URL 和分类。
               </FieldDescription>
             </FieldGroup>
 
