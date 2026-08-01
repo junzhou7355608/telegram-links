@@ -40,8 +40,7 @@ export function WorkspaceHeader({
         onClick={onStartScan}
       >
         {running ? <LoaderCircle className="animate-spin" /> : <Play />}
-        <span className="hidden sm:inline">{scanLabel}</span>
-        <span className="sm:hidden">扫描</span>
+        <span>{running ? '扫描中' : scanLabel}</span>
       </Button>
       <ModeToggle />
     </header>
