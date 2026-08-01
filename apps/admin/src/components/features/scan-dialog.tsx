@@ -1,6 +1,7 @@
 import { adminTelegramControllerListChatsOptions } from '@/api/@tanstack/react-query.gen';
 import type { CreateSyncJobDto } from '@/api/types.gen';
 import { TagPicker } from '@/components/features/tag-picker';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTaxonomy } from '@/hooks/use-taxonomy';
 import { getAdminApiError } from '@/lib/api-error';
@@ -99,6 +100,8 @@ export function ScanDialog({
     enabled: open && authorized,
     placeholderData: keepPreviousData,
   });
+  useApiErrorToast(chatsQuery.error);
+  useApiErrorToast(taxonomyQuery.error);
 
   function toggleChat(chatId: string) {
     setConfiguration((current) => ({
@@ -188,15 +191,6 @@ export function ScanDialog({
                     aria-label="搜索扫描来源聊天"
                   />
                 </div>
-                {chatsQuery.error ? (
-                  <Alert variant="destructive">
-                    <AlertTriangle />
-                    <AlertTitle>无法读取聊天</AlertTitle>
-                    <AlertDescription>
-                      {getAdminApiError(chatsQuery.error).message}
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
                 <div className="grid gap-2 sm:grid-cols-2">
                   {chatsQuery.isPending ? (
                     <p className="col-span-full py-6 text-center text-sm text-muted-foreground">
@@ -424,16 +418,6 @@ export function ScanDialog({
                   />
                 </Field>
               </FieldSet>
-
-              {taxonomyQuery.error ? (
-                <Alert variant="destructive">
-                  <AlertTriangle />
-                  <AlertTitle>无法读取默认整理属性</AlertTitle>
-                  <AlertDescription>
-                    {getAdminApiError(taxonomyQuery.error).message}
-                  </AlertDescription>
-                </Alert>
-              ) : null}
 
               {error ? <FieldError>{error}</FieldError> : null}
             </FieldGroup>

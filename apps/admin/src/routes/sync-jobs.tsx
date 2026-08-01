@@ -1,7 +1,8 @@
 import { adminSyncControllerListOptions } from '@/api/@tanstack/react-query.gen';
 import { LinkPagination } from '@/components/features/link-pagination';
 import { ScanJobsView } from '@/components/features/scan-jobs-view';
-import { ApiErrorState, PageSkeleton } from '@/components/layouts/api-state';
+import { PageSkeleton } from '@/components/layouts/api-state';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { ADMIN_JOB_PAGE_SIZE } from '@/lib/admin-api';
 import { isActiveSyncJob } from '@/lib/admin-display';
 import { syncJobsSearchSchema } from '@/lib/admin-search';
@@ -25,6 +26,7 @@ function SyncJobsRoute() {
     refetchInterval: (query) =>
       query.state.data?.items.some(isActiveSyncJob) ? 2_000 : false,
   });
+  useApiErrorToast(jobsQuery.error);
   const pagination = jobsQuery.data?.pagination;
 
   useEffect(() => {
@@ -39,24 +41,18 @@ function SyncJobsRoute() {
   if (jobsQuery.isPending) {
     return <PageSkeleton rows={5} />;
   }
-  if (jobsQuery.error) {
-    return (
-      <ApiErrorState
-        error={jobsQuery.error}
-        onRetry={() => void jobsQuery.refetch()}
-      />
-    );
-  }
 
   return (
     <>
-      <ScanJobsView jobs={jobsQuery.data.items} />
-      <LinkPagination
-        page={jobsQuery.data.pagination.page}
-        pageCount={jobsQuery.data.pagination.totalPages}
-        total={jobsQuery.data.pagination.total}
-        onPageChange={(page) => void navigate({ search: { page } })}
-      />
+      <ScanJobsView jobs={jobsQuery.data?.items ?? []} />
+      {jobsQuery.data ? (
+        <LinkPagination
+          page={jobsQuery.data.pagination.page}
+          pageCount={jobsQuery.data.pagination.totalPages}
+          total={jobsQuery.data.pagination.total}
+          onPageChange={(page) => void navigate({ search: { page } })}
+        />
+      ) : null}
     </>
   );
 }

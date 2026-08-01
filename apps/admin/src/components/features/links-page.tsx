@@ -12,7 +12,8 @@ import { LinkEditSheet } from '@/components/features/link-edit-sheet';
 import { LinkFiltersBar } from '@/components/features/link-filters';
 import { LinkList } from '@/components/features/link-list';
 import { LinkPagination } from '@/components/features/link-pagination';
-import { ApiErrorState, PageSkeleton } from '@/components/layouts/api-state';
+import { PageSkeleton } from '@/components/layouts/api-state';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTaxonomy } from '@/hooks/use-taxonomy';
 import { createLinksQuery, invalidateLinks } from '@/lib/admin-api';
@@ -76,6 +77,9 @@ export function LinksPage({
   const batchMutation = useMutation(adminLinksControllerBatchMutation());
   const archiveMutation = useMutation(adminLinksControllerArchiveMutation());
   const restoreMutation = useMutation(adminLinksControllerRestoreMutation());
+  useApiErrorToast(linksQuery.error);
+  useApiErrorToast(taxonomyQuery.error);
+  useApiErrorToast(detailQuery.error);
   const mutationPending =
     updateMutation.isPending ||
     batchMutation.isPending ||
@@ -169,8 +173,6 @@ export function LinksPage({
     await invalidateLinks(queryClient, id);
   }
 
-  const initialError = linksQuery.error ?? taxonomyQuery.error;
-
   return (
     <section aria-labelledby="review-heading" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -190,99 +192,70 @@ export function LinksPage({
         <Badge variant="outline">{pagination?.total ?? 0} 条结果</Badge>
       </div>
 
-      {initialError && !linksQuery.data ? (
-        <ApiErrorState
-          error={initialError}
-          onRetry={() => {
-            void linksQuery.refetch();
-            void taxonomyQuery.refetch();
+      <LinkFiltersBar
+        filters={search}
+        searchValue={searchValue}
+        taxonomy={taxonomyQuery.taxonomy}
+        showStatus={!pendingOnly}
+        resultCount={pagination?.total ?? 0}
+        onChange={changeSearch}
+        onReset={resetFilters}
+        onSearchValueChange={(value) => {
+          setSelectedIds(new Set());
+          setSearchDraft({ source: search.q, value });
+        }}
+      />
+      <BulkActions
+        isPending={mutationPending}
+        selectedLinks={selectedLinks}
+        taxonomy={taxonomyQuery.taxonomy}
+        onClear={() => setSelectedIds(new Set())}
+        onApply={(patch) => void applyPatch(patch)}
+        onComplete={() => void completeSelected()}
+      />
+      <div id="link-results" className="scroll-mt-36">
+        {linksQuery.isPending ? (
+          <PageSkeleton rows={6} />
+        ) : (
+          <LinkList
+            links={links}
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            onOpenLink={(linkId) =>
+              onSearchChange((current) => ({ ...current, linkId }))
+            }
+            onResetFilters={resetFilters}
+          />
+        )}
+      </div>
+      <LinkPagination
+        page={pagination?.page ?? search.page}
+        pageCount={pagination?.totalPages ?? 1}
+        total={pagination?.total ?? 0}
+        onPageChange={(page) => {
+          setSelectedIds(new Set());
+          onSearchChange((current) => ({ ...current, page }));
+        }}
+      />
+
+      {detailQuery.data ? (
+        <LinkEditSheet
+          key={detailQuery.data.id}
+          isPending={mutationPending}
+          link={detailQuery.data}
+          taxonomy={taxonomyQuery.taxonomy}
+          onArchive={archiveLink}
+          onRestore={restoreLink}
+          onSave={saveLink}
+          onOpenChange={(open) => {
+            if (!open) {
+              onSearchChange((current) => ({
+                ...current,
+                linkId: undefined,
+              }));
+            }
           }}
         />
-      ) : null}
-      {!initialError || linksQuery.data ? (
-        <>
-          {initialError ? (
-            <ApiErrorState
-              error={initialError}
-              onRetry={() => {
-                void linksQuery.refetch();
-                void taxonomyQuery.refetch();
-              }}
-            />
-          ) : null}
-          <LinkFiltersBar
-            filters={search}
-            searchValue={searchValue}
-            taxonomy={taxonomyQuery.taxonomy}
-            showStatus={!pendingOnly}
-            resultCount={pagination?.total ?? 0}
-            onChange={changeSearch}
-            onReset={resetFilters}
-            onSearchValueChange={(value) => {
-              setSelectedIds(new Set());
-              setSearchDraft({ source: search.q, value });
-            }}
-          />
-          <BulkActions
-            isPending={mutationPending}
-            selectedLinks={selectedLinks}
-            taxonomy={taxonomyQuery.taxonomy}
-            onClear={() => setSelectedIds(new Set())}
-            onApply={(patch) => void applyPatch(patch)}
-            onComplete={() => void completeSelected()}
-          />
-          <div id="link-results" className="scroll-mt-36">
-            {linksQuery.isPending ? (
-              <PageSkeleton rows={6} />
-            ) : (
-              <LinkList
-                links={links}
-                selectedIds={selectedIds}
-                onSelectionChange={setSelectedIds}
-                onOpenLink={(linkId) =>
-                  onSearchChange((current) => ({ ...current, linkId }))
-                }
-                onResetFilters={resetFilters}
-              />
-            )}
-          </div>
-          <LinkPagination
-            page={pagination?.page ?? search.page}
-            pageCount={pagination?.totalPages ?? 1}
-            total={pagination?.total ?? 0}
-            onPageChange={(page) => {
-              setSelectedIds(new Set());
-              onSearchChange((current) => ({ ...current, page }));
-            }}
-          />
-
-          {search.linkId && detailQuery.error ? (
-            <ApiErrorState
-              error={detailQuery.error}
-              title="无法读取链接详情"
-              onRetry={() => void detailQuery.refetch()}
-            />
-          ) : null}
-          {detailQuery.data ? (
-            <LinkEditSheet
-              key={detailQuery.data.id}
-              isPending={mutationPending}
-              link={detailQuery.data}
-              taxonomy={taxonomyQuery.taxonomy}
-              onArchive={archiveLink}
-              onRestore={restoreLink}
-              onSave={saveLink}
-              onOpenChange={(open) => {
-                if (!open) {
-                  onSearchChange((current) => ({
-                    ...current,
-                    linkId: undefined,
-                  }));
-                }
-              }}
-            />
-          ) : null}
-        </>
       ) : null}
     </section>
   );

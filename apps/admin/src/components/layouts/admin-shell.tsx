@@ -8,7 +8,7 @@ import type { CreateSyncJobDto } from '@/api/types.gen';
 import { AdminSidebar } from '@/components/features/admin-sidebar';
 import { ScanDialog } from '@/components/features/scan-dialog';
 import { WorkspaceHeader } from '@/components/features/workspace-header';
-import { ApiErrorState } from '@/components/layouts/api-state';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { invalidateSyncResults } from '@/lib/admin-api';
 import {
   formatDateTime,
@@ -83,6 +83,9 @@ export function AdminShell() {
     refetchInterval: (query) =>
       isActiveSyncJob(query.state.data?.items[0]) ? 2_000 : false,
   });
+  useApiErrorToast(overviewQuery.error);
+  useApiErrorToast(accountQuery.error);
+  useApiErrorToast(latestJobQuery.error);
   const createJobMutation = useMutation(adminSyncControllerCreateMutation());
   const latestJob = latestJobQuery.data?.items[0] ?? null;
   const runningJob = isActiveSyncJob(latestJob) ? latestJob : null;
@@ -164,13 +167,6 @@ export function AdminShell() {
           className="scroll-mt-16 px-4 py-5 sm:px-6 sm:py-6 lg:px-8"
         >
           <div className="mx-auto grid min-w-0 max-w-[1480px] gap-5 [&>*]:min-w-0">
-            {overviewQuery.error ? (
-              <ApiErrorState
-                error={overviewQuery.error}
-                onRetry={() => void overviewQuery.refetch()}
-              />
-            ) : null}
-
             <section
               aria-label="工作台概览"
               className="grid grid-cols-2 gap-3 xl:grid-cols-4"

@@ -10,7 +10,8 @@ import {
   adminTelegramControllerVerifyPasswordMutation,
 } from '@/api/@tanstack/react-query.gen';
 import { LinkPagination } from '@/components/features/link-pagination';
-import { ApiErrorState, PageSkeleton } from '@/components/layouts/api-state';
+import { PageSkeleton } from '@/components/layouts/api-state';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { ADMIN_CHAT_PAGE_SIZE, invalidateTelegram } from '@/lib/admin-api';
 import { formatDateTime } from '@/lib/admin-display';
@@ -148,6 +149,8 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
   const updateChatMutation = useMutation(
     adminTelegramControllerUpdateChatMutation(),
   );
+  useApiErrorToast(accountQuery.error);
+  useApiErrorToast(chatsQuery.error);
   const authPending =
     sendCodeMutation.isPending ||
     verifyCodeMutation.isPending ||
@@ -312,13 +315,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
           </Button>
         ) : null}
       </div>
-
-      {accountQuery.error ? (
-        <ApiErrorState
-          error={accountQuery.error}
-          onRetry={() => void accountQuery.refetch()}
-        />
-      ) : null}
 
       {accountQuery.isPending ? <PageSkeleton rows={2} /> : null}
 
@@ -529,13 +525,7 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
         </Select>
       </div>
 
-      {chatsQuery.error ? (
-        <ApiErrorState
-          error={chatsQuery.error}
-          title="无法读取 Telegram 聊天"
-          onRetry={() => void chatsQuery.refetch()}
-        />
-      ) : chatsQuery.isPending ? (
+      {chatsQuery.isPending ? (
         <PageSkeleton rows={5} />
       ) : (
         <div className="overflow-hidden rounded-xl border">

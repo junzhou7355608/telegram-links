@@ -1,6 +1,6 @@
 import { adminTelegramControllerListChatsOptions } from '@/api/@tanstack/react-query.gen';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { getAdminApiError } from '@/lib/api-error';
 import { Button } from '@repo/ui/components/button';
 import {
   Command,
@@ -40,6 +40,7 @@ export function SourceChatPicker({ value, onChange }: SourceChatPickerProps) {
     enabled: open,
     placeholderData: keepPreviousData,
   });
+  useApiErrorToast(chats.error);
   const selected = chats.data?.items.find((chat) => chat.id === value);
 
   return (
@@ -69,11 +70,6 @@ export function SourceChatPicker({ value, onChange }: SourceChatPickerProps) {
             placeholder="搜索聊天名称或用户名…"
           />
           <CommandList>
-            {chats.error ? (
-              <p className="px-3 py-4 text-center text-sm text-destructive">
-                {getAdminApiError(chats.error).message}
-              </p>
-            ) : null}
             <CommandGroup>
               <CommandItem
                 value="all"

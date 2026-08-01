@@ -4,7 +4,8 @@ import {
   adminTaxonomyControllerRenameMutation,
 } from '@/api/@tanstack/react-query.gen';
 import { TaxonomyView } from '@/components/features/taxonomy-view';
-import { ApiErrorState, PageSkeleton } from '@/components/layouts/api-state';
+import { PageSkeleton } from '@/components/layouts/api-state';
+import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { useTaxonomy } from '@/hooks/use-taxonomy';
 import {
   invalidateLinks,
@@ -32,6 +33,7 @@ function TaxonomyRoute() {
     createMutation.isPending ||
     renameMutation.isPending ||
     removeMutation.isPending;
+  useApiErrorToast(taxonomyQuery.error);
 
   async function create(kind: TaxonomyKind, name: string) {
     await createMutation.mutateAsync({ body: { name }, path: { kind } });
@@ -56,14 +58,6 @@ function TaxonomyRoute() {
 
   if (taxonomyQuery.isPending) {
     return <PageSkeleton rows={5} />;
-  }
-  if (taxonomyQuery.error) {
-    return (
-      <ApiErrorState
-        error={taxonomyQuery.error}
-        onRetry={() => void taxonomyQuery.refetch()}
-      />
-    );
   }
 
   return (
