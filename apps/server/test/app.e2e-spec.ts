@@ -360,8 +360,13 @@ describe('Server API (e2e)', () => {
         .post('/api/admin/v1/taxonomy/tags')
         .send({ name: '后端' })
         .expect(201);
+      const unusedTag = await request(server)
+        .post('/api/admin/v1/taxonomy/tags')
+        .send({ name: '未使用标签' })
+        .expect(201);
       const categoryBody = responseBody<{ id: string }>(category);
       const tagBody = responseBody<{ id: string }>(tag);
+      const unusedTagBody = responseBody<{ id: string }>(unusedTag);
 
       await request(server)
         .post('/api/admin/v1/sync-jobs')
@@ -462,6 +467,32 @@ describe('Server API (e2e)', () => {
         title: 'scan.example.com',
       });
 
+      const githubLink = await app.get(PrismaService).link.findUniqueOrThrow({
+        where: { domain: 'github.com' },
+      });
+      const linkId = githubLink.id;
+      await request(server).get('/api/web/v1/links?q=github').expect(200, {
+        items: [],
+        pagination: { page: 1, pageSize: 8, total: 0, totalPages: 1 },
+      });
+      await request(server).get(`/api/web/v1/links/${linkId}`).expect(404);
+      await request(server)
+        .get('/api/web/v1/links?status=pending')
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'VALIDATION_ERROR' }),
+          );
+        });
+      await request(server)
+        .patch(`/api/admin/v1/links/${linkId}`)
+        .send({
+          purpose: '项目代码仓库',
+          status: 'organized',
+          title: 'Project repository',
+        })
+        .expect(200);
+
       const webLinks = await request(server)
         .get('/api/web/v1/links?q=github')
         .expect(200);
@@ -470,14 +501,16 @@ describe('Server API (e2e)', () => {
         pagination: { total: number };
       }>(webLinks);
       expect(linksBody.pagination.total).toBe(1);
-      const linkId = linksBody.items[0].id;
+      expect(linksBody.items[0].id).toBe(linkId);
       const taggedLinks = await request(server)
-        .get(`/api/web/v1/links?tagIds=${tagBody.id}`)
+        .get(
+          `/api/web/v1/links?tagIds=${tagBody.id},${unusedTagBody.id}`,
+        )
         .expect(200);
       expect(
         responseBody<{ pagination: { total: number } }>(taggedLinks).pagination
           .total,
-      ).toBe(2);
+      ).toBe(1);
       const detail = await request(server)
         .get(`/api/web/v1/links/${linkId}`)
         .expect(200);
@@ -534,10 +567,20 @@ describe('Server API (e2e)', () => {
         .get('/api/web/v1/overview')
         .expect(200);
       const overviewBody = responseBody<{
-        counts: { pending: number; total: number };
+        categories: Array<{ count: number; id: string }>;
+        counts: { recent: number; total: number };
+        tags: Array<{ count: number; id: string }>;
       }>(overview);
-      expect(overviewBody.counts).toEqual(
-        expect.objectContaining({ pending: 3, total: 3 }),
+      expect(overviewBody.counts).toEqual({ recent: 1, total: 1 });
+      expect(overviewBody.counts).not.toHaveProperty('pending');
+      expect(overviewBody.categories).toContainEqual(
+        expect.objectContaining({ count: 1, id: categoryBody.id }),
+      );
+      expect(overviewBody.tags).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ count: 1, id: tagBody.id }),
+          expect.objectContaining({ count: 0, id: unusedTagBody.id }),
+        ]),
       );
       expect(overviewBody.counts).not.toHaveProperty('favorites');
       await request(server)
@@ -553,15 +596,6 @@ describe('Server API (e2e)', () => {
             expect.objectContaining({ code: 'VALIDATION_ERROR' }),
           );
         });
-      await request(server)
-        .patch(`/api/admin/v1/links/${linkId}`)
-        .send({
-          purpose: '项目代码仓库',
-          status: 'organized',
-          title: 'Project repository',
-        })
-        .expect(200);
-
       const allLinks = await request(server)
         .get('/api/admin/v1/links?pageSize=100')
         .expect(200);

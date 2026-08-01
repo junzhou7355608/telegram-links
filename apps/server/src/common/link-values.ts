@@ -12,6 +12,11 @@ export enum LinkViewValue {
   Pending = 'pending',
 }
 
+export enum WebLinkViewValue {
+  All = 'all',
+  Recent = 'recent',
+}
+
 export enum LinkSortValue {
   Newest = 'newest',
   Oldest = 'oldest',

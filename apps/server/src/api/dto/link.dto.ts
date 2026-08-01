@@ -16,6 +16,7 @@ import {
   LinkSortValue,
   LinkViewValue,
   OrganizationStatusValue,
+  WebLinkViewValue,
 } from '../../common/link-values';
 import { PaginationQueryDto } from '../../common/pagination.dto';
 import { SyncJobStatusDtoValue } from './sync.dto';
@@ -72,6 +73,43 @@ export class LinkQueryDto extends PaginationQueryDto {
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   includeArchived?: boolean;
+}
+
+export class WebLinkQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  q?: string;
+
+  @ApiPropertyOptional({ enum: WebLinkViewValue })
+  @IsOptional()
+  @IsEnum(WebLinkViewValue)
+  view?: WebLinkViewValue;
+
+  @ApiPropertyOptional({ format: 'uuid', type: String })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @ApiPropertyOptional({ enum: LinkSortValue })
+  @IsOptional()
+  @IsEnum(LinkSortValue)
+  sort?: LinkSortValue;
+
+  @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
+  @IsOptional()
+  @Transform(({ value }) => {
+    const input: unknown = value;
+    return Array.isArray(input)
+      ? input
+      : typeof input === 'string'
+        ? input.split(',').filter(Boolean)
+        : undefined;
+  })
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  tagIds?: string[];
 }
 
 export class UpdateLinkDto {
@@ -303,9 +341,6 @@ export class OverviewCountResponseDto {
 
 export class WebOverviewCountsResponseDto {
   @ApiProperty({ type: Number })
-  pending!: number;
-
-  @ApiProperty({ type: Number })
   recent!: number;
 
   @ApiProperty({ type: Number })
@@ -329,4 +364,7 @@ export class WebOverviewResponseDto {
 
   @ApiProperty({ nullable: true, type: WebLatestSyncResponseDto })
   latestSync!: WebLatestSyncResponseDto | null;
+
+  @ApiProperty({ isArray: true, type: OverviewCountResponseDto })
+  tags!: OverviewCountResponseDto[];
 }

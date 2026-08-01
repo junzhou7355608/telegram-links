@@ -3,9 +3,9 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { LinksService } from '../links/links.service';
 import { ApiCommonErrorResponses } from './dto/error.dto';
 import {
-  LinkQueryDto,
   LinkResponseDto,
   PaginatedLinksResponseDto,
+  WebLinkQueryDto,
   WebOverviewResponseDto,
 } from './dto/link.dto';
 
@@ -23,7 +23,7 @@ export class WebApiController {
 
   @Get('links')
   @ApiOkResponse({ type: PaginatedLinksResponseDto })
-  list(@Query() query: LinkQueryDto) {
+  list(@Query() query: WebLinkQueryDto) {
     return this.links.list(
       {
         categoryId: query.categoryId,
@@ -31,7 +31,6 @@ export class WebApiController {
         pageSize: query.pageSize,
         query: query.q,
         sort: query.sort,
-        status: query.status,
         tagIds: query.tagIds,
         view: query.view,
       },

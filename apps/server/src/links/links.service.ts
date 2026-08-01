@@ -13,6 +13,7 @@ import {
   LinkViewValue,
   requireHttpUrl,
   toOrganizationStatus,
+  WebLinkViewValue,
   type OrganizationStatusValue,
 } from '../common/link-values';
 import { paginationMeta } from '../common/pagination.dto';
@@ -43,7 +44,7 @@ export interface LinkListInput {
   sourceChatId?: string;
   status?: OrganizationStatusValue;
   tagIds?: string[];
-  view?: LinkViewValue;
+  view?: LinkViewValue | WebLinkViewValue;
 }
 
 export interface UpdateLinkInput {
@@ -93,7 +94,12 @@ export class LinksService {
   async findOne(id: string, webOnly = false) {
     const link = await this.prisma.link.findFirst({
       include: linkInclude,
-      where: { id, ...(webOnly ? { archivedAt: null } : {}) },
+      where: {
+        id,
+        ...(webOnly
+          ? { archivedAt: null, status: OrganizationStatus.ORGANIZED }
+          : {}),
+      },
     });
     if (!link) {
       throw new NotFoundException({
@@ -106,13 +112,13 @@ export class LinksService {
 
   async webOverview() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const active = { archivedAt: null };
-    const [total, pending, recent, latestJob, categories] =
+    const active = {
+      archivedAt: null,
+      status: OrganizationStatus.ORGANIZED,
+    };
+    const [total, recent, latestJob, categories, tags] =
       await Promise.all([
         this.prisma.link.count({ where: active }),
-        this.prisma.link.count({
-          where: { ...active, status: OrganizationStatus.PENDING },
-        }),
         this.prisma.link.count({
           where: { ...active, createdAt: { gte: sevenDaysAgo } },
         }),
@@ -123,14 +129,22 @@ export class LinksService {
         this.prisma.category.findMany({
           include: {
             _count: {
-              select: { links: { where: { archivedAt: null } } },
+              select: { links: { where: active } },
+            },
+          },
+          orderBy: { name: 'asc' },
+        }),
+        this.prisma.tag.findMany({
+          include: {
+            _count: {
+              select: { links: { where: { link: active } } },
             },
           },
           orderBy: { name: 'asc' },
         }),
       ]);
     return {
-      counts: { pending, recent, total },
+      counts: { recent, total },
       latestSync: latestJob
         ? {
             finishedAt: latestJob.finishedAt?.toISOString() ?? null,
@@ -141,6 +155,11 @@ export class LinksService {
         count: category._count.links,
         id: category.id,
         name: category.name,
+      })),
+      tags: tags.map((tag) => ({
+        count: tag._count.links,
+        id: tag.id,
+        name: tag.name,
       })),
     };
   }
@@ -351,11 +370,13 @@ export class LinksService {
     return {
       ...(webOnly || !input.includeArchived ? { archivedAt: null } : {}),
       ...(input.categoryId ? { categoryId: input.categoryId } : {}),
-      ...(input.status
-        ? { status: toOrganizationStatus(input.status) }
-        : view === LinkViewValue.Pending
-          ? { status: OrganizationStatus.PENDING }
-          : {}),
+      ...(webOnly
+        ? { status: OrganizationStatus.ORGANIZED }
+        : input.status
+          ? { status: toOrganizationStatus(input.status) }
+          : view === LinkViewValue.Pending
+            ? { status: OrganizationStatus.PENDING }
+            : {}),
       ...(view === LinkViewValue.Recent
         ? { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
         : {}),
@@ -453,19 +474,17 @@ export class LinksService {
 
   private assertCanOrganize(input: {
     categoryId: string | null;
-    purpose: string | null;
     title: string;
     url: string;
   }): void {
     if (
       !input.title ||
-      !input.purpose ||
       !input.categoryId ||
       !requireHttpUrl(input.url)
     ) {
       throw new BadRequestException({
         code: 'LINK_INCOMPLETE',
-        message: '完成整理需要标题、URL、用途和分类。',
+        message: '完成整理需要标题、URL 和分类。',
       });
     }
   }
