@@ -9,6 +9,24 @@ import type {
 } from './client';
 import { client } from './client.gen';
 import type {
+  AdminAiControllerClearKeyData,
+  AdminAiControllerClearKeyErrors,
+  AdminAiControllerClearKeyResponses,
+  AdminAiControllerModelsData,
+  AdminAiControllerModelsErrors,
+  AdminAiControllerModelsResponses,
+  AdminAiControllerSetKeyData,
+  AdminAiControllerSetKeyErrors,
+  AdminAiControllerSetKeyResponses,
+  AdminAiControllerSetModelData,
+  AdminAiControllerSetModelErrors,
+  AdminAiControllerSetModelResponses,
+  AdminAiControllerSettingsData,
+  AdminAiControllerSettingsErrors,
+  AdminAiControllerSettingsResponses,
+  AdminLinksControllerApplyAiSuggestionsData,
+  AdminLinksControllerApplyAiSuggestionsErrors,
+  AdminLinksControllerApplyAiSuggestionsResponses,
   AdminLinksControllerArchiveData,
   AdminLinksControllerArchiveErrors,
   AdminLinksControllerArchiveResponses,
@@ -77,6 +95,12 @@ import type {
   AdminTelegramControllerVerifyPasswordResponses,
 } from './types.gen';
 import {
+  zAdminAiControllerClearKeyResponse,
+  zAdminAiControllerModelsResponse,
+  zAdminAiControllerSetKeyResponse,
+  zAdminAiControllerSetModelResponse,
+  zAdminAiControllerSettingsResponse,
+  zAdminLinksControllerApplyAiSuggestionsResponse,
   zAdminLinksControllerArchiveResponse,
   zAdminLinksControllerBatchResponse,
   zAdminLinksControllerFindOneResponse,
@@ -118,6 +142,108 @@ export type Options<
    */
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const adminAiControllerSettings = <ThrowOnError extends boolean = false>(
+  options?: Options<AdminAiControllerSettingsData, ThrowOnError>,
+): RequestResult<
+  AdminAiControllerSettingsResponses,
+  AdminAiControllerSettingsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    AdminAiControllerSettingsResponses,
+    AdminAiControllerSettingsErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminAiControllerSettingsResponse.parseAsync(data),
+    url: '/api/admin/v1/ai/settings',
+    ...options,
+  });
+
+export const adminAiControllerClearKey = <ThrowOnError extends boolean = false>(
+  options?: Options<AdminAiControllerClearKeyData, ThrowOnError>,
+): RequestResult<
+  AdminAiControllerClearKeyResponses,
+  AdminAiControllerClearKeyErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).delete<
+    AdminAiControllerClearKeyResponses,
+    AdminAiControllerClearKeyErrors,
+    ThrowOnError
+  >({
+    responseValidator: async (data) =>
+      await zAdminAiControllerClearKeyResponse.parseAsync(data),
+    url: '/api/admin/v1/ai/settings/key',
+    ...options,
+  });
+
+export const adminAiControllerSetKey = <ThrowOnError extends boolean = false>(
+  options: Options<AdminAiControllerSetKeyData, ThrowOnError>,
+): RequestResult<
+  AdminAiControllerSetKeyResponses,
+  AdminAiControllerSetKeyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    AdminAiControllerSetKeyResponses,
+    AdminAiControllerSetKeyErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminAiControllerSetKeyResponse.parseAsync(data),
+    url: '/api/admin/v1/ai/settings/key',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const adminAiControllerModels = <ThrowOnError extends boolean = false>(
+  options?: Options<AdminAiControllerModelsData, ThrowOnError>,
+): RequestResult<
+  AdminAiControllerModelsResponses,
+  AdminAiControllerModelsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    AdminAiControllerModelsResponses,
+    AdminAiControllerModelsErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminAiControllerModelsResponse.parseAsync(data),
+    url: '/api/admin/v1/ai/models',
+    ...options,
+  });
+
+export const adminAiControllerSetModel = <ThrowOnError extends boolean = false>(
+  options: Options<AdminAiControllerSetModelData, ThrowOnError>,
+): RequestResult<
+  AdminAiControllerSetModelResponses,
+  AdminAiControllerSetModelErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    AdminAiControllerSetModelResponses,
+    AdminAiControllerSetModelErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminAiControllerSetModelResponse.parseAsync(data),
+    url: '/api/admin/v1/ai/settings/model',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
 export const adminLinksControllerOverview = <
   ThrowOnError extends boolean = false,
@@ -267,6 +393,31 @@ export const adminLinksControllerRestore = <
       await zAdminLinksControllerRestoreResponse.parseAsync(data),
     url: '/api/admin/v1/links/{id}/restore',
     ...options,
+  });
+
+export const adminLinksControllerApplyAiSuggestions = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<AdminLinksControllerApplyAiSuggestionsData, ThrowOnError>,
+): RequestResult<
+  AdminLinksControllerApplyAiSuggestionsResponses,
+  AdminLinksControllerApplyAiSuggestionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    AdminLinksControllerApplyAiSuggestionsResponses,
+    AdminLinksControllerApplyAiSuggestionsErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminLinksControllerApplyAiSuggestionsResponse.parseAsync(data),
+    url: '/api/admin/v1/links/{id}/ai-suggestions/apply',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const adminSyncControllerList = <ThrowOnError extends boolean = false>(

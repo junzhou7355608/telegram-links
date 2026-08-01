@@ -93,6 +93,33 @@ export type PaginatedLinksResponseDto = {
   pagination: PaginationMetaResponseDto;
 };
 
+export type AiSettingsResponseDto = {
+  configured: boolean;
+  selectedModel: string | null;
+  ready: boolean;
+  provider: 'kimi';
+  lastValidatedAt: string | null;
+};
+
+export type SetAiApiKeyDto = {
+  apiKey: string;
+};
+
+export type AiModelResponseDto = {
+  contextLength: number | null;
+  id: string;
+  ownedBy: string;
+  supportsReasoning: boolean;
+};
+
+export type AiModelsResponseDto = {
+  items: Array<AiModelResponseDto>;
+};
+
+export type SetAiModelDto = {
+  model: string;
+};
+
 export type LatestSyncSummaryResponseDto = {
   id: string;
   status:
@@ -142,6 +169,40 @@ export type BatchUpdateLinksResponseDto = {
   skipped: Array<BatchSkippedLinkResponseDto>;
 };
 
+export type AiAnalysisResponseDto = {
+  id: string;
+  provider: 'kimi';
+  model: string;
+  confidence: number;
+  rationale: string;
+  suggestedProjectName: string | null;
+  suggestedCategoryName: string | null;
+  suggestedTagNames: Array<string>;
+  appliedAt: string | null;
+  createdAt: string;
+};
+
+export type AdminLinkResponseDto = {
+  id: string;
+  title: string;
+  url: string;
+  domain: string;
+  environment: 'production' | 'test' | 'development' | 'unknown';
+  status: 'pending' | 'organized';
+  project: TaxonomyReferenceResponseDto | null;
+  category: TaxonomyReferenceResponseDto | null;
+  tags: Array<TaxonomyReferenceResponseDto>;
+  purpose: string | null;
+  sourceCount: number;
+  latestSource: LinkSourceResponseDto | null;
+  sources?: Array<LinkSourceResponseDto>;
+  firstDiscoveredAt: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+  aiAnalysis: AiAnalysisResponseDto | null;
+};
+
 export type UpdateLinkDto = {
   title?: string;
   url?: string;
@@ -151,6 +212,13 @@ export type UpdateLinkDto = {
   projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
+};
+
+export type ApplyAiSuggestionsDto = {
+  analysisId: string;
+  applyProject: boolean;
+  applyCategory: boolean;
+  tagNames: Array<string>;
 };
 
 export type CreateSyncJobDto = {
@@ -167,11 +235,16 @@ export type SyncJobChatResponseDto = {
   id: string;
   chatId: string;
   chatTitle: string;
+  aiProvider: 'kimi' | null;
+  aiModel: string | null;
   status: 'pending' | 'running' | 'succeeded' | 'failed';
   messageCount: number;
   foundCount: number;
   newCount: number;
   duplicateCount: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
   maxProcessedMessageId: number | null;
   error: string | null;
   startedAt: string | null;
@@ -191,6 +264,7 @@ export type SyncJobResponseDto = {
     | 'connecting'
     | 'reading'
     | 'extracting'
+    | 'classifying'
     | 'deduplicating'
     | 'saving'
     | null;
@@ -201,6 +275,11 @@ export type SyncJobResponseDto = {
   defaultProjectId: string | null;
   defaultCategoryId: string | null;
   defaultTagIds: Array<string>;
+  aiProvider: 'kimi' | null;
+  aiModel: string | null;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
   messageCount: number;
   foundCount: number;
   newCount: number;
@@ -300,6 +379,139 @@ export type VerifyPasswordDtoWritable = {
   challengeId: string;
   password: string;
 };
+
+export type AdminAiControllerSettingsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/ai/settings';
+};
+
+export type AdminAiControllerSettingsErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
+};
+
+export type AdminAiControllerSettingsError =
+  AdminAiControllerSettingsErrors[keyof AdminAiControllerSettingsErrors];
+
+export type AdminAiControllerSettingsResponses = {
+  200: AiSettingsResponseDto;
+};
+
+export type AdminAiControllerSettingsResponse =
+  AdminAiControllerSettingsResponses[keyof AdminAiControllerSettingsResponses];
+
+export type AdminAiControllerClearKeyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/ai/settings/key';
+};
+
+export type AdminAiControllerClearKeyErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
+};
+
+export type AdminAiControllerClearKeyError =
+  AdminAiControllerClearKeyErrors[keyof AdminAiControllerClearKeyErrors];
+
+export type AdminAiControllerClearKeyResponses = {
+  /**
+   * Kimi API Key 已清除。
+   */
+  204: void;
+};
+
+export type AdminAiControllerClearKeyResponse =
+  AdminAiControllerClearKeyResponses[keyof AdminAiControllerClearKeyResponses];
+
+export type AdminAiControllerSetKeyData = {
+  body: SetAiApiKeyDto;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/ai/settings/key';
+};
+
+export type AdminAiControllerSetKeyErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
+};
+
+export type AdminAiControllerSetKeyError =
+  AdminAiControllerSetKeyErrors[keyof AdminAiControllerSetKeyErrors];
+
+export type AdminAiControllerSetKeyResponses = {
+  200: AiSettingsResponseDto;
+};
+
+export type AdminAiControllerSetKeyResponse =
+  AdminAiControllerSetKeyResponses[keyof AdminAiControllerSetKeyResponses];
+
+export type AdminAiControllerModelsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/ai/models';
+};
+
+export type AdminAiControllerModelsErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
+};
+
+export type AdminAiControllerModelsError =
+  AdminAiControllerModelsErrors[keyof AdminAiControllerModelsErrors];
+
+export type AdminAiControllerModelsResponses = {
+  200: AiModelsResponseDto;
+};
+
+export type AdminAiControllerModelsResponse =
+  AdminAiControllerModelsResponses[keyof AdminAiControllerModelsResponses];
+
+export type AdminAiControllerSetModelData = {
+  body: SetAiModelDto;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/ai/settings/model';
+};
+
+export type AdminAiControllerSetModelErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
+};
+
+export type AdminAiControllerSetModelError =
+  AdminAiControllerSetModelErrors[keyof AdminAiControllerSetModelErrors];
+
+export type AdminAiControllerSetModelResponses = {
+  200: AiSettingsResponseDto;
+};
+
+export type AdminAiControllerSetModelResponse =
+  AdminAiControllerSetModelResponses[keyof AdminAiControllerSetModelResponses];
 
 export type AdminLinksControllerOverviewData = {
   body?: never;
@@ -438,7 +650,7 @@ export type AdminLinksControllerFindOneError =
   AdminLinksControllerFindOneErrors[keyof AdminLinksControllerFindOneErrors];
 
 export type AdminLinksControllerFindOneResponses = {
-  200: LinkResponseDto;
+  200: AdminLinkResponseDto;
 };
 
 export type AdminLinksControllerFindOneResponse =
@@ -464,7 +676,7 @@ export type AdminLinksControllerUpdateError =
   AdminLinksControllerUpdateErrors[keyof AdminLinksControllerUpdateErrors];
 
 export type AdminLinksControllerUpdateResponses = {
-  200: LinkResponseDto;
+  200: AdminLinkResponseDto;
 };
 
 export type AdminLinksControllerUpdateResponse =
@@ -490,11 +702,37 @@ export type AdminLinksControllerRestoreError =
   AdminLinksControllerRestoreErrors[keyof AdminLinksControllerRestoreErrors];
 
 export type AdminLinksControllerRestoreResponses = {
-  200: LinkResponseDto;
+  200: AdminLinkResponseDto;
 };
 
 export type AdminLinksControllerRestoreResponse =
   AdminLinksControllerRestoreResponses[keyof AdminLinksControllerRestoreResponses];
+
+export type AdminLinksControllerApplyAiSuggestionsData = {
+  body: ApplyAiSuggestionsDto;
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/admin/v1/links/{id}/ai-suggestions/apply';
+};
+
+export type AdminLinksControllerApplyAiSuggestionsErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerApplyAiSuggestionsError =
+  AdminLinksControllerApplyAiSuggestionsErrors[keyof AdminLinksControllerApplyAiSuggestionsErrors];
+
+export type AdminLinksControllerApplyAiSuggestionsResponses = {
+  200: AdminLinkResponseDto;
+};
+
+export type AdminLinksControllerApplyAiSuggestionsResponse =
+  AdminLinksControllerApplyAiSuggestionsResponses[keyof AdminLinksControllerApplyAiSuggestionsResponses];
 
 export type AdminSyncControllerListData = {
   body?: never;
@@ -511,6 +749,8 @@ export type AdminSyncControllerListErrors = {
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
 
 export type AdminSyncControllerListError =
@@ -535,6 +775,8 @@ export type AdminSyncControllerCreateErrors = {
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
 
 export type AdminSyncControllerCreateError =
@@ -561,6 +803,8 @@ export type AdminSyncControllerFindOneErrors = {
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
+  502: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
 
 export type AdminSyncControllerFindOneError =

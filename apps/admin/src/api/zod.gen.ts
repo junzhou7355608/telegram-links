@@ -92,6 +92,33 @@ export const zPaginatedLinksResponseDto = z.object({
   pagination: zPaginationMetaResponseDto,
 });
 
+export const zAiSettingsResponseDto = z.object({
+  configured: z.boolean(),
+  selectedModel: z.string().nullable(),
+  ready: z.boolean(),
+  provider: z.enum(['kimi']),
+  lastValidatedAt: z.iso.datetime().nullable(),
+});
+
+export const zSetAiApiKeyDto = z.object({
+  apiKey: z.string(),
+});
+
+export const zAiModelResponseDto = z.object({
+  contextLength: z.number().nullable(),
+  id: z.string(),
+  ownedBy: z.string(),
+  supportsReasoning: z.boolean(),
+});
+
+export const zAiModelsResponseDto = z.object({
+  items: z.array(zAiModelResponseDto),
+});
+
+export const zSetAiModelDto = z.object({
+  model: z.string(),
+});
+
 export const zLatestSyncSummaryResponseDto = z.object({
   id: z.uuid(),
   status: z.enum([
@@ -144,6 +171,40 @@ export const zBatchUpdateLinksResponseDto = z.object({
   skipped: z.array(zBatchSkippedLinkResponseDto),
 });
 
+export const zAiAnalysisResponseDto = z.object({
+  id: z.uuid(),
+  provider: z.enum(['kimi']),
+  model: z.string(),
+  confidence: z.number().gte(0).lte(1),
+  rationale: z.string(),
+  suggestedProjectName: z.string().nullable(),
+  suggestedCategoryName: z.string().nullable(),
+  suggestedTagNames: z.array(z.string()),
+  appliedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+});
+
+export const zAdminLinkResponseDto = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  url: z.string(),
+  domain: z.string(),
+  environment: z.enum(['production', 'test', 'development', 'unknown']),
+  status: z.enum(['pending', 'organized']),
+  project: zTaxonomyReferenceResponseDto.nullable(),
+  category: zTaxonomyReferenceResponseDto.nullable(),
+  tags: z.array(zTaxonomyReferenceResponseDto),
+  purpose: z.string().nullable(),
+  sourceCount: z.number(),
+  latestSource: zLinkSourceResponseDto.nullable(),
+  sources: z.array(zLinkSourceResponseDto).optional(),
+  firstDiscoveredAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  archivedAt: z.iso.datetime().nullable(),
+  aiAnalysis: zAiAnalysisResponseDto.nullable(),
+});
+
 export const zUpdateLinkDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
@@ -155,6 +216,13 @@ export const zUpdateLinkDto = z.object({
   projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
+});
+
+export const zApplyAiSuggestionsDto = z.object({
+  analysisId: z.uuid(),
+  applyProject: z.boolean(),
+  applyCategory: z.boolean(),
+  tagNames: z.array(z.string()),
 });
 
 export const zCreateSyncJobDto = z.object({
@@ -171,11 +239,16 @@ export const zSyncJobChatResponseDto = z.object({
   id: z.uuid(),
   chatId: z.uuid(),
   chatTitle: z.string(),
+  aiProvider: z.enum(['kimi']).nullable(),
+  aiModel: z.string().nullable(),
   status: z.enum(['pending', 'running', 'succeeded', 'failed']),
   messageCount: z.number(),
   foundCount: z.number(),
   newCount: z.number(),
   duplicateCount: z.number(),
+  promptTokens: z.number(),
+  completionTokens: z.number(),
+  totalTokens: z.number(),
   maxProcessedMessageId: z.number().nullable(),
   error: z.string().nullable(),
   startedAt: z.iso.datetime().nullable(),
@@ -193,7 +266,14 @@ export const zSyncJobResponseDto = z.object({
     'interrupted',
   ]),
   stage: z
-    .enum(['connecting', 'reading', 'extracting', 'deduplicating', 'saving'])
+    .enum([
+      'connecting',
+      'reading',
+      'extracting',
+      'classifying',
+      'deduplicating',
+      'saving',
+    ])
     .nullable(),
   progress: z.number(),
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
@@ -202,6 +282,11 @@ export const zSyncJobResponseDto = z.object({
   defaultProjectId: z.uuid().nullable(),
   defaultCategoryId: z.uuid().nullable(),
   defaultTagIds: z.array(z.uuid()),
+  aiProvider: z.enum(['kimi']).nullable(),
+  aiModel: z.string().nullable(),
+  promptTokens: z.number(),
+  completionTokens: z.number(),
+  totalTokens: z.number(),
   messageCount: z.number(),
   foundCount: z.number(),
   newCount: z.number(),
@@ -302,6 +387,23 @@ export const zVerifyPasswordDtoWritable = z.object({
   password: z.string(),
 });
 
+export const zAdminAiControllerSettingsResponse = zAiSettingsResponseDto;
+
+/**
+ * Kimi API Key 已清除。
+ */
+export const zAdminAiControllerClearKeyResponse = z.void();
+
+export const zAdminAiControllerSetKeyBody = zSetAiApiKeyDto;
+
+export const zAdminAiControllerSetKeyResponse = zAiSettingsResponseDto;
+
+export const zAdminAiControllerModelsResponse = zAiModelsResponseDto;
+
+export const zAdminAiControllerSetModelBody = zSetAiModelDto;
+
+export const zAdminAiControllerSetModelResponse = zAiSettingsResponseDto;
+
 export const zAdminLinksControllerOverviewResponse = zAdminOverviewResponseDto;
 
 export const zAdminLinksControllerListQuery = z.object({
@@ -340,7 +442,7 @@ export const zAdminLinksControllerFindOnePath = z.object({
   id: z.string(),
 });
 
-export const zAdminLinksControllerFindOneResponse = zLinkResponseDto;
+export const zAdminLinksControllerFindOneResponse = zAdminLinkResponseDto;
 
 export const zAdminLinksControllerUpdateBody = zUpdateLinkDto;
 
@@ -348,13 +450,23 @@ export const zAdminLinksControllerUpdatePath = z.object({
   id: z.string(),
 });
 
-export const zAdminLinksControllerUpdateResponse = zLinkResponseDto;
+export const zAdminLinksControllerUpdateResponse = zAdminLinkResponseDto;
 
 export const zAdminLinksControllerRestorePath = z.object({
   id: z.string(),
 });
 
-export const zAdminLinksControllerRestoreResponse = zLinkResponseDto;
+export const zAdminLinksControllerRestoreResponse = zAdminLinkResponseDto;
+
+export const zAdminLinksControllerApplyAiSuggestionsBody =
+  zApplyAiSuggestionsDto;
+
+export const zAdminLinksControllerApplyAiSuggestionsPath = z.object({
+  id: z.string(),
+});
+
+export const zAdminLinksControllerApplyAiSuggestionsResponse =
+  zAdminLinkResponseDto;
 
 export const zAdminSyncControllerListQuery = z.object({
   page: z.number().gte(1).optional().default(1),

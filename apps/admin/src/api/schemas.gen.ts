@@ -327,6 +327,92 @@ export const PaginatedLinksResponseDtoSchema = {
   required: ['items', 'pagination'],
 } as const;
 
+export const AiSettingsResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    configured: {
+      type: 'boolean',
+    },
+    selectedModel: {
+      type: 'string',
+      nullable: true,
+    },
+    ready: {
+      type: 'boolean',
+    },
+    provider: {
+      type: 'string',
+      enum: ['kimi'],
+    },
+    lastValidatedAt: {
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    },
+  },
+  required: [
+    'configured',
+    'selectedModel',
+    'ready',
+    'provider',
+    'lastValidatedAt',
+  ],
+} as const;
+
+export const SetAiApiKeyDtoSchema = {
+  type: 'object',
+  properties: {
+    apiKey: {
+      type: 'string',
+      writeOnly: true,
+    },
+  },
+  required: ['apiKey'],
+} as const;
+
+export const AiModelResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    contextLength: {
+      type: 'number',
+      nullable: true,
+    },
+    id: {
+      type: 'string',
+    },
+    ownedBy: {
+      type: 'string',
+    },
+    supportsReasoning: {
+      type: 'boolean',
+    },
+  },
+  required: ['contextLength', 'id', 'ownedBy', 'supportsReasoning'],
+} as const;
+
+export const AiModelsResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AiModelResponseDto',
+      },
+    },
+  },
+  required: ['items'],
+} as const;
+
+export const SetAiModelDtoSchema = {
+  type: 'object',
+  properties: {
+    model: {
+      type: 'string',
+    },
+  },
+  required: ['model'],
+} as const;
+
 export const LatestSyncSummaryResponseDtoSchema = {
   type: 'object',
   properties: {
@@ -488,6 +574,184 @@ export const BatchUpdateLinksResponseDtoSchema = {
   required: ['updatedIds', 'skipped'],
 } as const;
 
+export const AiAnalysisResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    provider: {
+      type: 'string',
+      enum: ['kimi'],
+    },
+    model: {
+      type: 'string',
+    },
+    confidence: {
+      type: 'number',
+      maximum: 1,
+      minimum: 0,
+    },
+    rationale: {
+      type: 'string',
+    },
+    suggestedProjectName: {
+      type: 'string',
+      nullable: true,
+    },
+    suggestedCategoryName: {
+      type: 'string',
+      nullable: true,
+    },
+    suggestedTagNames: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    appliedAt: {
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    },
+    createdAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+  required: [
+    'id',
+    'provider',
+    'model',
+    'confidence',
+    'rationale',
+    'suggestedProjectName',
+    'suggestedCategoryName',
+    'suggestedTagNames',
+    'appliedAt',
+    'createdAt',
+  ],
+} as const;
+
+export const AdminLinkResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    url: {
+      type: 'string',
+    },
+    domain: {
+      type: 'string',
+    },
+    environment: {
+      type: 'string',
+      enum: ['production', 'test', 'development', 'unknown'],
+    },
+    status: {
+      type: 'string',
+      enum: ['pending', 'organized'],
+    },
+    project: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+        },
+      ],
+    },
+    category: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+        },
+      ],
+    },
+    tags: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+      },
+    },
+    purpose: {
+      type: 'string',
+      nullable: true,
+    },
+    sourceCount: {
+      type: 'number',
+    },
+    latestSource: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/LinkSourceResponseDto',
+        },
+      ],
+    },
+    sources: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LinkSourceResponseDto',
+      },
+    },
+    firstDiscoveredAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    createdAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    updatedAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    archivedAt: {
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    },
+    aiAnalysis: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/AiAnalysisResponseDto',
+        },
+      ],
+    },
+  },
+  required: [
+    'id',
+    'title',
+    'url',
+    'domain',
+    'environment',
+    'status',
+    'project',
+    'category',
+    'tags',
+    'purpose',
+    'sourceCount',
+    'latestSource',
+    'firstDiscoveredAt',
+    'createdAt',
+    'updatedAt',
+    'archivedAt',
+    'aiAnalysis',
+  ],
+} as const;
+
 export const UpdateLinkDtoSchema = {
   type: 'object',
   properties: {
@@ -527,6 +791,29 @@ export const UpdateLinkDtoSchema = {
       },
     },
   },
+} as const;
+
+export const ApplyAiSuggestionsDtoSchema = {
+  type: 'object',
+  properties: {
+    analysisId: {
+      type: 'string',
+      format: 'uuid',
+    },
+    applyProject: {
+      type: 'boolean',
+    },
+    applyCategory: {
+      type: 'boolean',
+    },
+    tagNames: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+  },
+  required: ['analysisId', 'applyProject', 'applyCategory', 'tagNames'],
 } as const;
 
 export const CreateSyncJobDtoSchema = {
@@ -584,6 +871,15 @@ export const SyncJobChatResponseDtoSchema = {
     chatTitle: {
       type: 'string',
     },
+    aiProvider: {
+      type: 'string',
+      enum: ['kimi', null],
+      nullable: true,
+    },
+    aiModel: {
+      type: 'string',
+      nullable: true,
+    },
     status: {
       type: 'string',
       enum: ['pending', 'running', 'succeeded', 'failed'],
@@ -598,6 +894,15 @@ export const SyncJobChatResponseDtoSchema = {
       type: 'number',
     },
     duplicateCount: {
+      type: 'number',
+    },
+    promptTokens: {
+      type: 'number',
+    },
+    completionTokens: {
+      type: 'number',
+    },
+    totalTokens: {
       type: 'number',
     },
     maxProcessedMessageId: {
@@ -623,11 +928,16 @@ export const SyncJobChatResponseDtoSchema = {
     'id',
     'chatId',
     'chatTitle',
+    'aiProvider',
+    'aiModel',
     'status',
     'messageCount',
     'foundCount',
     'newCount',
     'duplicateCount',
+    'promptTokens',
+    'completionTokens',
+    'totalTokens',
     'maxProcessedMessageId',
     'error',
     'startedAt',
@@ -659,6 +969,7 @@ export const SyncJobResponseDtoSchema = {
         'connecting',
         'reading',
         'extracting',
+        'classifying',
         'deduplicating',
         'saving',
         null,
@@ -698,6 +1009,24 @@ export const SyncJobResponseDtoSchema = {
         type: 'string',
         format: 'uuid',
       },
+    },
+    aiProvider: {
+      type: 'string',
+      enum: ['kimi', null],
+      nullable: true,
+    },
+    aiModel: {
+      type: 'string',
+      nullable: true,
+    },
+    promptTokens: {
+      type: 'number',
+    },
+    completionTokens: {
+      type: 'number',
+    },
+    totalTokens: {
+      type: 'number',
     },
     messageCount: {
       type: 'number',
@@ -751,6 +1080,11 @@ export const SyncJobResponseDtoSchema = {
     'defaultProjectId',
     'defaultCategoryId',
     'defaultTagIds',
+    'aiProvider',
+    'aiModel',
+    'promptTokens',
+    'completionTokens',
+    'totalTokens',
     'messageCount',
     'foundCount',
     'newCount',

@@ -1,6 +1,412 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/admin/v1/ai/settings": {
+      "get": {
+        "operationId": "AdminAiController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Admin - AI"]
+      }
+    },
+    "/api/admin/v1/ai/settings/key": {
+      "put": {
+        "operationId": "AdminAiController_setKey",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAiApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Admin - AI"]
+      },
+      "delete": {
+        "operationId": "AdminAiController_clearKey",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Kimi API Key 已清除。"
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Admin - AI"]
+      }
+    },
+    "/api/admin/v1/ai/models": {
+      "get": {
+        "operationId": "AdminAiController_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModelsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Admin - AI"]
+      }
+    },
+    "/api/admin/v1/ai/settings/model": {
+      "put": {
+        "operationId": "AdminAiController_setModel",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAiModelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Admin - AI"]
+      }
+    },
     "/api/admin/v1/overview": {
       "get": {
         "operationId": "AdminLinksController_overview",
@@ -321,7 +727,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LinkResponseDto"
+                  "$ref": "#/components/schemas/AdminLinkResponseDto"
                 }
               }
             }
@@ -397,7 +803,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LinkResponseDto"
+                  "$ref": "#/components/schemas/AdminLinkResponseDto"
                 }
               }
             }
@@ -524,7 +930,85 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LinkResponseDto"
+                  "$ref": "#/components/schemas/AdminLinkResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Admin - Links"]
+      }
+    },
+    "/api/admin/v1/links/{id}/ai-suggestions/apply": {
+      "post": {
+        "operationId": "AdminLinksController_applyAiSuggestions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyAiSuggestionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLinkResponseDto"
                 }
               }
             }
@@ -637,6 +1121,26 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": ["Admin - Sync jobs"]
@@ -716,6 +1220,26 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": ["Admin - Sync jobs"]
@@ -776,6 +1300,26 @@
             }
           },
           "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
             "description": "",
             "content": {
               "application/json": {
@@ -2214,6 +2758,87 @@
         },
         "required": ["items", "pagination"]
       },
+      "AiSettingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "selectedModel": {
+            "type": "string",
+            "nullable": true
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["kimi"]
+          },
+          "lastValidatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "configured",
+          "selectedModel",
+          "ready",
+          "provider",
+          "lastValidatedAt"
+        ]
+      },
+      "SetAiApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": ["apiKey"]
+      },
+      "AiModelResponseDto": {
+        "type": "object",
+        "properties": {
+          "contextLength": {
+            "type": "number",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "ownedBy": {
+            "type": "string"
+          },
+          "supportsReasoning": {
+            "type": "boolean"
+          }
+        },
+        "required": ["contextLength", "id", "ownedBy", "supportsReasoning"]
+      },
+      "AiModelsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiModelResponseDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "SetAiModelDto": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": ["model"]
+      },
       "LatestSyncSummaryResponseDto": {
         "type": "object",
         "properties": {
@@ -2369,6 +2994,182 @@
         },
         "required": ["updatedIds", "skipped"]
       },
+      "AiAnalysisResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["kimi"]
+          },
+          "model": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "suggestedProjectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "suggestedCategoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "suggestedTagNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "model",
+          "confidence",
+          "rationale",
+          "suggestedProjectName",
+          "suggestedCategoryName",
+          "suggestedTagNames",
+          "appliedAt",
+          "createdAt"
+        ]
+      },
+      "AdminLinkResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["production", "test", "development", "unknown"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "organized"]
+          },
+          "project": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+              }
+            ]
+          },
+          "category": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+            }
+          },
+          "purpose": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceCount": {
+            "type": "number"
+          },
+          "latestSource": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LinkSourceResponseDto"
+              }
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkSourceResponseDto"
+            }
+          },
+          "firstDiscoveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "aiAnalysis": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AiAnalysisResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "url",
+          "domain",
+          "environment",
+          "status",
+          "project",
+          "category",
+          "tags",
+          "purpose",
+          "sourceCount",
+          "latestSource",
+          "firstDiscoveredAt",
+          "createdAt",
+          "updatedAt",
+          "archivedAt",
+          "aiAnalysis"
+        ]
+      },
       "UpdateLinkDto": {
         "type": "object",
         "properties": {
@@ -2408,6 +3209,28 @@
             }
           }
         }
+      },
+      "ApplyAiSuggestionsDto": {
+        "type": "object",
+        "properties": {
+          "analysisId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "applyProject": {
+            "type": "boolean"
+          },
+          "applyCategory": {
+            "type": "boolean"
+          },
+          "tagNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["analysisId", "applyProject", "applyCategory", "tagNames"]
       },
       "CreateSyncJobDto": {
         "type": "object",
@@ -2463,6 +3286,15 @@
           "chatTitle": {
             "type": "string"
           },
+          "aiProvider": {
+            "type": "string",
+            "enum": ["kimi", null],
+            "nullable": true
+          },
+          "aiModel": {
+            "type": "string",
+            "nullable": true
+          },
           "status": {
             "type": "string",
             "enum": ["pending", "running", "succeeded", "failed"]
@@ -2477,6 +3309,15 @@
             "type": "number"
           },
           "duplicateCount": {
+            "type": "number"
+          },
+          "promptTokens": {
+            "type": "number"
+          },
+          "completionTokens": {
+            "type": "number"
+          },
+          "totalTokens": {
             "type": "number"
           },
           "maxProcessedMessageId": {
@@ -2502,11 +3343,16 @@
           "id",
           "chatId",
           "chatTitle",
+          "aiProvider",
+          "aiModel",
           "status",
           "messageCount",
           "foundCount",
           "newCount",
           "duplicateCount",
+          "promptTokens",
+          "completionTokens",
+          "totalTokens",
           "maxProcessedMessageId",
           "error",
           "startedAt",
@@ -2537,6 +3383,7 @@
               "connecting",
               "reading",
               "extracting",
+              "classifying",
               "deduplicating",
               "saving",
               null
@@ -2576,6 +3423,24 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "aiProvider": {
+            "type": "string",
+            "enum": ["kimi", null],
+            "nullable": true
+          },
+          "aiModel": {
+            "type": "string",
+            "nullable": true
+          },
+          "promptTokens": {
+            "type": "number"
+          },
+          "completionTokens": {
+            "type": "number"
+          },
+          "totalTokens": {
+            "type": "number"
           },
           "messageCount": {
             "type": "number"
@@ -2629,6 +3494,11 @@
           "defaultProjectId",
           "defaultCategoryId",
           "defaultTagIds",
+          "aiProvider",
+          "aiModel",
+          "promptTokens",
+          "completionTokens",
+          "totalTokens",
           "messageCount",
           "foundCount",
           "newCount",
