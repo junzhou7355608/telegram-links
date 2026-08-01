@@ -10,15 +10,19 @@ import type {
 import { client } from './client.gen';
 import type {
   WebApiControllerFindOneData,
+  WebApiControllerFindOneErrors,
   WebApiControllerFindOneResponses,
   WebApiControllerListData,
+  WebApiControllerListErrors,
   WebApiControllerListResponses,
   WebApiControllerOverviewData,
+  WebApiControllerOverviewErrors,
   WebApiControllerOverviewResponses,
 } from './types.gen';
 import {
   zWebApiControllerFindOneResponse,
   zWebApiControllerListResponse,
+  zWebApiControllerOverviewResponse,
 } from './zod.gen';
 
 export type Options<
@@ -41,19 +45,33 @@ export type Options<
 
 export const webApiControllerOverview = <ThrowOnError extends boolean = false>(
   options?: Options<WebApiControllerOverviewData, ThrowOnError>,
-): RequestResult<WebApiControllerOverviewResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  WebApiControllerOverviewResponses,
+  WebApiControllerOverviewErrors,
+  ThrowOnError
+> =>
   (options?.client ?? client).get<
     WebApiControllerOverviewResponses,
-    unknown,
+    WebApiControllerOverviewErrors,
     ThrowOnError
-  >({ url: '/api/web/v1/overview', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zWebApiControllerOverviewResponse.parseAsync(data),
+    url: '/api/web/v1/overview',
+    ...options,
+  });
 
 export const webApiControllerList = <ThrowOnError extends boolean = false>(
   options?: Options<WebApiControllerListData, ThrowOnError>,
-): RequestResult<WebApiControllerListResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  WebApiControllerListResponses,
+  WebApiControllerListErrors,
+  ThrowOnError
+> =>
   (options?.client ?? client).get<
     WebApiControllerListResponses,
-    unknown,
+    WebApiControllerListErrors,
     ThrowOnError
   >({
     responseType: 'json',
@@ -65,10 +83,14 @@ export const webApiControllerList = <ThrowOnError extends boolean = false>(
 
 export const webApiControllerFindOne = <ThrowOnError extends boolean = false>(
   options: Options<WebApiControllerFindOneData, ThrowOnError>,
-): RequestResult<WebApiControllerFindOneResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  WebApiControllerFindOneResponses,
+  WebApiControllerFindOneErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).get<
     WebApiControllerFindOneResponses,
-    unknown,
+    WebApiControllerFindOneErrors,
     ThrowOnError
   >({
     responseType: 'json',

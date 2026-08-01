@@ -4,8 +4,44 @@ export type ClientOptions = {
   baseURL: string;
 };
 
-export type Object = {
-  [key: string]: unknown;
+export type ApiErrorResponseDto = {
+  statusCode: number;
+  code: string;
+  message: string;
+  details?: Array<string>;
+  path: string;
+  timestamp: string;
+};
+
+export type OverviewCountResponseDto = {
+  count: number;
+  id: string;
+  name: string;
+};
+
+export type WebOverviewCountsResponseDto = {
+  favorites: number;
+  pending: number;
+  recent: number;
+  total: number;
+};
+
+export type WebLatestSyncResponseDto = {
+  finishedAt: string | null;
+  status:
+    | 'queued'
+    | 'running'
+    | 'succeeded'
+    | 'partiallySucceeded'
+    | 'failed'
+    | 'interrupted';
+};
+
+export type WebOverviewResponseDto = {
+  categories: Array<OverviewCountResponseDto>;
+  counts: WebOverviewCountsResponseDto;
+  latestSync: WebLatestSyncResponseDto | null;
+  projects: Array<OverviewCountResponseDto>;
 };
 
 export type TaxonomyReferenceResponseDto = {
@@ -20,13 +56,9 @@ export type LinkSourceResponseDto = {
   messageId: number;
   messagePreview: string;
   messageText?: string;
-  messageUrl?: {
-    [key: string]: unknown;
-  } | null;
+  messageUrl?: string | null;
   rawUrl: string;
-  senderName?: {
-    [key: string]: unknown;
-  } | null;
+  senderName?: string | null;
   capturedAt: string;
 };
 
@@ -40,9 +72,7 @@ export type LinkResponseDto = {
   project: TaxonomyReferenceResponseDto | null;
   category: TaxonomyReferenceResponseDto | null;
   tags: Array<TaxonomyReferenceResponseDto>;
-  purpose: {
-    [key: string]: unknown;
-  } | null;
+  purpose: string | null;
   isFavorite: boolean;
   sourceCount: number;
   latestSource: LinkSourceResponseDto | null;
@@ -50,9 +80,7 @@ export type LinkResponseDto = {
   firstDiscoveredAt: string;
   createdAt: string;
   updatedAt: string;
-  archivedAt: {
-    [key: string]: unknown;
-  } | null;
+  archivedAt: string | null;
 };
 
 export type PaginationMetaResponseDto = {
@@ -67,80 +95,204 @@ export type PaginatedLinksResponseDto = {
   pagination: PaginationMetaResponseDto;
 };
 
+export type LatestSyncSummaryResponseDto = {
+  id: string;
+  status:
+    | 'queued'
+    | 'running'
+    | 'succeeded'
+    | 'partiallySucceeded'
+    | 'failed'
+    | 'interrupted';
+  finishedAt: string | null;
+  createdAt: string;
+};
+
+export type AdminOverviewResponseDto = {
+  archived: number;
+  latestSync: LatestSyncSummaryResponseDto | null;
+  pending: number;
+  todayAdded: number;
+  total: number;
+};
+
 export type BatchLinkPatchDto = {
   title?: string;
   url?: string;
-  purpose?: {
-    [key: string]: unknown;
-  } | null;
+  purpose?: string | null;
   environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: {
-    [key: string]: unknown;
-  } | null;
-  categoryId?: {
-    [key: string]: unknown;
-  } | null;
-  tagIds?: Array<Array<unknown>>;
+  projectId?: string | null;
+  categoryId?: string | null;
+  tagIds?: Array<string>;
   isFavorite?: boolean;
-  addTagIds?: Array<Array<unknown>>;
+  addTagIds?: Array<string>;
 };
 
 export type BatchUpdateLinksDto = {
-  ids: Array<Array<unknown>>;
+  ids: Array<string>;
   patch: BatchLinkPatchDto;
+};
+
+export type BatchSkippedLinkResponseDto = {
+  id: string;
+  code: string;
+  message: string;
+};
+
+export type BatchUpdateLinksResponseDto = {
+  updatedIds: Array<string>;
+  skipped: Array<BatchSkippedLinkResponseDto>;
 };
 
 export type UpdateLinkDto = {
   title?: string;
   url?: string;
-  purpose?: {
-    [key: string]: unknown;
-  } | null;
+  purpose?: string | null;
   environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: {
-    [key: string]: unknown;
-  } | null;
-  categoryId?: {
-    [key: string]: unknown;
-  } | null;
-  tagIds?: Array<Array<unknown>>;
+  projectId?: string | null;
+  categoryId?: string | null;
+  tagIds?: Array<string>;
   isFavorite?: boolean;
 };
 
 export type CreateSyncJobDto = {
-  chatIds?: Array<Array<unknown>>;
+  chatIds?: Array<string>;
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom?: string;
   rangeTo?: string;
   defaultProjectId?: string;
   defaultCategoryId?: string;
-  defaultTagIds?: Array<Array<unknown>>;
+  defaultTagIds?: Array<string>;
+};
+
+export type SyncJobChatResponseDto = {
+  id: string;
+  chatId: string;
+  chatTitle: string;
+  status: 'pending' | 'running' | 'succeeded' | 'failed';
+  messageCount: number;
+  foundCount: number;
+  newCount: number;
+  duplicateCount: number;
+  maxProcessedMessageId: number | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
+export type SyncJobResponseDto = {
+  id: string;
+  status:
+    | 'queued'
+    | 'running'
+    | 'succeeded'
+    | 'partiallySucceeded'
+    | 'failed'
+    | 'interrupted';
+  stage:
+    | 'connecting'
+    | 'reading'
+    | 'extracting'
+    | 'deduplicating'
+    | 'saving'
+    | null;
+  progress: number;
+  rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
+  rangeFrom: string | null;
+  rangeTo: string | null;
+  defaultProjectId: string | null;
+  defaultCategoryId: string | null;
+  defaultTagIds: Array<string>;
+  messageCount: number;
+  foundCount: number;
+  newCount: number;
+  duplicateCount: number;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  chats: Array<SyncJobChatResponseDto>;
+};
+
+export type PaginatedSyncJobsResponseDto = {
+  items: Array<SyncJobResponseDto>;
+  pagination: PaginationMetaResponseDto;
+};
+
+export type TaxonomyItemResponseDto = {
+  id: string;
+  name: string;
+  referenceCount: number;
 };
 
 export type TaxonomyNameDto = {
   name: string;
 };
 
+export type TelegramAccountProfileResponseDto = {
+  displayName: string | null;
+  phoneNumber: string | null;
+  telegramUserId: string | null;
+  username: string | null;
+};
+
+export type TelegramAccountResponseDto = {
+  configured: boolean;
+  status: 'authorized' | 'unauthorized';
+  account: TelegramAccountProfileResponseDto | null;
+};
+
 export type SendCodeDto = {
   phoneNumber: string;
+};
+
+export type SendCodeResponseDto = {
+  challengeId: string;
+  delivery: 'app' | 'sms';
+  expiresAt: string;
 };
 
 export type VerifyCodeDto = {
   challengeId: string;
 };
 
+export type TelegramAuthResultResponseDto = {
+  status: 'authorized' | 'passwordRequired';
+};
+
 export type VerifyPasswordDto = {
   challengeId: string;
 };
 
-export type UpdateChatDto = {
-  isEnabled: boolean;
+export type RefreshChatsResponseDto = {
+  count: number;
+  refreshedAt: string;
 };
 
-export type ObjectWritable = {
-  [key: string]: unknown;
+export type TelegramChatResponseDto = {
+  id: string;
+  telegramPeerId: string;
+  type: 'saved' | 'private' | 'group' | 'channel';
+  title: string;
+  username: string | null;
+  isEnabled: boolean;
+  isAvailable: boolean;
+  lastSyncedMessageId: number | null;
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaginatedTelegramChatsResponseDto = {
+  items: Array<TelegramChatResponseDto>;
+  pagination: PaginationMetaResponseDto;
+};
+
+export type UpdateChatDto = {
+  isEnabled: boolean;
 };
 
 export type VerifyCodeDtoWritable = {
@@ -160,19 +312,29 @@ export type WebApiControllerOverviewData = {
   url: '/api/web/v1/overview';
 };
 
-export type WebApiControllerOverviewResponses = {
-  /**
-   * Web 链接工作台概览。
-   */
-  200: unknown;
+export type WebApiControllerOverviewErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type WebApiControllerOverviewError =
+  WebApiControllerOverviewErrors[keyof WebApiControllerOverviewErrors];
+
+export type WebApiControllerOverviewResponses = {
+  200: WebOverviewResponseDto;
+};
+
+export type WebApiControllerOverviewResponse =
+  WebApiControllerOverviewResponses[keyof WebApiControllerOverviewResponses];
 
 export type WebApiControllerListData = {
   body?: never;
   path?: never;
   query?: {
-    page?: ObjectWritable;
-    pageSize?: ObjectWritable;
+    page?: number;
+    pageSize?: number;
     q?: string;
     view?: 'all' | 'recent' | 'favorites' | 'pending';
     /**
@@ -190,6 +352,16 @@ export type WebApiControllerListData = {
   url: '/api/web/v1/links';
 };
 
+export type WebApiControllerListErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type WebApiControllerListError =
+  WebApiControllerListErrors[keyof WebApiControllerListErrors];
+
 export type WebApiControllerListResponses = {
   200: PaginatedLinksResponseDto;
 };
@@ -205,6 +377,16 @@ export type WebApiControllerFindOneData = {
   query?: never;
   url: '/api/web/v1/links/{id}';
 };
+
+export type WebApiControllerFindOneErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type WebApiControllerFindOneError =
+  WebApiControllerFindOneErrors[keyof WebApiControllerFindOneErrors];
 
 export type WebApiControllerFindOneResponses = {
   200: LinkResponseDto;

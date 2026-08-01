@@ -2,7 +2,46 @@
 
 import * as z from 'zod';
 
-export const zObject = z.record(z.string(), z.unknown());
+export const zApiErrorResponseDto = z.object({
+  statusCode: z.number(),
+  code: z.string(),
+  message: z.string(),
+  details: z.array(z.string()).optional(),
+  path: z.string(),
+  timestamp: z.iso.datetime(),
+});
+
+export const zOverviewCountResponseDto = z.object({
+  count: z.number(),
+  id: z.uuid(),
+  name: z.string(),
+});
+
+export const zWebOverviewCountsResponseDto = z.object({
+  favorites: z.number(),
+  pending: z.number(),
+  recent: z.number(),
+  total: z.number(),
+});
+
+export const zWebLatestSyncResponseDto = z.object({
+  finishedAt: z.iso.datetime().nullable(),
+  status: z.enum([
+    'queued',
+    'running',
+    'succeeded',
+    'partiallySucceeded',
+    'failed',
+    'interrupted',
+  ]),
+});
+
+export const zWebOverviewResponseDto = z.object({
+  categories: z.array(zOverviewCountResponseDto),
+  counts: zWebOverviewCountsResponseDto,
+  latestSync: zWebLatestSyncResponseDto.nullable(),
+  projects: z.array(zOverviewCountResponseDto),
+});
 
 export const zTaxonomyReferenceResponseDto = z.object({
   id: z.uuid(),
@@ -16,9 +55,9 @@ export const zLinkSourceResponseDto = z.object({
   messageId: z.number(),
   messagePreview: z.string(),
   messageText: z.string().optional(),
-  messageUrl: z.record(z.string(), z.unknown()).nullish(),
+  messageUrl: z.string().nullish(),
   rawUrl: z.string(),
-  senderName: z.record(z.string(), z.unknown()).nullish(),
+  senderName: z.string().nullish(),
   capturedAt: z.iso.datetime(),
 });
 
@@ -32,7 +71,7 @@ export const zLinkResponseDto = z.object({
   project: zTaxonomyReferenceResponseDto.nullable(),
   category: zTaxonomyReferenceResponseDto.nullable(),
   tags: z.array(zTaxonomyReferenceResponseDto),
-  purpose: z.record(z.string(), z.unknown()).nullable(),
+  purpose: z.string().nullable(),
   isFavorite: z.boolean(),
   sourceCount: z.number(),
   latestSource: zLinkSourceResponseDto.nullable(),
@@ -40,7 +79,7 @@ export const zLinkResponseDto = z.object({
   firstDiscoveredAt: z.iso.datetime(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
-  archivedAt: z.record(z.string(), z.unknown()).nullable(),
+  archivedAt: z.iso.datetime().nullable(),
 });
 
 export const zPaginationMetaResponseDto = z.object({
@@ -55,71 +94,207 @@ export const zPaginatedLinksResponseDto = z.object({
   pagination: zPaginationMetaResponseDto,
 });
 
+export const zLatestSyncSummaryResponseDto = z.object({
+  id: z.uuid(),
+  status: z.enum([
+    'queued',
+    'running',
+    'succeeded',
+    'partiallySucceeded',
+    'failed',
+    'interrupted',
+  ]),
+  finishedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+});
+
+export const zAdminOverviewResponseDto = z.object({
+  archived: z.number(),
+  latestSync: zLatestSyncSummaryResponseDto.nullable(),
+  pending: z.number(),
+  todayAdded: z.number(),
+  total: z.number(),
+});
+
 export const zBatchLinkPatchDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
-  purpose: z.record(z.string(), z.unknown()).nullish(),
+  purpose: z.string().nullish(),
   environment: z
     .enum(['production', 'test', 'development', 'unknown'])
     .optional(),
   status: z.enum(['pending', 'organized']).optional(),
-  projectId: z.record(z.string(), z.unknown()).nullish(),
-  categoryId: z.record(z.string(), z.unknown()).nullish(),
-  tagIds: z.array(z.array(z.unknown())).optional(),
+  projectId: z.uuid().nullish(),
+  categoryId: z.uuid().nullish(),
+  tagIds: z.array(z.uuid()).optional(),
   isFavorite: z.boolean().optional(),
-  addTagIds: z.array(z.array(z.unknown())).optional(),
+  addTagIds: z.array(z.uuid()).optional(),
 });
 
 export const zBatchUpdateLinksDto = z.object({
-  ids: z.array(z.array(z.unknown())),
+  ids: z.array(z.uuid()),
   patch: zBatchLinkPatchDto,
+});
+
+export const zBatchSkippedLinkResponseDto = z.object({
+  id: z.uuid(),
+  code: z.string(),
+  message: z.string(),
+});
+
+export const zBatchUpdateLinksResponseDto = z.object({
+  updatedIds: z.array(z.uuid()),
+  skipped: z.array(zBatchSkippedLinkResponseDto),
 });
 
 export const zUpdateLinkDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
-  purpose: z.record(z.string(), z.unknown()).nullish(),
+  purpose: z.string().nullish(),
   environment: z
     .enum(['production', 'test', 'development', 'unknown'])
     .optional(),
   status: z.enum(['pending', 'organized']).optional(),
-  projectId: z.record(z.string(), z.unknown()).nullish(),
-  categoryId: z.record(z.string(), z.unknown()).nullish(),
-  tagIds: z.array(z.array(z.unknown())).optional(),
+  projectId: z.uuid().nullish(),
+  categoryId: z.uuid().nullish(),
+  tagIds: z.array(z.uuid()).optional(),
   isFavorite: z.boolean().optional(),
 });
 
 export const zCreateSyncJobDto = z.object({
-  chatIds: z.array(z.array(z.unknown())).optional(),
+  chatIds: z.array(z.uuid()).optional(),
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
   rangeFrom: z.iso.datetime().optional(),
   rangeTo: z.iso.datetime().optional(),
   defaultProjectId: z.uuid().optional(),
   defaultCategoryId: z.uuid().optional(),
-  defaultTagIds: z.array(z.array(z.unknown())).optional(),
+  defaultTagIds: z.array(z.uuid()).optional(),
+});
+
+export const zSyncJobChatResponseDto = z.object({
+  id: z.uuid(),
+  chatId: z.uuid(),
+  chatTitle: z.string(),
+  status: z.enum(['pending', 'running', 'succeeded', 'failed']),
+  messageCount: z.number(),
+  foundCount: z.number(),
+  newCount: z.number(),
+  duplicateCount: z.number(),
+  maxProcessedMessageId: z.number().nullable(),
+  error: z.string().nullable(),
+  startedAt: z.iso.datetime().nullable(),
+  finishedAt: z.iso.datetime().nullable(),
+});
+
+export const zSyncJobResponseDto = z.object({
+  id: z.uuid(),
+  status: z.enum([
+    'queued',
+    'running',
+    'succeeded',
+    'partiallySucceeded',
+    'failed',
+    'interrupted',
+  ]),
+  stage: z
+    .enum(['connecting', 'reading', 'extracting', 'deduplicating', 'saving'])
+    .nullable(),
+  progress: z.number(),
+  rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
+  rangeFrom: z.iso.datetime().nullable(),
+  rangeTo: z.iso.datetime().nullable(),
+  defaultProjectId: z.uuid().nullable(),
+  defaultCategoryId: z.uuid().nullable(),
+  defaultTagIds: z.array(z.uuid()),
+  messageCount: z.number(),
+  foundCount: z.number(),
+  newCount: z.number(),
+  duplicateCount: z.number(),
+  error: z.string().nullable(),
+  startedAt: z.iso.datetime().nullable(),
+  finishedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  chats: z.array(zSyncJobChatResponseDto),
+});
+
+export const zPaginatedSyncJobsResponseDto = z.object({
+  items: z.array(zSyncJobResponseDto),
+  pagination: zPaginationMetaResponseDto,
+});
+
+export const zTaxonomyItemResponseDto = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  referenceCount: z.number(),
 });
 
 export const zTaxonomyNameDto = z.object({
   name: z.string(),
 });
 
+export const zTelegramAccountProfileResponseDto = z.object({
+  displayName: z.string().nullable(),
+  phoneNumber: z.string().nullable(),
+  telegramUserId: z.string().nullable(),
+  username: z.string().nullable(),
+});
+
+export const zTelegramAccountResponseDto = z.object({
+  configured: z.boolean(),
+  status: z.enum(['authorized', 'unauthorized']),
+  account: zTelegramAccountProfileResponseDto.nullable(),
+});
+
 export const zSendCodeDto = z.object({
   phoneNumber: z.string(),
+});
+
+export const zSendCodeResponseDto = z.object({
+  challengeId: z.uuid(),
+  delivery: z.enum(['app', 'sms']),
+  expiresAt: z.iso.datetime(),
 });
 
 export const zVerifyCodeDto = z.object({
   challengeId: z.uuid(),
 });
 
+export const zTelegramAuthResultResponseDto = z.object({
+  status: z.enum(['authorized', 'passwordRequired']),
+});
+
 export const zVerifyPasswordDto = z.object({
   challengeId: z.uuid(),
+});
+
+export const zRefreshChatsResponseDto = z.object({
+  count: z.number(),
+  refreshedAt: z.iso.datetime(),
+});
+
+export const zTelegramChatResponseDto = z.object({
+  id: z.uuid(),
+  telegramPeerId: z.string(),
+  type: z.enum(['saved', 'private', 'group', 'channel']),
+  title: z.string(),
+  username: z.string().nullable(),
+  isEnabled: z.boolean(),
+  isAvailable: z.boolean(),
+  lastSyncedMessageId: z.number().nullable(),
+  lastSyncedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const zPaginatedTelegramChatsResponseDto = z.object({
+  items: z.array(zTelegramChatResponseDto),
+  pagination: zPaginationMetaResponseDto,
 });
 
 export const zUpdateChatDto = z.object({
   isEnabled: z.boolean(),
 });
-
-export const zObjectWritable = z.record(z.string(), z.unknown());
 
 export const zVerifyCodeDtoWritable = z.object({
   challengeId: z.uuid(),
@@ -131,9 +306,11 @@ export const zVerifyPasswordDtoWritable = z.object({
   password: z.string(),
 });
 
+export const zWebApiControllerOverviewResponse = zWebOverviewResponseDto;
+
 export const zWebApiControllerListQuery = z.object({
-  page: zObjectWritable.optional(),
-  pageSize: zObjectWritable.optional(),
+  page: z.number().gte(1).optional().default(1),
+  pageSize: z.number().gte(1).lte(100).optional().default(8),
   q: z.string().optional(),
   view: z.enum(['all', 'recent', 'favorites', 'pending']).optional(),
   projectId: z.string().optional(),
@@ -144,7 +321,7 @@ export const zWebApiControllerListQuery = z.object({
   status: z.enum(['pending', 'organized']).optional(),
   sort: z.enum(['newest', 'oldest', 'title']).optional(),
   sourceChatId: z.uuid().optional(),
-  tagIds: z.array(z.string()).optional(),
+  tagIds: z.array(z.uuid()).optional(),
   includeArchived: z.boolean().optional().default(false),
 });
 
