@@ -4,8 +4,44 @@ export type ClientOptions = {
   baseURL: string;
 };
 
-export type Object = {
-  [key: string]: unknown;
+export type ApiErrorResponseDto = {
+  statusCode: number;
+  code: string;
+  message: string;
+  details?: Array<string>;
+  path: string;
+  timestamp: string;
+};
+
+export type OverviewCountResponseDto = {
+  count: number;
+  id: string;
+  name: string;
+};
+
+export type WebOverviewCountsResponseDto = {
+  favorites: number;
+  pending: number;
+  recent: number;
+  total: number;
+};
+
+export type WebLatestSyncResponseDto = {
+  finishedAt: string | null;
+  status:
+    | 'queued'
+    | 'running'
+    | 'succeeded'
+    | 'partiallySucceeded'
+    | 'failed'
+    | 'interrupted';
+};
+
+export type WebOverviewResponseDto = {
+  categories: Array<OverviewCountResponseDto>;
+  counts: WebOverviewCountsResponseDto;
+  latestSync: WebLatestSyncResponseDto | null;
+  projects: Array<OverviewCountResponseDto>;
 };
 
 export type TaxonomyReferenceResponseDto = {
@@ -20,13 +56,9 @@ export type LinkSourceResponseDto = {
   messageId: number;
   messagePreview: string;
   messageText?: string;
-  messageUrl?: {
-    [key: string]: unknown;
-  } | null;
+  messageUrl?: string | null;
   rawUrl: string;
-  senderName?: {
-    [key: string]: unknown;
-  } | null;
+  senderName?: string | null;
   capturedAt: string;
 };
 
@@ -40,9 +72,7 @@ export type LinkResponseDto = {
   project: TaxonomyReferenceResponseDto | null;
   category: TaxonomyReferenceResponseDto | null;
   tags: Array<TaxonomyReferenceResponseDto>;
-  purpose: {
-    [key: string]: unknown;
-  } | null;
+  purpose: string | null;
   isFavorite: boolean;
   sourceCount: number;
   latestSource: LinkSourceResponseDto | null;
@@ -50,9 +80,7 @@ export type LinkResponseDto = {
   firstDiscoveredAt: string;
   createdAt: string;
   updatedAt: string;
-  archivedAt: {
-    [key: string]: unknown;
-  } | null;
+  archivedAt: string | null;
 };
 
 export type PaginationMetaResponseDto = {
@@ -67,80 +95,204 @@ export type PaginatedLinksResponseDto = {
   pagination: PaginationMetaResponseDto;
 };
 
+export type LatestSyncSummaryResponseDto = {
+  id: string;
+  status:
+    | 'queued'
+    | 'running'
+    | 'succeeded'
+    | 'partiallySucceeded'
+    | 'failed'
+    | 'interrupted';
+  finishedAt: string | null;
+  createdAt: string;
+};
+
+export type AdminOverviewResponseDto = {
+  archived: number;
+  latestSync: LatestSyncSummaryResponseDto | null;
+  pending: number;
+  todayAdded: number;
+  total: number;
+};
+
 export type BatchLinkPatchDto = {
   title?: string;
   url?: string;
-  purpose?: {
-    [key: string]: unknown;
-  } | null;
+  purpose?: string | null;
   environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: {
-    [key: string]: unknown;
-  } | null;
-  categoryId?: {
-    [key: string]: unknown;
-  } | null;
-  tagIds?: Array<Array<unknown>>;
+  projectId?: string | null;
+  categoryId?: string | null;
+  tagIds?: Array<string>;
   isFavorite?: boolean;
-  addTagIds?: Array<Array<unknown>>;
+  addTagIds?: Array<string>;
 };
 
 export type BatchUpdateLinksDto = {
-  ids: Array<Array<unknown>>;
+  ids: Array<string>;
   patch: BatchLinkPatchDto;
+};
+
+export type BatchSkippedLinkResponseDto = {
+  id: string;
+  code: string;
+  message: string;
+};
+
+export type BatchUpdateLinksResponseDto = {
+  updatedIds: Array<string>;
+  skipped: Array<BatchSkippedLinkResponseDto>;
 };
 
 export type UpdateLinkDto = {
   title?: string;
   url?: string;
-  purpose?: {
-    [key: string]: unknown;
-  } | null;
+  purpose?: string | null;
   environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: {
-    [key: string]: unknown;
-  } | null;
-  categoryId?: {
-    [key: string]: unknown;
-  } | null;
-  tagIds?: Array<Array<unknown>>;
+  projectId?: string | null;
+  categoryId?: string | null;
+  tagIds?: Array<string>;
   isFavorite?: boolean;
 };
 
 export type CreateSyncJobDto = {
-  chatIds?: Array<Array<unknown>>;
+  chatIds?: Array<string>;
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom?: string;
   rangeTo?: string;
   defaultProjectId?: string;
   defaultCategoryId?: string;
-  defaultTagIds?: Array<Array<unknown>>;
+  defaultTagIds?: Array<string>;
+};
+
+export type SyncJobChatResponseDto = {
+  id: string;
+  chatId: string;
+  chatTitle: string;
+  status: 'pending' | 'running' | 'succeeded' | 'failed';
+  messageCount: number;
+  foundCount: number;
+  newCount: number;
+  duplicateCount: number;
+  maxProcessedMessageId: number | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
+export type SyncJobResponseDto = {
+  id: string;
+  status:
+    | 'queued'
+    | 'running'
+    | 'succeeded'
+    | 'partiallySucceeded'
+    | 'failed'
+    | 'interrupted';
+  stage:
+    | 'connecting'
+    | 'reading'
+    | 'extracting'
+    | 'deduplicating'
+    | 'saving'
+    | null;
+  progress: number;
+  rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
+  rangeFrom: string | null;
+  rangeTo: string | null;
+  defaultProjectId: string | null;
+  defaultCategoryId: string | null;
+  defaultTagIds: Array<string>;
+  messageCount: number;
+  foundCount: number;
+  newCount: number;
+  duplicateCount: number;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  chats: Array<SyncJobChatResponseDto>;
+};
+
+export type PaginatedSyncJobsResponseDto = {
+  items: Array<SyncJobResponseDto>;
+  pagination: PaginationMetaResponseDto;
+};
+
+export type TaxonomyItemResponseDto = {
+  id: string;
+  name: string;
+  referenceCount: number;
 };
 
 export type TaxonomyNameDto = {
   name: string;
 };
 
+export type TelegramAccountProfileResponseDto = {
+  displayName: string | null;
+  phoneNumber: string | null;
+  telegramUserId: string | null;
+  username: string | null;
+};
+
+export type TelegramAccountResponseDto = {
+  configured: boolean;
+  status: 'authorized' | 'unauthorized';
+  account: TelegramAccountProfileResponseDto | null;
+};
+
 export type SendCodeDto = {
   phoneNumber: string;
+};
+
+export type SendCodeResponseDto = {
+  challengeId: string;
+  delivery: 'app' | 'sms';
+  expiresAt: string;
 };
 
 export type VerifyCodeDto = {
   challengeId: string;
 };
 
+export type TelegramAuthResultResponseDto = {
+  status: 'authorized' | 'passwordRequired';
+};
+
 export type VerifyPasswordDto = {
   challengeId: string;
 };
 
-export type UpdateChatDto = {
-  isEnabled: boolean;
+export type RefreshChatsResponseDto = {
+  count: number;
+  refreshedAt: string;
 };
 
-export type ObjectWritable = {
-  [key: string]: unknown;
+export type TelegramChatResponseDto = {
+  id: string;
+  telegramPeerId: string;
+  type: 'saved' | 'private' | 'group' | 'channel';
+  title: string;
+  username: string | null;
+  isEnabled: boolean;
+  isAvailable: boolean;
+  lastSyncedMessageId: number | null;
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaginatedTelegramChatsResponseDto = {
+  items: Array<TelegramChatResponseDto>;
+  pagination: PaginationMetaResponseDto;
+};
+
+export type UpdateChatDto = {
+  isEnabled: boolean;
 };
 
 export type VerifyCodeDtoWritable = {
@@ -160,19 +312,29 @@ export type AdminLinksControllerOverviewData = {
   url: '/api/admin/v1/overview';
 };
 
-export type AdminLinksControllerOverviewResponses = {
-  /**
-   * Admin 工作台概览。
-   */
-  200: unknown;
+export type AdminLinksControllerOverviewErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminLinksControllerOverviewError =
+  AdminLinksControllerOverviewErrors[keyof AdminLinksControllerOverviewErrors];
+
+export type AdminLinksControllerOverviewResponses = {
+  200: AdminOverviewResponseDto;
+};
+
+export type AdminLinksControllerOverviewResponse =
+  AdminLinksControllerOverviewResponses[keyof AdminLinksControllerOverviewResponses];
 
 export type AdminLinksControllerListData = {
   body?: never;
   path?: never;
   query?: {
-    page?: ObjectWritable;
-    pageSize?: ObjectWritable;
+    page?: number;
+    pageSize?: number;
     q?: string;
     view?: 'all' | 'recent' | 'favorites' | 'pending';
     /**
@@ -190,6 +352,16 @@ export type AdminLinksControllerListData = {
   url: '/api/admin/v1/links';
 };
 
+export type AdminLinksControllerListErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerListError =
+  AdminLinksControllerListErrors[keyof AdminLinksControllerListErrors];
+
 export type AdminLinksControllerListResponses = {
   200: PaginatedLinksResponseDto;
 };
@@ -204,12 +376,22 @@ export type AdminLinksControllerBatchData = {
   url: '/api/admin/v1/links/batch';
 };
 
-export type AdminLinksControllerBatchResponses = {
-  /**
-   * 批量整理结果。
-   */
-  200: unknown;
+export type AdminLinksControllerBatchErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminLinksControllerBatchError =
+  AdminLinksControllerBatchErrors[keyof AdminLinksControllerBatchErrors];
+
+export type AdminLinksControllerBatchResponses = {
+  200: BatchUpdateLinksResponseDto;
+};
+
+export type AdminLinksControllerBatchResponse =
+  AdminLinksControllerBatchResponses[keyof AdminLinksControllerBatchResponses];
 
 export type AdminLinksControllerArchiveData = {
   body?: never;
@@ -219,6 +401,16 @@ export type AdminLinksControllerArchiveData = {
   query?: never;
   url: '/api/admin/v1/links/{id}';
 };
+
+export type AdminLinksControllerArchiveErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerArchiveError =
+  AdminLinksControllerArchiveErrors[keyof AdminLinksControllerArchiveErrors];
 
 export type AdminLinksControllerArchiveResponses = {
   /**
@@ -239,6 +431,16 @@ export type AdminLinksControllerFindOneData = {
   url: '/api/admin/v1/links/{id}';
 };
 
+export type AdminLinksControllerFindOneErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerFindOneError =
+  AdminLinksControllerFindOneErrors[keyof AdminLinksControllerFindOneErrors];
+
 export type AdminLinksControllerFindOneResponses = {
   200: LinkResponseDto;
 };
@@ -254,6 +456,16 @@ export type AdminLinksControllerUpdateData = {
   query?: never;
   url: '/api/admin/v1/links/{id}';
 };
+
+export type AdminLinksControllerUpdateErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerUpdateError =
+  AdminLinksControllerUpdateErrors[keyof AdminLinksControllerUpdateErrors];
 
 export type AdminLinksControllerUpdateResponses = {
   200: LinkResponseDto;
@@ -271,6 +483,16 @@ export type AdminLinksControllerRestoreData = {
   url: '/api/admin/v1/links/{id}/restore';
 };
 
+export type AdminLinksControllerRestoreErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerRestoreError =
+  AdminLinksControllerRestoreErrors[keyof AdminLinksControllerRestoreErrors];
+
 export type AdminLinksControllerRestoreResponses = {
   200: LinkResponseDto;
 };
@@ -282,18 +504,28 @@ export type AdminSyncControllerListData = {
   body?: never;
   path?: never;
   query?: {
-    page?: ObjectWritable;
-    pageSize?: ObjectWritable;
+    page?: number;
+    pageSize?: number;
   };
   url: '/api/admin/v1/sync-jobs';
 };
 
-export type AdminSyncControllerListResponses = {
-  /**
-   * 同步任务列表。
-   */
-  200: unknown;
+export type AdminSyncControllerListErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminSyncControllerListError =
+  AdminSyncControllerListErrors[keyof AdminSyncControllerListErrors];
+
+export type AdminSyncControllerListResponses = {
+  200: PaginatedSyncJobsResponseDto;
+};
+
+export type AdminSyncControllerListResponse =
+  AdminSyncControllerListResponses[keyof AdminSyncControllerListResponses];
 
 export type AdminSyncControllerCreateData = {
   body: CreateSyncJobDto;
@@ -302,12 +534,22 @@ export type AdminSyncControllerCreateData = {
   url: '/api/admin/v1/sync-jobs';
 };
 
-export type AdminSyncControllerCreateResponses = {
-  /**
-   * 同步任务已进入后台执行。
-   */
-  202: unknown;
+export type AdminSyncControllerCreateErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminSyncControllerCreateError =
+  AdminSyncControllerCreateErrors[keyof AdminSyncControllerCreateErrors];
+
+export type AdminSyncControllerCreateResponses = {
+  202: SyncJobResponseDto;
+};
+
+export type AdminSyncControllerCreateResponse =
+  AdminSyncControllerCreateResponses[keyof AdminSyncControllerCreateResponses];
 
 export type AdminSyncControllerFindOneData = {
   body?: never;
@@ -318,54 +560,94 @@ export type AdminSyncControllerFindOneData = {
   url: '/api/admin/v1/sync-jobs/{id}';
 };
 
-export type AdminSyncControllerFindOneResponses = {
-  /**
-   * 同步任务详情与聊天级进度。
-   */
-  200: unknown;
+export type AdminSyncControllerFindOneErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminSyncControllerFindOneError =
+  AdminSyncControllerFindOneErrors[keyof AdminSyncControllerFindOneErrors];
+
+export type AdminSyncControllerFindOneResponses = {
+  200: SyncJobResponseDto;
+};
+
+export type AdminSyncControllerFindOneResponse =
+  AdminSyncControllerFindOneResponses[keyof AdminSyncControllerFindOneResponses];
 
 export type AdminTaxonomyControllerListData = {
   body?: never;
   path: {
-    kind: string;
+    kind: 'projects' | 'categories' | 'tags';
   };
   query?: never;
   url: '/api/admin/v1/taxonomy/{kind}';
 };
 
-export type AdminTaxonomyControllerListResponses = {
-  /**
-   * 基础资料列表及引用数。
-   */
-  200: unknown;
+export type AdminTaxonomyControllerListErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminTaxonomyControllerListError =
+  AdminTaxonomyControllerListErrors[keyof AdminTaxonomyControllerListErrors];
+
+export type AdminTaxonomyControllerListResponses = {
+  200: Array<TaxonomyItemResponseDto>;
+};
+
+export type AdminTaxonomyControllerListResponse =
+  AdminTaxonomyControllerListResponses[keyof AdminTaxonomyControllerListResponses];
 
 export type AdminTaxonomyControllerCreateData = {
   body: TaxonomyNameDto;
   path: {
-    kind: string;
+    kind: 'projects' | 'categories' | 'tags';
   };
   query?: never;
   url: '/api/admin/v1/taxonomy/{kind}';
 };
 
-export type AdminTaxonomyControllerCreateResponses = {
-  /**
-   * 新增基础资料。
-   */
-  200: unknown;
+export type AdminTaxonomyControllerCreateErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminTaxonomyControllerCreateError =
+  AdminTaxonomyControllerCreateErrors[keyof AdminTaxonomyControllerCreateErrors];
+
+export type AdminTaxonomyControllerCreateResponses = {
+  201: TaxonomyItemResponseDto;
+};
+
+export type AdminTaxonomyControllerCreateResponse =
+  AdminTaxonomyControllerCreateResponses[keyof AdminTaxonomyControllerCreateResponses];
 
 export type AdminTaxonomyControllerRemoveData = {
   body?: never;
   path: {
-    kind: string;
+    kind: 'projects' | 'categories' | 'tags';
     id: string;
   };
   query?: never;
   url: '/api/admin/v1/taxonomy/{kind}/{id}';
 };
+
+export type AdminTaxonomyControllerRemoveErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminTaxonomyControllerRemoveError =
+  AdminTaxonomyControllerRemoveErrors[keyof AdminTaxonomyControllerRemoveErrors];
 
 export type AdminTaxonomyControllerRemoveResponses = {
   /**
@@ -380,19 +662,29 @@ export type AdminTaxonomyControllerRemoveResponse =
 export type AdminTaxonomyControllerRenameData = {
   body: TaxonomyNameDto;
   path: {
-    kind: string;
+    kind: 'projects' | 'categories' | 'tags';
     id: string;
   };
   query?: never;
   url: '/api/admin/v1/taxonomy/{kind}/{id}';
 };
 
-export type AdminTaxonomyControllerRenameResponses = {
-  /**
-   * 重命名基础资料。
-   */
-  200: unknown;
+export type AdminTaxonomyControllerRenameErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
 };
+
+export type AdminTaxonomyControllerRenameError =
+  AdminTaxonomyControllerRenameErrors[keyof AdminTaxonomyControllerRenameErrors];
+
+export type AdminTaxonomyControllerRenameResponses = {
+  200: TaxonomyItemResponseDto;
+};
+
+export type AdminTaxonomyControllerRenameResponse =
+  AdminTaxonomyControllerRenameResponses[keyof AdminTaxonomyControllerRenameResponses];
 
 export type AdminTelegramControllerAccountData = {
   body?: never;
@@ -401,12 +693,25 @@ export type AdminTelegramControllerAccountData = {
   url: '/api/admin/v1/telegram/account';
 };
 
-export type AdminTelegramControllerAccountResponses = {
-  /**
-   * Telegram 配置与授权状态。
-   */
-  200: unknown;
+export type AdminTelegramControllerAccountErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerAccountError =
+  AdminTelegramControllerAccountErrors[keyof AdminTelegramControllerAccountErrors];
+
+export type AdminTelegramControllerAccountResponses = {
+  200: TelegramAccountResponseDto;
+};
+
+export type AdminTelegramControllerAccountResponse =
+  AdminTelegramControllerAccountResponses[keyof AdminTelegramControllerAccountResponses];
 
 export type AdminTelegramControllerSendCodeData = {
   body: SendCodeDto;
@@ -415,12 +720,25 @@ export type AdminTelegramControllerSendCodeData = {
   url: '/api/admin/v1/telegram/auth/code';
 };
 
-export type AdminTelegramControllerSendCodeResponses = {
-  /**
-   * 验证码已请求。
-   */
-  202: unknown;
+export type AdminTelegramControllerSendCodeErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerSendCodeError =
+  AdminTelegramControllerSendCodeErrors[keyof AdminTelegramControllerSendCodeErrors];
+
+export type AdminTelegramControllerSendCodeResponses = {
+  202: SendCodeResponseDto;
+};
+
+export type AdminTelegramControllerSendCodeResponse =
+  AdminTelegramControllerSendCodeResponses[keyof AdminTelegramControllerSendCodeResponses];
 
 export type AdminTelegramControllerVerifyCodeData = {
   body: VerifyCodeDtoWritable;
@@ -429,12 +747,25 @@ export type AdminTelegramControllerVerifyCodeData = {
   url: '/api/admin/v1/telegram/auth/code/verify';
 };
 
-export type AdminTelegramControllerVerifyCodeResponses = {
-  /**
-   * 验证码验证结果。
-   */
-  200: unknown;
+export type AdminTelegramControllerVerifyCodeErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerVerifyCodeError =
+  AdminTelegramControllerVerifyCodeErrors[keyof AdminTelegramControllerVerifyCodeErrors];
+
+export type AdminTelegramControllerVerifyCodeResponses = {
+  200: TelegramAuthResultResponseDto;
+};
+
+export type AdminTelegramControllerVerifyCodeResponse =
+  AdminTelegramControllerVerifyCodeResponses[keyof AdminTelegramControllerVerifyCodeResponses];
 
 export type AdminTelegramControllerVerifyPasswordData = {
   body: VerifyPasswordDtoWritable;
@@ -443,12 +774,25 @@ export type AdminTelegramControllerVerifyPasswordData = {
   url: '/api/admin/v1/telegram/auth/password/verify';
 };
 
-export type AdminTelegramControllerVerifyPasswordResponses = {
-  /**
-   * 2FA 验证结果。
-   */
-  200: unknown;
+export type AdminTelegramControllerVerifyPasswordErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerVerifyPasswordError =
+  AdminTelegramControllerVerifyPasswordErrors[keyof AdminTelegramControllerVerifyPasswordErrors];
+
+export type AdminTelegramControllerVerifyPasswordResponses = {
+  200: TelegramAuthResultResponseDto;
+};
+
+export type AdminTelegramControllerVerifyPasswordResponse =
+  AdminTelegramControllerVerifyPasswordResponses[keyof AdminTelegramControllerVerifyPasswordResponses];
 
 export type AdminTelegramControllerLogOutData = {
   body?: never;
@@ -456,6 +800,19 @@ export type AdminTelegramControllerLogOutData = {
   query?: never;
   url: '/api/admin/v1/telegram/session';
 };
+
+export type AdminTelegramControllerLogOutErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
+};
+
+export type AdminTelegramControllerLogOutError =
+  AdminTelegramControllerLogOutErrors[keyof AdminTelegramControllerLogOutErrors];
 
 export type AdminTelegramControllerLogOutResponses = {
   /**
@@ -474,31 +831,57 @@ export type AdminTelegramControllerRefreshChatsData = {
   url: '/api/admin/v1/telegram/chats/refresh';
 };
 
-export type AdminTelegramControllerRefreshChatsResponses = {
-  /**
-   * Telegram 聊天列表已刷新。
-   */
-  200: unknown;
+export type AdminTelegramControllerRefreshChatsErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerRefreshChatsError =
+  AdminTelegramControllerRefreshChatsErrors[keyof AdminTelegramControllerRefreshChatsErrors];
+
+export type AdminTelegramControllerRefreshChatsResponses = {
+  200: RefreshChatsResponseDto;
+};
+
+export type AdminTelegramControllerRefreshChatsResponse =
+  AdminTelegramControllerRefreshChatsResponses[keyof AdminTelegramControllerRefreshChatsResponses];
 
 export type AdminTelegramControllerListChatsData = {
   body?: never;
   path?: never;
   query?: {
-    page?: ObjectWritable;
-    pageSize?: ObjectWritable;
+    page?: number;
+    pageSize?: number;
     query?: string;
     type?: 'saved' | 'private' | 'group' | 'channel';
   };
   url: '/api/admin/v1/telegram/chats';
 };
 
-export type AdminTelegramControllerListChatsResponses = {
-  /**
-   * Telegram 聊天列表。
-   */
-  200: unknown;
+export type AdminTelegramControllerListChatsErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerListChatsError =
+  AdminTelegramControllerListChatsErrors[keyof AdminTelegramControllerListChatsErrors];
+
+export type AdminTelegramControllerListChatsResponses = {
+  200: PaginatedTelegramChatsResponseDto;
+};
+
+export type AdminTelegramControllerListChatsResponse =
+  AdminTelegramControllerListChatsResponses[keyof AdminTelegramControllerListChatsResponses];
 
 export type AdminTelegramControllerUpdateChatData = {
   body: UpdateChatDto;
@@ -509,9 +892,22 @@ export type AdminTelegramControllerUpdateChatData = {
   url: '/api/admin/v1/telegram/chats/{id}';
 };
 
-export type AdminTelegramControllerUpdateChatResponses = {
-  /**
-   * 聊天同步开关已更新。
-   */
-  200: unknown;
+export type AdminTelegramControllerUpdateChatErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+  503: ApiErrorResponseDto;
 };
+
+export type AdminTelegramControllerUpdateChatError =
+  AdminTelegramControllerUpdateChatErrors[keyof AdminTelegramControllerUpdateChatErrors];
+
+export type AdminTelegramControllerUpdateChatResponses = {
+  200: TelegramChatResponseDto;
+};
+
+export type AdminTelegramControllerUpdateChatResponse =
+  AdminTelegramControllerUpdateChatResponses[keyof AdminTelegramControllerUpdateChatResponses];

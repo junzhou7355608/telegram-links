@@ -10,7 +10,7 @@ import { router } from '@/lib/router';
 
 client.setConfig({
   axios: axiosInstance,
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL?.trim() || '',
 });
 
 const rootElement = document.getElementById('root');

@@ -1,5 +1,6 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { createRootRoute } from '@tanstack/react-router';
 
+import { AdminShell } from '@/components/layouts/admin-shell';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { AppProviders } from '@/components/providers/app-providers';
 
@@ -12,7 +13,7 @@ function RootComponent() {
   return (
     <AppProviders>
       <AppLayout>
-        <Outlet />
+        <AdminShell />
       </AppLayout>
     </AppProviders>
   );

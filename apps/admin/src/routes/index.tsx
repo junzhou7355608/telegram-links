@@ -1,7 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
-
-import { AdminWorkspace } from '@/components/features/admin-workspace';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
-  component: AdminWorkspace,
+  beforeLoad: () => {
+    throw redirect({
+      to: '/links/pending',
+      search: { page: 1, sort: 'newest' },
+    });
+  },
 });

@@ -1,15 +1,13 @@
+import type { LinkResponseDto } from '@/api/types.gen';
+import { TagPicker } from '@/components/features/tag-picker';
 import {
   canCompleteLink,
   environmentLabels,
   formatDateTime,
   getDomain,
   isValidHttpUrl,
+  type DemoTaxonomyState,
 } from '@/lib/admin-store';
-import type {
-  AdminTaxonomyState,
-  LinkEnvironment,
-  ManagedLinkMock,
-} from '@/types/admin';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -39,13 +37,22 @@ import { Textarea } from '@repo/ui/components/textarea';
 import { Copy, ExternalLink, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { TagPicker } from '@/components/features/tag-picker';
+
+interface LinkDraft {
+  categoryId: string;
+  environment: LinkResponseDto['environment'];
+  projectId: string;
+  purpose: string;
+  tagIds: string[];
+  title: string;
+  url: string;
+}
 
 interface LinkEditSheetProps {
-  link: ManagedLinkMock;
-  taxonomy: AdminTaxonomyState;
+  link: LinkResponseDto;
+  taxonomy: DemoTaxonomyState;
   onOpenChange: (open: boolean) => void;
-  onSave: (link: ManagedLinkMock) => void;
+  onSave: (link: LinkResponseDto) => void;
 }
 
 export function LinkEditSheet({
@@ -54,27 +61,41 @@ export function LinkEditSheet({
   onOpenChange,
   onSave,
 }: LinkEditSheetProps) {
-  const [draft, setDraft] = useState(link);
+  const [draft, setDraft] = useState<LinkDraft>({
+    categoryId: link.category?.id ?? '',
+    environment: link.environment,
+    projectId: link.project?.id ?? '',
+    purpose: link.purpose ?? '',
+    tagIds: link.tags.map((tag) => tag.id),
+    title: link.title,
+    url: link.url,
+  });
   const [error, setError] = useState('');
 
-  function update<Key extends keyof ManagedLinkMock>(
+  function update<Key extends keyof LinkDraft>(
     key: Key,
-    value: ManagedLinkMock[Key],
+    value: LinkDraft[Key],
   ) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function save(status: 'pending' | 'organized') {
-    const next: ManagedLinkMock = {
-      ...draft,
-      title: draft.title.trim(),
-      url: draft.url.trim(),
-      domain: getDomain(draft.url.trim()),
-      project: draft.project.trim(),
-      purpose: draft.purpose.trim(),
-      category: draft.category.trim(),
+  function save(status: LinkResponseDto['status']) {
+    const url = draft.url.trim();
+    const next: LinkResponseDto = {
+      ...link,
+      category:
+        taxonomy.categories.find((item) => item.id === draft.categoryId) ??
+        null,
+      domain: getDomain(url),
+      environment: draft.environment,
+      project:
+        taxonomy.projects.find((item) => item.id === draft.projectId) ?? null,
+      purpose: draft.purpose.trim() || null,
       status,
+      tags: taxonomy.tags.filter((item) => draft.tagIds.includes(item.id)),
+      title: draft.title.trim(),
       updatedAt: new Date().toISOString(),
+      url,
     };
 
     if (status === 'organized' && !canCompleteLink(next)) {
@@ -101,6 +122,8 @@ export function LinkEditSheet({
     }
   }
 
+  const source = link.latestSource;
+
   return (
     <Sheet open onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
@@ -108,9 +131,9 @@ export function LinkEditSheet({
           <div className="flex flex-wrap items-center gap-2 pr-8">
             <SheetTitle>整理链接</SheetTitle>
             <Badge
-              variant={draft.status === 'pending' ? 'secondary' : 'outline'}
+              variant={link.status === 'pending' ? 'secondary' : 'outline'}
             >
-              {draft.status === 'pending' ? '待整理' : '已整理'}
+              {link.status === 'pending' ? '待整理' : '已整理'}
             </Badge>
           </div>
           <SheetDescription>
@@ -171,21 +194,26 @@ export function LinkEditSheet({
               <Field>
                 <FieldLabel htmlFor="edit-project">项目</FieldLabel>
                 <Select
-                  value={draft.project || 'none'}
+                  value={draft.projectId || 'none'}
                   onValueChange={(value) =>
-                    update('project', value === 'none' ? '' : String(value))
+                    update('projectId', value === 'none' ? '' : String(value))
                   }
                 >
                   <SelectTrigger id="edit-project" className="w-full">
                     <SelectValue>
-                      {(value) => (value === 'none' ? '未设置' : String(value))}
+                      {(value) =>
+                        value === 'none'
+                          ? '未设置'
+                          : (taxonomy.projects.find((item) => item.id === value)
+                              ?.name ?? '未知项目')
+                      }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">未设置</SelectItem>
                     {taxonomy.projects.map((project) => (
-                      <SelectItem key={project} value={project}>
-                        {project}
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -194,21 +222,27 @@ export function LinkEditSheet({
               <Field>
                 <FieldLabel htmlFor="edit-category">分类</FieldLabel>
                 <Select
-                  value={draft.category || 'none'}
+                  value={draft.categoryId || 'none'}
                   onValueChange={(value) =>
-                    update('category', value === 'none' ? '' : String(value))
+                    update('categoryId', value === 'none' ? '' : String(value))
                   }
                 >
                   <SelectTrigger id="edit-category" className="w-full">
                     <SelectValue>
-                      {(value) => (value === 'none' ? '未设置' : String(value))}
+                      {(value) =>
+                        value === 'none'
+                          ? '未设置'
+                          : (taxonomy.categories.find(
+                              (item) => item.id === value,
+                            )?.name ?? '未知分类')
+                      }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">未设置</SelectItem>
                     {taxonomy.categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -233,14 +267,17 @@ export function LinkEditSheet({
                 <Select
                   value={draft.environment}
                   onValueChange={(value) =>
-                    update('environment', value as LinkEnvironment)
+                    update(
+                      'environment',
+                      String(value) as LinkResponseDto['environment'],
+                    )
                   }
                 >
                   <SelectTrigger id="edit-environment" className="w-full">
                     <SelectValue>
                       {(value) =>
                         environmentLabels[
-                          value as keyof typeof environmentLabels
+                          value as LinkResponseDto['environment']
                         ]
                       }
                     </SelectValue>
@@ -259,8 +296,8 @@ export function LinkEditSheet({
                 <TagPicker
                   id="edit-tags"
                   options={taxonomy.tags}
-                  value={draft.tags}
-                  onChange={(tags) => update('tags', tags)}
+                  value={draft.tagIds}
+                  onChange={(tagIds) => update('tagIds', tagIds)}
                 />
               </Field>
             </div>
@@ -275,37 +312,43 @@ export function LinkEditSheet({
             className="rounded-xl border"
           >
             <div className="border-b px-4 py-3">
-              <h3 id="source-heading" className="font-heading font-medium">
+              <h3 id="source-heading" className="font-medium">
                 Telegram 来源
               </h3>
             </div>
-            <dl className="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-3 p-4 text-sm">
-              <dt className="text-muted-foreground">聊天</dt>
-              <dd>{draft.source.chatName}</dd>
-              <dt className="text-muted-foreground">采集时间</dt>
-              <dd>{formatDateTime(draft.source.capturedAt)}</dd>
-              <dt className="text-muted-foreground">原消息</dt>
-              <dd className="leading-relaxed">{draft.source.messagePreview}</dd>
-            </dl>
-            {draft.source.messageUrl ? (
-              <div className="border-t p-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  nativeButton={false}
-                  render={
-                    <a
-                      href={draft.source.messageUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                >
-                  <MessageCircle />
-                  打开原消息
-                </Button>
-              </div>
-            ) : null}
+            {source ? (
+              <>
+                <dl className="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-3 p-4 text-sm">
+                  <dt className="text-muted-foreground">聊天</dt>
+                  <dd>{source.chatName}</dd>
+                  <dt className="text-muted-foreground">采集时间</dt>
+                  <dd>{formatDateTime(source.capturedAt)}</dd>
+                  <dt className="text-muted-foreground">原消息</dt>
+                  <dd className="leading-relaxed">{source.messagePreview}</dd>
+                </dl>
+                {source.messageUrl ? (
+                  <div className="border-t p-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      nativeButton={false}
+                      render={
+                        <a
+                          href={source.messageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        />
+                      }
+                    >
+                      <MessageCircle />
+                      打开原消息
+                    </Button>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="p-4 text-sm text-muted-foreground">暂无来源信息</p>
+            )}
           </section>
         </div>
 
@@ -316,7 +359,7 @@ export function LinkEditSheet({
           <Button
             type="button"
             variant="outline"
-            onClick={() => save(draft.status)}
+            onClick={() => save(link.status)}
           >
             保存草稿
           </Button>

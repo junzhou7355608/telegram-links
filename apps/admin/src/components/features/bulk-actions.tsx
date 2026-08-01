@@ -1,9 +1,6 @@
-import type {
-  AdminTaxonomyState,
-  LinkEnvironment,
-  ManagedLinkMock,
-} from '@/types/admin';
-import { environmentLabels } from '@/lib/admin-store';
+import type { BatchLinkPatchDto, LinkResponseDto } from '@/api/types.gen';
+import { TagPicker } from '@/components/features/tag-picker';
+import { environmentLabels, type DemoTaxonomyState } from '@/lib/admin-store';
 import { Button } from '@repo/ui/components/button';
 import {
   Dialog,
@@ -23,20 +20,12 @@ import {
 } from '@repo/ui/components/select';
 import { CheckCheck, ListChecks, X } from 'lucide-react';
 import { useState } from 'react';
-import { TagPicker } from '@/components/features/tag-picker';
-
-export interface BulkPatch {
-  project?: string;
-  category?: string;
-  environment?: LinkEnvironment;
-  tags?: string[];
-}
 
 interface BulkActionsProps {
-  selectedLinks: ManagedLinkMock[];
-  taxonomy: AdminTaxonomyState;
+  selectedLinks: LinkResponseDto[];
+  taxonomy: DemoTaxonomyState;
   onClear: () => void;
-  onApply: (patch: BulkPatch) => void;
+  onApply: (patch: BatchLinkPatchDto) => void;
   onComplete: () => void;
 }
 
@@ -48,28 +37,28 @@ export function BulkActions({
   onComplete,
 }: BulkActionsProps) {
   const [open, setOpen] = useState(false);
-  const [project, setProject] = useState('unchanged');
-  const [category, setCategory] = useState('unchanged');
+  const [projectId, setProjectId] = useState('unchanged');
+  const [categoryId, setCategoryId] = useState('unchanged');
   const [environment, setEnvironment] = useState('unchanged');
-  const [tags, setTags] = useState<string[]>([]);
+  const [tagIds, setTagIds] = useState<string[]>([]);
 
   if (selectedLinks.length === 0) {
     return null;
   }
 
   function apply() {
-    const patch: BulkPatch = {};
-    if (project !== 'unchanged') {
-      patch.project = project;
+    const patch: BatchLinkPatchDto = {};
+    if (projectId !== 'unchanged') {
+      patch.projectId = projectId === 'none' ? null : projectId;
     }
-    if (category !== 'unchanged') {
-      patch.category = category;
+    if (categoryId !== 'unchanged') {
+      patch.categoryId = categoryId === 'none' ? null : categoryId;
     }
     if (environment !== 'unchanged') {
-      patch.environment = environment as LinkEnvironment;
+      patch.environment = environment as LinkResponseDto['environment'];
     }
-    if (tags.length > 0) {
-      patch.tags = tags;
+    if (tagIds.length > 0) {
+      patch.addTagIds = tagIds;
     }
     onApply(patch);
     setOpen(false);
@@ -112,21 +101,28 @@ export function BulkActions({
               <Field>
                 <FieldLabel htmlFor="bulk-project">项目</FieldLabel>
                 <Select
-                  value={project}
-                  onValueChange={(value) => setProject(String(value))}
+                  value={projectId}
+                  onValueChange={(value) => setProjectId(value ?? 'unchanged')}
                 >
                   <SelectTrigger id="bulk-project" className="w-full">
                     <SelectValue>
                       {(value) =>
-                        value === 'unchanged' ? '保持不变' : String(value)
+                        value === 'unchanged'
+                          ? '保持不变'
+                          : value === 'none'
+                            ? '清空项目'
+                            : (taxonomy.projects.find(
+                                (item) => item.id === value,
+                              )?.name ?? '未知项目')
                       }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unchanged">保持不变</SelectItem>
+                    <SelectItem value="none">清空项目</SelectItem>
                     {taxonomy.projects.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -135,21 +131,28 @@ export function BulkActions({
               <Field>
                 <FieldLabel htmlFor="bulk-category">分类</FieldLabel>
                 <Select
-                  value={category}
-                  onValueChange={(value) => setCategory(String(value))}
+                  value={categoryId}
+                  onValueChange={(value) => setCategoryId(value ?? 'unchanged')}
                 >
                   <SelectTrigger id="bulk-category" className="w-full">
                     <SelectValue>
                       {(value) =>
-                        value === 'unchanged' ? '保持不变' : String(value)
+                        value === 'unchanged'
+                          ? '保持不变'
+                          : value === 'none'
+                            ? '清空分类'
+                            : (taxonomy.categories.find(
+                                (item) => item.id === value,
+                              )?.name ?? '未知分类')
                       }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unchanged">保持不变</SelectItem>
+                    <SelectItem value="none">清空分类</SelectItem>
                     {taxonomy.categories.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -160,7 +163,7 @@ export function BulkActions({
               <FieldLabel htmlFor="bulk-environment">环境</FieldLabel>
               <Select
                 value={environment}
-                onValueChange={(value) => setEnvironment(String(value))}
+                onValueChange={(value) => setEnvironment(value ?? 'unchanged')}
               >
                 <SelectTrigger id="bulk-environment" className="w-full">
                   <SelectValue>
@@ -168,17 +171,18 @@ export function BulkActions({
                       value === 'unchanged'
                         ? '保持不变'
                         : environmentLabels[
-                            value as keyof typeof environmentLabels
+                            value as LinkResponseDto['environment']
                           ]
                     }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unchanged">保持不变</SelectItem>
-                  <SelectItem value="production">正式</SelectItem>
-                  <SelectItem value="test">测试</SelectItem>
-                  <SelectItem value="development">开发</SelectItem>
-                  <SelectItem value="unknown">未知</SelectItem>
+                  {Object.entries(environmentLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
@@ -187,8 +191,8 @@ export function BulkActions({
               <TagPicker
                 id="bulk-tags"
                 options={taxonomy.tags}
-                value={tags}
-                onChange={setTags}
+                value={tagIds}
+                onChange={setTagIds}
               />
             </Field>
           </FieldGroup>

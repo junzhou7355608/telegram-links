@@ -1,9 +1,9 @@
+import type { LinkResponseDto } from '@/api/types.gen';
 import {
   environmentLabels,
   formatDateTime,
   statusLabels,
 } from '@/lib/admin-store';
-import type { ManagedLinkMock } from '@/types/admin';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -25,25 +25,27 @@ import {
 import { ArrowUpRight, FileQuestion, Link2, Pencil } from 'lucide-react';
 
 interface LinkListProps {
-  links: ManagedLinkMock[];
+  links: LinkResponseDto[];
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
-  onOpenLink: (link: ManagedLinkMock) => void;
+  onOpenLink: (linkId: string) => void;
   onResetFilters: () => void;
 }
 
-function titleFor(link: ManagedLinkMock) {
+function titleFor(link: LinkResponseDto) {
   return link.title || '未命名链接';
 }
 
-function StatusBadges({ link }: { link: ManagedLinkMock }) {
+function StatusBadges({ link }: { link: LinkResponseDto }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       <Badge variant="outline">{environmentLabels[link.environment]}</Badge>
       <Badge variant={link.status === 'pending' ? 'secondary' : 'outline'}>
         {statusLabels[link.status]}
       </Badge>
-      {link.category ? <Badge variant="outline">{link.category}</Badge> : null}
+      {link.category ? (
+        <Badge variant="outline">{link.category.name}</Badge>
+      ) : null}
     </div>
   );
 }
@@ -70,11 +72,9 @@ export function LinkList({
   }
 
   function toggleAll() {
-    if (allSelected) {
-      onSelectionChange(new Set());
-      return;
-    }
-    onSelectionChange(new Set(links.map((link) => link.id)));
+    onSelectionChange(
+      allSelected ? new Set() : new Set(links.map((link) => link.id)),
+    );
   }
 
   if (links.length === 0) {
@@ -107,7 +107,7 @@ export function LinkList({
             key={link.id}
             size="sm"
             className="cursor-pointer"
-            onClick={() => onOpenLink(link)}
+            onClick={() => onOpenLink(link.id)}
           >
             <CardHeader className="grid-cols-[auto_1fr_auto] items-start">
               <div
@@ -124,16 +124,7 @@ export function LinkList({
                 <CardTitle
                   className={!link.title ? 'text-muted-foreground' : ''}
                 >
-                  <button
-                    type="button"
-                    className="max-w-full truncate rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenLink(link);
-                    }}
-                  >
-                    {titleFor(link)}
-                  </button>
+                  {titleFor(link)}
                 </CardTitle>
                 <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
                   {link.domain}
@@ -146,7 +137,7 @@ export function LinkList({
                 aria-label={`编辑 ${titleFor(link)}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  onOpenLink(link);
+                  onOpenLink(link.id);
                 }}
               >
                 <Pencil />
@@ -156,11 +147,13 @@ export function LinkList({
               <StatusBadges link={link} />
               <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
                 <dt className="text-muted-foreground">项目</dt>
-                <dd>{link.project || '未设置'}</dd>
+                <dd>{link.project?.name ?? '未设置'}</dd>
                 <dt className="text-muted-foreground">分类</dt>
-                <dd>{link.category || '未设置'}</dd>
+                <dd>{link.category?.name ?? '未设置'}</dd>
                 <dt className="text-muted-foreground">来源</dt>
-                <dd className="truncate">{link.source.chatName}</dd>
+                <dd className="truncate">
+                  {link.latestSource?.chatName ?? '—'}
+                </dd>
               </dl>
             </CardContent>
             <CardFooter className="justify-between text-xs text-muted-foreground">
@@ -205,14 +198,14 @@ export function LinkList({
                 aria-label={`编辑 ${titleFor(link)}`}
                 className="cursor-pointer focus-visible:bg-muted focus-visible:outline-none"
                 data-state={selectedIds.has(link.id) ? 'selected' : undefined}
-                onClick={() => onOpenLink(link)}
+                onClick={() => onOpenLink(link.id)}
                 onKeyDown={(event) => {
                   if (
                     event.target === event.currentTarget &&
                     (event.key === 'Enter' || event.key === ' ')
                   ) {
                     event.preventDefault();
-                    onOpenLink(link);
+                    onOpenLink(link.id);
                   }
                 }}
               >
@@ -245,9 +238,9 @@ export function LinkList({
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{link.project || '—'}</TableCell>
+                <TableCell>{link.project?.name ?? '—'}</TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  {link.category || '—'}
+                  {link.category?.name ?? '—'}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">
@@ -255,7 +248,9 @@ export function LinkList({
                   </Badge>
                 </TableCell>
                 <TableCell className="hidden xl:table-cell">
-                  <p className="truncate">{link.source.chatName}</p>
+                  <p className="truncate">
+                    {link.latestSource?.chatName ?? '—'}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {formatDateTime(link.createdAt)}
                   </p>
@@ -277,7 +272,7 @@ export function LinkList({
                     aria-label={`编辑 ${titleFor(link)}`}
                     onClick={(event) => {
                       event.stopPropagation();
-                      onOpenLink(link);
+                      onOpenLink(link.id);
                     }}
                   >
                     <Pencil />

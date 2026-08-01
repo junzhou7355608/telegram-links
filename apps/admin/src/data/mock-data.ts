@@ -1,11 +1,12 @@
 import type {
-  AdminStoreV1,
-  ManagedLinkMock,
-  ScanCandidateMock,
-  TelegramChatMock,
-} from '@/types/admin';
+  LinkResponseDto,
+  LinkSourceResponseDto,
+  SyncJobResponseDto,
+  TaxonomyItemResponseDto,
+  TelegramChatResponseDto,
+} from '@/api/types.gen';
 
-export const telegramChats: TelegramChatMock[] = [
+const legacyTelegramChats = [
   {
     id: 'saved',
     name: 'Saved Messages',
@@ -28,7 +29,7 @@ export const telegramChats: TelegramChatMock[] = [
   },
 ];
 
-const links: ManagedLinkMock[] = [
+const legacyLinks = [
   {
     id: 'link-001',
     title: 'Atlas Web 仓库',
@@ -379,81 +380,53 @@ const links: ManagedLinkMock[] = [
   },
 ];
 
-export const initialAdminStore: AdminStoreV1 = {
-  version: 1,
-  links,
-  jobs: [
-    {
-      id: 'scan-demo-004',
-      status: 'success',
-      progress: 100,
-      chatNames: ['研发协作群', '产品与设计', '运维通知'],
-      rangeLabel: '从上次扫描',
-      startedAt: '2026-07-30T08:31:00+08:00',
-      finishedAt: '2026-07-30T08:31:18+08:00',
-      messageCount: 126,
-      foundCount: 9,
-      newCount: 4,
-      duplicateCount: 5,
-      durationMs: 18_400,
-    },
-    {
-      id: 'scan-demo-003',
-      status: 'success',
-      progress: 100,
-      chatNames: ['Saved Messages', '研发协作群'],
-      rangeLabel: '最近 7 天',
-      startedAt: '2026-07-29T21:04:00+08:00',
-      finishedAt: '2026-07-29T21:04:13+08:00',
-      messageCount: 84,
-      foundCount: 7,
-      newCount: 4,
-      duplicateCount: 3,
-      durationMs: 13_200,
-    },
-    {
-      id: 'scan-demo-002',
-      status: 'failed',
-      progress: 34,
-      chatNames: ['Saved Messages'],
-      rangeLabel: '从上次扫描',
-      startedAt: '2026-07-27T13:10:00+08:00',
-      finishedAt: '2026-07-27T13:10:06+08:00',
-      messageCount: 18,
-      foundCount: 0,
-      newCount: 0,
-      duplicateCount: 0,
-      durationMs: 6_100,
-      error: '演示错误：Telegram 会话暂时不可用。',
-    },
-  ],
-  taxonomy: {
-    projects: ['Atlas', 'Northstar', 'Billing', 'Orbit', 'Legacy'],
-    categories: [
-      '代码仓库',
-      '部署地址',
-      '文档',
-      '设计稿',
-      '监控面板',
-      '工单',
-      '其他',
-      '书签',
-    ],
-    tags: [
-      '前端',
-      '后端',
-      'API',
-      '正式',
-      '测试',
-      '发布',
-      '告警',
-      '待确认',
-      '待阅读',
-    ],
+const legacyJobs = [
+  {
+    id: 'scan-demo-004',
+    status: 'success',
+    progress: 100,
+    chatNames: ['研发协作群', '产品与设计', '运维通知'],
+    rangeLabel: '从上次扫描',
+    startedAt: '2026-07-30T08:31:00+08:00',
+    finishedAt: '2026-07-30T08:31:18+08:00',
+    messageCount: 126,
+    foundCount: 9,
+    newCount: 4,
+    duplicateCount: 5,
+    durationMs: 18_400,
   },
-};
+  {
+    id: 'scan-demo-003',
+    status: 'success',
+    progress: 100,
+    chatNames: ['Saved Messages', '研发协作群'],
+    rangeLabel: '最近 7 天',
+    startedAt: '2026-07-29T21:04:00+08:00',
+    finishedAt: '2026-07-29T21:04:13+08:00',
+    messageCount: 84,
+    foundCount: 7,
+    newCount: 4,
+    duplicateCount: 3,
+    durationMs: 13_200,
+  },
+  {
+    id: 'scan-demo-002',
+    status: 'failed',
+    progress: 34,
+    chatNames: ['Saved Messages'],
+    rangeLabel: '从上次扫描',
+    startedAt: '2026-07-27T13:10:00+08:00',
+    finishedAt: '2026-07-27T13:10:06+08:00',
+    messageCount: 18,
+    foundCount: 0,
+    newCount: 0,
+    duplicateCount: 0,
+    durationMs: 6_100,
+    error: '演示错误：Telegram 会话暂时不可用。',
+  },
+];
 
-export const scanCandidates: ScanCandidateMock[] = [
+const legacyScanCandidates = [
   {
     title: 'Atlas Web 仓库',
     url: 'https://github.com/example-org/atlas-web/',
@@ -518,3 +491,214 @@ export const scanCandidates: ScanCandidateMock[] = [
     },
   },
 ];
+
+const projectNames = ['Atlas', 'Northstar', 'Billing', 'Orbit', 'Legacy'];
+const categoryNames = [
+  '代码仓库',
+  '部署地址',
+  '文档',
+  '设计稿',
+  '监控面板',
+  '工单',
+  '其他',
+  '书签',
+];
+const tagNames = [
+  '前端',
+  '后端',
+  'API',
+  '正式',
+  '测试',
+  '发布',
+  '告警',
+  '待确认',
+  '待阅读',
+  'React',
+  '验收',
+  'iOS',
+  '支付',
+  '工具',
+  'Android',
+  '设计',
+];
+
+export function demoUuid(value: number): string {
+  return `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`;
+}
+
+function taxonomyItems(
+  names: string[],
+  offset: number,
+): TaxonomyItemResponseDto[] {
+  return names.map((name, index) => ({
+    id: demoUuid(offset + index + 1),
+    name,
+    referenceCount: 0,
+  }));
+}
+
+const projects = taxonomyItems(projectNames, 100);
+const categories = taxonomyItems(categoryNames, 200);
+const tags = taxonomyItems(tagNames, 300);
+
+function taxonomyItem(
+  items: TaxonomyItemResponseDto[],
+  name: string,
+): TaxonomyItemResponseDto | null {
+  return items.find((item) => item.name === name) ?? null;
+}
+
+export const telegramChats: Array<
+  TelegramChatResponseDto & { description: string }
+> = legacyTelegramChats.map((chat, index) => ({
+  createdAt: '2026-07-01T00:00:00.000Z',
+  description: chat.description,
+  id: demoUuid(400 + index + 1),
+  isAvailable: true,
+  isEnabled: index < 2,
+  lastSyncedAt: index < 2 ? '2026-07-30T04:00:00.000Z' : null,
+  lastSyncedMessageId: index < 2 ? 3800 + index : null,
+  telegramPeerId: String(-1000000000 - index),
+  title: chat.name,
+  type: index === 0 ? 'saved' : 'group',
+  updatedAt: '2026-07-30T04:00:00.000Z',
+  username: null,
+}));
+
+function sourceFromLegacy(
+  source: (typeof legacyLinks)[number]['source'],
+  index: number,
+  rawUrl: string,
+): LinkSourceResponseDto {
+  const chat = legacyTelegramChats.find((item) => item.id === source.chatId);
+  const resolvedChat = telegramChats.find((item) => item.title === chat?.name);
+  return {
+    capturedAt: source.capturedAt,
+    chatId: resolvedChat?.id ?? telegramChats[0]!.id,
+    chatName: source.chatName,
+    id: demoUuid(700 + index + 1),
+    messageId: 3000 + index,
+    messagePreview: source.messagePreview,
+    messageText: source.messagePreview,
+    messageUrl: 'messageUrl' in source ? source.messageUrl : null,
+    rawUrl,
+    senderName: null,
+  };
+}
+
+export const links: LinkResponseDto[] = legacyLinks.map((link, index) => {
+  const latestSource = sourceFromLegacy(link.source, index, link.url);
+  return {
+    archivedAt: null,
+    category: taxonomyItem(categories, link.category),
+    createdAt: link.createdAt,
+    domain: link.domain,
+    environment: link.environment as LinkResponseDto['environment'],
+    firstDiscoveredAt: link.createdAt,
+    id: demoUuid(600 + index + 1),
+    isFavorite: false,
+    latestSource,
+    project: taxonomyItem(projects, link.project),
+    purpose: link.purpose || null,
+    sourceCount: 1,
+    sources: [latestSource],
+    status: link.status as LinkResponseDto['status'],
+    tags: link.tags
+      .map((name) => taxonomyItem(tags, name))
+      .filter((item): item is TaxonomyItemResponseDto => item !== null),
+    title: link.title,
+    updatedAt: link.updatedAt,
+    url: link.url,
+  };
+});
+
+function withReferenceCounts(
+  items: TaxonomyItemResponseDto[],
+  count: (item: TaxonomyItemResponseDto) => number,
+) {
+  return items.map((item) => ({ ...item, referenceCount: count(item) }));
+}
+
+export const taxonomy = {
+  categories: withReferenceCounts(
+    categories,
+    (item) => links.filter((link) => link.category?.id === item.id).length,
+  ),
+  projects: withReferenceCounts(
+    projects,
+    (item) => links.filter((link) => link.project?.id === item.id).length,
+  ),
+  tags: withReferenceCounts(
+    tags,
+    (item) =>
+      links.filter((link) => link.tags.some((tag) => tag.id === item.id))
+        .length,
+  ),
+};
+
+export const jobs: SyncJobResponseDto[] = legacyJobs.map((job, index) => {
+  const status = job.status === 'success' ? 'succeeded' : 'failed';
+  return {
+    chats: job.chatNames.map((chatName, chatIndex) => ({
+      chatId:
+        telegramChats.find((chat) => chat.title === chatName)?.id ??
+        telegramChats[0]!.id,
+      chatTitle: chatName,
+      duplicateCount: 0,
+      error: null,
+      finishedAt: job.finishedAt ?? null,
+      foundCount: 0,
+      id: demoUuid(900 + index * 10 + chatIndex + 1),
+      maxProcessedMessageId: null,
+      messageCount: 0,
+      newCount: 0,
+      startedAt: job.startedAt,
+      status: status === 'failed' ? 'failed' : 'succeeded',
+    })),
+    createdAt: job.startedAt,
+    defaultCategoryId: null,
+    defaultProjectId: null,
+    defaultTagIds: [],
+    duplicateCount: job.duplicateCount,
+    error: job.error ?? null,
+    finishedAt: job.finishedAt ?? null,
+    foundCount: job.foundCount,
+    id: demoUuid(500 + index + 1),
+    messageCount: job.messageCount,
+    newCount: job.newCount,
+    progress: job.progress,
+    rangeFrom: null,
+    rangeMode: job.rangeLabel === '最近 7 天' ? 'last7Days' : 'sinceLast',
+    rangeTo: null,
+    stage: status === 'failed' ? 'reading' : 'saving',
+    startedAt: job.startedAt,
+    status,
+    updatedAt: job.finishedAt ?? job.startedAt,
+  };
+});
+
+export interface DemoScanCandidate {
+  category: TaxonomyItemResponseDto | null;
+  environment: LinkResponseDto['environment'];
+  project: TaxonomyItemResponseDto | null;
+  purpose: string;
+  source: LinkSourceResponseDto;
+  tags: TaxonomyItemResponseDto[];
+  title: string;
+  url: string;
+}
+
+export const scanCandidates: DemoScanCandidate[] = legacyScanCandidates.map(
+  (candidate, index) => ({
+    category: taxonomyItem(categories, candidate.category),
+    environment: candidate.environment as LinkResponseDto['environment'],
+    project: taxonomyItem(projects, candidate.project),
+    purpose: candidate.purpose,
+    source: sourceFromLegacy(candidate.source, 100 + index, candidate.url),
+    tags: candidate.tags
+      .map((name) => taxonomyItem(tags, name))
+      .filter((item): item is TaxonomyItemResponseDto => item !== null),
+    title: candidate.title,
+    url: candidate.url,
+  }),
+);

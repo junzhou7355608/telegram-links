@@ -1,4 +1,6 @@
-import type { AdminTaxonomyState, ManagedLinkMock } from '@/types/admin';
+import type { TaxonomyItemResponseDto } from '@/api/types.gen';
+import type { TaxonomyKind } from '@/components/providers/demo-admin-context';
+import type { DemoTaxonomyState } from '@/lib/admin-store';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,18 +37,13 @@ import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export type TaxonomyKind = keyof AdminTaxonomyState;
-
 interface TaxonomyViewProps {
-  taxonomy: AdminTaxonomyState;
-  links: ManagedLinkMock[];
+  kind: TaxonomyKind;
+  taxonomy: DemoTaxonomyState;
+  onKindChange: (kind: TaxonomyKind) => void;
   onAdd: (kind: TaxonomyKind, value: string) => string | null;
-  onRename: (
-    kind: TaxonomyKind,
-    oldValue: string,
-    newValue: string,
-  ) => string | null;
-  onDelete: (kind: TaxonomyKind, value: string) => void;
+  onRename: (kind: TaxonomyKind, id: string, value: string) => string | null;
+  onDelete: (kind: TaxonomyKind, id: string) => void;
 }
 
 const labels: Record<
@@ -70,36 +67,26 @@ const labels: Record<
   },
 };
 
-function referenceCount(
-  kind: TaxonomyKind,
-  value: string,
-  links: ManagedLinkMock[],
-) {
-  if (kind === 'projects') {
-    return links.filter((link) => link.project === value).length;
-  }
-  if (kind === 'categories') {
-    return links.filter((link) => link.category === value).length;
-  }
-  return links.filter((link) => link.tags.includes(value)).length;
-}
-
-interface TaxonomySectionProps extends TaxonomyViewProps {
+interface TaxonomySectionProps extends Omit<
+  TaxonomyViewProps,
+  'kind' | 'onKindChange'
+> {
   kind: TaxonomyKind;
 }
 
 function TaxonomySection({
   kind,
   taxonomy,
-  links,
   onAdd,
   onRename,
   onDelete,
 }: TaxonomySectionProps) {
   const [newValue, setNewValue] = useState('');
-  const [editing, setEditing] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
-  const [deleteValue, setDeleteValue] = useState<string | null>(null);
+  const [deleteItem, setDeleteItem] = useState<TaxonomyItemResponseDto | null>(
+    null,
+  );
   const copy = labels[kind];
 
   function addItem(event: React.FormEvent<HTMLFormElement>) {
@@ -113,21 +100,21 @@ function TaxonomySection({
     toast.success(`已新增${copy.singular}`);
   }
 
-  function startRename(value: string) {
-    setEditing(value);
-    setRenameValue(value);
+  function startRename(item: TaxonomyItemResponseDto) {
+    setEditingId(item.id);
+    setRenameValue(item.name);
   }
 
   function saveRename() {
-    if (!editing) {
+    if (!editingId) {
       return;
     }
-    const error = onRename(kind, editing, renameValue);
+    const error = onRename(kind, editingId, renameValue);
     if (error) {
       toast.error(error);
       return;
     }
-    setEditing(null);
+    setEditingId(null);
     toast.success(`已重命名${copy.singular}并更新现有链接`);
   }
 
@@ -156,35 +143,34 @@ function TaxonomySection({
           </Button>
         </form>
         <div className="divide-y rounded-xl border">
-          {taxonomy[kind].map((value) => {
-            const count = referenceCount(kind, value, links);
-            const isEditing = editing === value;
+          {taxonomy[kind].map((item) => {
+            const isEditing = editingId === item.id;
             return (
               <div
-                key={value}
+                key={item.id}
                 className="flex min-h-12 items-center gap-2 px-3 py-2"
               >
                 {isEditing ? (
                   <Input
                     value={renameValue}
                     onChange={(event) => setRenameValue(event.target.value)}
-                    aria-label={`重命名 ${value}`}
+                    aria-label={`重命名 ${item.name}`}
                     autoFocus
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') {
                         saveRename();
                       }
                       if (event.key === 'Escape') {
-                        setEditing(null);
+                        setEditingId(null);
                       }
                     }}
                   />
                 ) : (
                   <span className="min-w-0 flex-1 truncate font-medium">
-                    {value}
+                    {item.name}
                   </span>
                 )}
-                <Badge variant="outline">{count} 条引用</Badge>
+                <Badge variant="outline">{item.referenceCount} 条引用</Badge>
                 {isEditing ? (
                   <>
                     <Button
@@ -201,7 +187,7 @@ function TaxonomySection({
                       variant="ghost"
                       size="icon-sm"
                       aria-label="取消重命名"
-                      onClick={() => setEditing(null)}
+                      onClick={() => setEditingId(null)}
                     >
                       <X />
                     </Button>
@@ -212,12 +198,12 @@ function TaxonomySection({
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`重命名 ${value}`}
-                      onClick={() => startRename(value)}
+                      aria-label={`重命名 ${item.name}`}
+                      onClick={() => startRename(item)}
                     >
                       <Pencil />
                     </Button>
-                    {count > 0 ? (
+                    {item.referenceCount > 0 ? (
                       <Tooltip>
                         <TooltipTrigger
                           render={<span className="inline-flex" tabIndex={0} />}
@@ -227,13 +213,13 @@ function TaxonomySection({
                             variant="ghost"
                             size="icon-sm"
                             disabled
-                            aria-label={`${value} 正在被引用，无法删除`}
+                            aria-label={`${item.name} 正在被引用，无法删除`}
                           >
                             <Trash2 />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          仍有 {count} 条链接引用，无法删除
+                          仍有 {item.referenceCount} 条链接引用，无法删除
                         </TooltipContent>
                       </Tooltip>
                     ) : (
@@ -241,8 +227,8 @@ function TaxonomySection({
                         type="button"
                         variant="ghost"
                         size="icon-sm"
-                        aria-label={`删除 ${value}`}
-                        onClick={() => setDeleteValue(value)}
+                        aria-label={`删除 ${item.name}`}
+                        onClick={() => setDeleteItem(item)}
                       >
                         <Trash2 />
                       </Button>
@@ -255,16 +241,16 @@ function TaxonomySection({
         </div>
       </CardContent>
       <AlertDialog
-        open={deleteValue !== null}
+        open={deleteItem !== null}
         onOpenChange={(open) => {
           if (!open) {
-            setDeleteValue(null);
+            setDeleteItem(null);
           }
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>删除“{deleteValue}”？</AlertDialogTitle>
+            <AlertDialogTitle>删除“{deleteItem?.name}”？</AlertDialogTitle>
             <AlertDialogDescription>
               这个{copy.singular}没有被任何链接引用。删除后无法恢复。
             </AlertDialogDescription>
@@ -274,11 +260,11 @@ function TaxonomySection({
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                if (deleteValue) {
-                  onDelete(kind, deleteValue);
+                if (deleteItem) {
+                  onDelete(kind, deleteItem.id);
                   toast.success(`已删除${copy.singular}`);
                 }
-                setDeleteValue(null);
+                setDeleteItem(null);
               }}
             >
               删除
@@ -290,7 +276,12 @@ function TaxonomySection({
   );
 }
 
-export function TaxonomyView(props: TaxonomyViewProps) {
+export function TaxonomyView({
+  kind,
+  taxonomy,
+  onKindChange,
+  ...actions
+}: TaxonomyViewProps) {
   return (
     <section aria-labelledby="taxonomy-heading" className="grid gap-5">
       <div>
@@ -301,18 +292,21 @@ export function TaxonomyView(props: TaxonomyViewProps) {
           基础资料
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          管理项目、分类和标签。重命名会同步更新已有链接。
+          管理项目、分类和标签。当前 Tab 保存在 URL。
         </p>
       </div>
-      <Tabs defaultValue="projects">
+      <Tabs
+        value={kind}
+        onValueChange={(value) => onKindChange(String(value) as TaxonomyKind)}
+      >
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="projects">项目</TabsTrigger>
           <TabsTrigger value="categories">分类</TabsTrigger>
           <TabsTrigger value="tags">标签</TabsTrigger>
         </TabsList>
-        {(['projects', 'categories', 'tags'] as const).map((kind) => (
-          <TabsContent key={kind} value={kind} className="pt-2">
-            <TaxonomySection {...props} kind={kind} />
+        {(['projects', 'categories', 'tags'] as const).map((value) => (
+          <TabsContent key={value} value={value} className="pt-2">
+            <TaxonomySection {...actions} kind={value} taxonomy={taxonomy} />
           </TabsContent>
         ))}
       </Tabs>

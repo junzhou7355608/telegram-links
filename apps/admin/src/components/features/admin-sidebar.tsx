@@ -14,68 +14,71 @@ import {
   SidebarRail,
   useSidebar,
 } from '@repo/ui/components/sidebar';
+import { Link, useRouterState } from '@tanstack/react-router';
 import {
   CheckCircle2,
   Database,
   Inbox,
   Link2,
+  MessageCircleMore,
   ScanSearch,
   Tags,
 } from 'lucide-react';
-import type { AdminView } from '@/types/admin';
 
 interface AdminSidebarProps {
-  activeView: AdminView;
+  jobCount: number;
   pendingCount: number;
   totalCount: number;
-  jobCount: number;
-  onViewChange: (view: AdminView) => void;
 }
 
 const navigation = [
   {
-    value: 'pending' as const,
-    label: '待整理',
+    count: 'pending' as const,
     icon: Inbox,
+    label: '待整理',
+    search: { page: 1, sort: 'newest' as const },
+    to: '/links/pending' as const,
   },
   {
-    value: 'all' as const,
-    label: '全部链接',
+    count: 'total' as const,
     icon: Database,
+    label: '全部链接',
+    search: { page: 1, sort: 'newest' as const },
+    to: '/links' as const,
   },
   {
-    value: 'jobs' as const,
-    label: '扫描任务',
+    count: 'jobs' as const,
     icon: ScanSearch,
+    label: '扫描任务',
+    search: { page: 1 },
+    to: '/sync-jobs' as const,
   },
   {
-    value: 'taxonomy' as const,
-    label: '基础资料',
+    count: null,
     icon: Tags,
+    label: '基础资料',
+    search: { kind: 'projects' as const },
+    to: '/taxonomy' as const,
+  },
+  {
+    count: null,
+    icon: MessageCircleMore,
+    label: 'Telegram',
+    search: { page: 1 },
+    to: '/telegram' as const,
   },
 ];
 
 export function AdminSidebar({
-  activeView,
   pendingCount,
   totalCount,
   jobCount,
-  onViewChange,
 }: AdminSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
-  const countByView: Record<AdminView, number | undefined> = {
-    pending: pendingCount,
-    all: totalCount,
-    jobs: jobCount,
-    taxonomy: undefined,
-  };
-
-  function selectView(view: AdminView) {
-    onViewChange(view);
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  }
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const counts = { jobs: jobCount, pending: pendingCount, total: totalCount };
 
   return (
     <Sidebar collapsible="icon">
@@ -100,14 +103,27 @@ export function AdminSidebar({
             <SidebarMenu>
               {navigation.map((item) => {
                 const Icon = item.icon;
-                const count = countByView[item.value];
+                const count = item.count ? counts[item.count] : undefined;
+                const active =
+                  item.to === '/links'
+                    ? pathname === '/links' || pathname === '/links/'
+                    : pathname === item.to;
                 return (
-                  <SidebarMenuItem key={item.value}>
+                  <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
-                      type="button"
                       tooltip={item.label}
-                      isActive={activeView === item.value}
-                      onClick={() => selectView(item.value)}
+                      isActive={active}
+                      render={
+                        <Link
+                          to={item.to}
+                          search={item.search}
+                          onClick={() => {
+                            if (isMobile) {
+                              setOpenMobile(false);
+                            }
+                          }}
+                        />
+                      }
                     >
                       <Icon />
                       <span>{item.label}</span>

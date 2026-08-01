@@ -1,9 +1,11 @@
-import type {
-  AdminTaxonomyState,
-  LinkFilters,
-  ManagedLinkMock,
-} from '@/types/admin';
-import { environmentLabels, statusLabels } from '@/lib/admin-store';
+import type { LinkResponseDto } from '@/api/types.gen';
+import { TagPicker } from '@/components/features/tag-picker';
+import type { LinksSearch } from '@/lib/admin-search';
+import {
+  environmentLabels,
+  statusLabels,
+  type DemoTaxonomyState,
+} from '@/lib/admin-store';
 import { Button } from '@repo/ui/components/button';
 import {
   InputGroup,
@@ -28,25 +30,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@repo/ui/components/sheet';
-import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Archive, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo } from 'react';
 
-interface LinkFiltersProps {
-  filters: LinkFilters;
-  links: ManagedLinkMock[];
-  taxonomy: AdminTaxonomyState;
-  showStatus: boolean;
-  resultCount: number;
-  onChange: (filters: LinkFilters) => void;
-  onReset: () => void;
+interface FilterOption {
+  label: string;
+  value: string;
 }
 
 interface FilterSelectProps {
   label: string;
-  value: string;
-  options: string[];
+  value?: string;
+  options: FilterOption[];
   stacked?: boolean;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
 }
 
 function FilterSelect({
@@ -56,20 +53,8 @@ function FilterSelect({
   stacked = false,
   onChange,
 }: FilterSelectProps) {
-  function formatValue(selected: unknown) {
-    const selectedValue = String(selected);
-    if (selectedValue === 'all') {
-      return `全部${label}`;
-    }
-    if (label === '环境' && selectedValue in environmentLabels) {
-      return environmentLabels[selectedValue as keyof typeof environmentLabels];
-    }
-    if (label === '状态' && selectedValue in statusLabels) {
-      return statusLabels[selectedValue as keyof typeof statusLabels];
-    }
-    return selectedValue;
-  }
-
+  const displayValue =
+    options.find((option) => option.value === value)?.label ?? `全部${label}`;
   return (
     <label className={stacked ? 'grid gap-2' : 'contents'}>
       {stacked ? (
@@ -77,18 +62,23 @@ function FilterSelect({
           {label}
         </span>
       ) : null}
-      <Select value={value} onValueChange={(next) => onChange(String(next))}>
+      <Select
+        value={value ?? 'all'}
+        onValueChange={(next) =>
+          onChange(String(next) === 'all' ? undefined : String(next))
+        }
+      >
         <SelectTrigger
           className={stacked ? 'w-full' : 'min-w-28'}
           aria-label={`按${label}筛选`}
         >
-          <SelectValue>{formatValue}</SelectValue>
+          <SelectValue>{displayValue}</SelectValue>
         </SelectTrigger>
         <SelectContent align="start">
           <SelectItem value="all">全部{label}</SelectItem>
           {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {formatValue(option)}
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -98,27 +88,27 @@ function FilterSelect({
 }
 
 interface FilterFieldsProps {
-  filters: LinkFilters;
-  chats: string[];
-  taxonomy: AdminTaxonomyState;
+  chats: FilterOption[];
+  filters: LinksSearch;
   showStatus: boolean;
   stacked?: boolean;
-  onChange: (filters: LinkFilters) => void;
+  taxonomy: DemoTaxonomyState;
+  onChange: (filters: LinksSearch) => void;
 }
 
 function FilterFields({
-  filters,
   chats,
-  taxonomy,
+  filters,
   showStatus,
   stacked = false,
+  taxonomy,
   onChange,
 }: FilterFieldsProps) {
-  function update<Key extends keyof LinkFilters>(
+  function update<Key extends keyof LinksSearch>(
     key: Key,
-    value: LinkFilters[Key],
+    value: LinksSearch[Key],
   ) {
-    onChange({ ...filters, [key]: value });
+    onChange({ ...filters, [key]: value, page: 1 });
   }
 
   return (
@@ -131,43 +121,110 @@ function FilterFields({
     >
       <FilterSelect
         label="项目"
-        value={filters.project}
-        options={taxonomy.projects}
+        value={filters.projectId}
+        options={[
+          { label: '未设置', value: 'unassigned' },
+          ...taxonomy.projects.map((item) => ({
+            label: item.name,
+            value: item.id,
+          })),
+        ]}
         stacked={stacked}
-        onChange={(value) => update('project', value)}
+        onChange={(value) => update('projectId', value)}
       />
       <FilterSelect
         label="分类"
-        value={filters.category}
-        options={taxonomy.categories}
+        value={filters.categoryId}
+        options={taxonomy.categories.map((item) => ({
+          label: item.name,
+          value: item.id,
+        }))}
         stacked={stacked}
-        onChange={(value) => update('category', value)}
+        onChange={(value) => update('categoryId', value)}
       />
       <FilterSelect
         label="环境"
         value={filters.environment}
-        options={['production', 'test', 'development', 'unknown']}
+        options={Object.entries(environmentLabels).map(([value, label]) => ({
+          label,
+          value,
+        }))}
         stacked={stacked}
-        onChange={(value) => update('environment', value)}
+        onChange={(value) =>
+          update('environment', value as LinksSearch['environment'] | undefined)
+        }
       />
       <FilterSelect
         label="来源"
-        value={filters.sourceChat}
+        value={filters.sourceChatId}
         options={chats}
         stacked={stacked}
-        onChange={(value) => update('sourceChat', value)}
+        onChange={(value) => update('sourceChatId', value)}
       />
       {showStatus ? (
         <FilterSelect
           label="状态"
           value={filters.status}
-          options={['pending', 'organized']}
+          options={Object.entries(statusLabels).map(([value, label]) => ({
+            label,
+            value,
+          }))}
           stacked={stacked}
-          onChange={(value) => update('status', value)}
+          onChange={(value) =>
+            update('status', value as LinksSearch['status'] | undefined)
+          }
         />
       ) : null}
+      <FilterSelect
+        label="排序"
+        value={filters.sort}
+        options={[
+          { label: '最近添加', value: 'newest' },
+          { label: '最早添加', value: 'oldest' },
+          { label: '标题', value: 'title' },
+        ]}
+        stacked={stacked}
+        onChange={(value) =>
+          update('sort', (value ?? 'newest') as LinksSearch['sort'])
+        }
+      />
+      <label className={stacked ? 'grid gap-2 sm:col-span-2' : 'contents'}>
+        {stacked ? (
+          <span className="text-xs font-medium text-muted-foreground">
+            标签
+          </span>
+        ) : null}
+        <div className={stacked ? undefined : 'min-w-36'}>
+          <TagPicker
+            options={taxonomy.tags}
+            value={filters.tagIds ?? []}
+            onChange={(value) =>
+              update('tagIds', value.length ? value : undefined)
+            }
+            placeholder="全部标签"
+          />
+        </div>
+      </label>
+      <Button
+        type="button"
+        variant={filters.includeArchived ? 'secondary' : 'outline'}
+        onClick={() => update('includeArchived', !filters.includeArchived)}
+      >
+        <Archive />
+        包含归档
+      </Button>
     </div>
   );
+}
+
+interface LinkFiltersProps {
+  filters: LinksSearch;
+  links: LinkResponseDto[];
+  taxonomy: DemoTaxonomyState;
+  showStatus: boolean;
+  resultCount: number;
+  onChange: (filters: LinksSearch) => void;
+  onReset: () => void;
 }
 
 export function LinkFiltersBar({
@@ -179,19 +236,24 @@ export function LinkFiltersBar({
   onChange,
   onReset,
 }: LinkFiltersProps) {
-  const chats = useMemo(
-    () =>
-      [...new Set(links.map((link) => link.source.chatName))].toSorted((a, b) =>
-        a.localeCompare(b, 'zh-CN'),
-      ),
-    [links],
-  );
+  const chats = useMemo(() => {
+    const values = new Map<string, string>();
+    links.forEach((link) => {
+      if (link.latestSource) {
+        values.set(link.latestSource.chatId, link.latestSource.chatName);
+      }
+    });
+    return [...values].map(([value, label]) => ({ label, value }));
+  }, [links]);
   const activeFilterCount = [
-    filters.project !== 'all',
-    filters.category !== 'all',
-    filters.environment !== 'all',
-    filters.sourceChat !== 'all',
-    showStatus && filters.status !== 'all',
+    filters.projectId,
+    filters.categoryId,
+    filters.environment,
+    filters.sourceChatId,
+    showStatus && filters.status,
+    filters.sort !== 'newest',
+    filters.tagIds?.length,
+    filters.includeArchived,
   ].filter(Boolean).length;
 
   return (
@@ -202,19 +264,23 @@ export function LinkFiltersBar({
             <Search aria-hidden="true" />
           </InputGroupAddon>
           <InputGroupInput
-            value={filters.query}
+            value={filters.q ?? ''}
             onChange={(event) =>
-              onChange({ ...filters, query: event.target.value })
+              onChange({
+                ...filters,
+                page: 1,
+                q: event.target.value || undefined,
+              })
             }
-            placeholder="搜索标题、URL、项目、用途或标签"
+            placeholder="搜索标题、URL、项目、用途、标签或来源"
             aria-label="搜索链接"
           />
-          {filters.query ? (
+          {filters.q ? (
             <InputGroupAddon align="inline-end">
               <InputGroupButton
                 size="icon-xs"
                 aria-label="清空搜索"
-                onClick={() => onChange({ ...filters, query: '' })}
+                onClick={() => onChange({ ...filters, page: 1, q: undefined })}
               >
                 <X />
               </InputGroupButton>
@@ -240,22 +306,22 @@ export function LinkFiltersBar({
             <SheetHeader>
               <SheetTitle>筛选链接</SheetTitle>
               <SheetDescription>
-                按项目、分类、环境、来源和整理状态缩小范围。
+                筛选条件保存在 URL，刷新和前进后退都可恢复。
               </SheetDescription>
             </SheetHeader>
             <div className="px-4">
               <FilterFields
-                filters={filters}
                 chats={chats}
-                taxonomy={taxonomy}
+                filters={filters}
                 showStatus={showStatus}
                 stacked
+                taxonomy={taxonomy}
                 onChange={onChange}
               />
             </div>
             <SheetFooter>
               <Button type="button" variant="outline" onClick={onReset}>
-                <RotateCcw data-icon="inline-start" />
+                <RotateCcw />
                 重置筛选
               </Button>
               <SheetClose render={<Button type="button" />}>
@@ -268,13 +334,13 @@ export function LinkFiltersBar({
 
       <div className="hidden items-center justify-between gap-3 md:flex">
         <FilterFields
-          filters={filters}
           chats={chats}
-          taxonomy={taxonomy}
+          filters={filters}
           showStatus={showStatus}
+          taxonomy={taxonomy}
           onChange={onChange}
         />
-        {activeFilterCount > 0 || filters.query ? (
+        {activeFilterCount > 0 || filters.q ? (
           <Button
             type="button"
             variant="ghost"
@@ -282,7 +348,7 @@ export function LinkFiltersBar({
             className="shrink-0"
             onClick={onReset}
           >
-            <RotateCcw data-icon="inline-start" />
+            <RotateCcw />
             重置
           </Button>
         ) : null}
@@ -292,9 +358,9 @@ export function LinkFiltersBar({
         <span>
           {activeFilterCount > 0
             ? `已启用 ${activeFilterCount} 个筛选条件`
-            : '全部项目与分类'}
+            : '未启用附加筛选'}
         </span>
-        {activeFilterCount > 0 || filters.query ? (
+        {activeFilterCount > 0 || filters.q ? (
           <Button type="button" variant="ghost" size="xs" onClick={onReset}>
             重置
           </Button>

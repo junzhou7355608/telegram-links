@@ -10,33 +10,111 @@
 
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as LinksRouteImport } from './routes/links';
+import { Route as SyncJobsRouteImport } from './routes/sync-jobs';
+import { Route as TaxonomyRouteImport } from './routes/taxonomy';
+import { Route as TelegramRouteImport } from './routes/telegram';
+import { Route as LinksIndexRouteImport } from './routes/links.index';
+import { Route as LinksPendingRouteImport } from './routes/links.pending';
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any);
+const LinksRoute = LinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const SyncJobsRoute = SyncJobsRouteImport.update({
+  id: '/sync-jobs',
+  path: '/sync-jobs',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const TaxonomyRoute = TaxonomyRouteImport.update({
+  id: '/taxonomy',
+  path: '/taxonomy',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const TelegramRoute = TelegramRouteImport.update({
+  id: '/telegram',
+  path: '/telegram',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const LinksIndexRoute = LinksIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LinksRoute,
+} as any);
+const LinksPendingRoute = LinksPendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
+  getParentRoute: () => LinksRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
+  '/links': typeof LinksRouteWithChildren;
+  '/sync-jobs': typeof SyncJobsRoute;
+  '/taxonomy': typeof TaxonomyRoute;
+  '/telegram': typeof TelegramRoute;
+  '/links/pending': typeof LinksPendingRoute;
+  '/links/': typeof LinksIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
+  '/sync-jobs': typeof SyncJobsRoute;
+  '/taxonomy': typeof TaxonomyRoute;
+  '/telegram': typeof TelegramRoute;
+  '/links/pending': typeof LinksPendingRoute;
+  '/links': typeof LinksIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   '/': typeof IndexRoute;
+  '/links': typeof LinksRouteWithChildren;
+  '/sync-jobs': typeof SyncJobsRoute;
+  '/taxonomy': typeof TaxonomyRoute;
+  '/telegram': typeof TelegramRoute;
+  '/links/pending': typeof LinksPendingRoute;
+  '/links/': typeof LinksIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/';
+  fullPaths:
+    | '/'
+    | '/links'
+    | '/sync-jobs'
+    | '/taxonomy'
+    | '/telegram'
+    | '/links/pending'
+    | '/links/';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/';
-  id: '__root__' | '/';
+  to:
+    | '/'
+    | '/sync-jobs'
+    | '/taxonomy'
+    | '/telegram'
+    | '/links/pending'
+    | '/links';
+  id:
+    | '__root__'
+    | '/'
+    | '/links'
+    | '/sync-jobs'
+    | '/taxonomy'
+    | '/telegram'
+    | '/links/pending'
+    | '/links/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
+  LinksRoute: typeof LinksRouteWithChildren;
+  SyncJobsRoute: typeof SyncJobsRoute;
+  TaxonomyRoute: typeof TaxonomyRoute;
+  TelegramRoute: typeof TelegramRoute;
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +126,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/links': {
+      id: '/links';
+      path: '/links';
+      fullPath: '/links';
+      preLoaderRoute: typeof LinksRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/sync-jobs': {
+      id: '/sync-jobs';
+      path: '/sync-jobs';
+      fullPath: '/sync-jobs';
+      preLoaderRoute: typeof SyncJobsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/taxonomy': {
+      id: '/taxonomy';
+      path: '/taxonomy';
+      fullPath: '/taxonomy';
+      preLoaderRoute: typeof TaxonomyRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/telegram': {
+      id: '/telegram';
+      path: '/telegram';
+      fullPath: '/telegram';
+      preLoaderRoute: typeof TelegramRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/links/': {
+      id: '/links/';
+      path: '/';
+      fullPath: '/links/';
+      preLoaderRoute: typeof LinksIndexRouteImport;
+      parentRoute: typeof LinksRoute;
+    };
+    '/links/pending': {
+      id: '/links/pending';
+      path: '/pending';
+      fullPath: '/links/pending';
+      preLoaderRoute: typeof LinksPendingRouteImport;
+      parentRoute: typeof LinksRoute;
+    };
   }
 }
 
+interface LinksRouteChildren {
+  LinksPendingRoute: typeof LinksPendingRoute;
+  LinksIndexRoute: typeof LinksIndexRoute;
+}
+
+const LinksRouteChildren: LinksRouteChildren = {
+  LinksPendingRoute: LinksPendingRoute,
+  LinksIndexRoute: LinksIndexRoute,
+};
+
+const LinksRouteWithChildren = LinksRoute._addFileChildren(LinksRouteChildren);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LinksRoute: LinksRouteWithChildren,
+  SyncJobsRoute: SyncJobsRoute,
+  TaxonomyRoute: TaxonomyRoute,
+  TelegramRoute: TelegramRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

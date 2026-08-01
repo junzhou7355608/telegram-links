@@ -1,9 +1,9 @@
+import type { SyncJobResponseDto } from '@/api/types.gen';
 import {
   formatDateTime,
   formatDuration,
   scanStageLabels,
 } from '@/lib/admin-store';
-import type { ScanJobMock } from '@/types/admin';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
 import { Badge } from '@repo/ui/components/badge';
 import {
@@ -25,44 +25,58 @@ import {
 } from 'lucide-react';
 
 interface ScanJobsViewProps {
-  jobs: ScanJobMock[];
-  runningJob: ScanJobMock | null;
+  jobs: SyncJobResponseDto[];
+  runningJob: SyncJobResponseDto | null;
 }
 
-function JobCard({ job }: { job: ScanJobMock }) {
-  const isFailed = job.status === 'failed';
+const statusLabels: Record<SyncJobResponseDto['status'], string> = {
+  failed: '失败',
+  interrupted: '已中断',
+  partiallySucceeded: '部分成功',
+  queued: '排队中',
+  running: '运行中',
+  succeeded: '成功',
+};
+
+const rangeLabels: Record<SyncJobResponseDto['rangeMode'], string> = {
+  allHistory: '全部历史消息',
+  custom: '自定义时间',
+  last7Days: '最近 7 天',
+  sinceLast: '从上次扫描',
+};
+
+function JobCard({ job }: { job: SyncJobResponseDto }) {
+  const isRunning = job.status === 'running' || job.status === 'queued';
+  const isFailed = job.status === 'failed' || job.status === 'interrupted';
   return (
     <Card size="sm">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
-            {job.status === 'running' ? (
+            {isRunning ? (
               <LoaderCircle className="size-4 animate-spin" />
             ) : isFailed ? (
               <AlertTriangle className="size-4" />
             ) : (
               <CheckCircle2 className="size-4" />
             )}
-            {job.status === 'running' ? '扫描进行中' : `任务 ${job.id}`}
+            {isRunning ? '扫描进行中' : `任务 ${job.id.slice(0, 8)}`}
           </CardTitle>
           <Badge
             variant={
-              job.status === 'running'
-                ? 'secondary'
-                : isFailed
-                  ? 'destructive'
-                  : 'outline'
+              isRunning ? 'secondary' : isFailed ? 'destructive' : 'outline'
             }
           >
-            {job.status === 'running' ? '运行中' : isFailed ? '失败' : '成功'}
+            {statusLabels[job.status]}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          {job.chatNames.join('、')} · {job.rangeLabel}
+          {job.chats.map((chat) => chat.chatTitle).join('、') || '全部启用聊天'}{' '}
+          · {rangeLabels[job.rangeMode]}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {job.status === 'running' ? (
+        {isRunning ? (
           <Progress value={job.progress}>
             <ProgressLabel>
               {job.stage ? scanStageLabels[job.stage] : '准备中'}
@@ -93,7 +107,9 @@ function JobCard({ job }: { job: ScanJobMock }) {
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">耗时</dt>
-            <dd className="mt-1">{formatDuration(job.durationMs)}</dd>
+            <dd className="mt-1">
+              {formatDuration(job.startedAt, job.finishedAt)}
+            </dd>
           </div>
         </dl>
         {job.error ? (

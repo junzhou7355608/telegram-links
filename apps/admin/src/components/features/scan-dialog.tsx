@@ -1,9 +1,7 @@
+import { TagPicker } from '@/components/features/tag-picker';
+import type { DemoScanConfiguration } from '@/components/providers/demo-admin-context';
 import { telegramChats } from '@/data/mock-data';
-import type {
-  AdminTaxonomyState,
-  ScanConfiguration,
-  ScanRangeMode,
-} from '@/types/admin';
+import type { DemoTaxonomyState } from '@/lib/admin-store';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
@@ -34,23 +32,25 @@ import {
 } from '@repo/ui/components/select';
 import { Info } from 'lucide-react';
 import { useState } from 'react';
-import { TagPicker } from '@/components/features/tag-picker';
 
 interface ScanDialogProps {
   open: boolean;
-  taxonomy: AdminTaxonomyState;
+  taxonomy: DemoTaxonomyState;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (configuration: ScanConfiguration) => void;
+  onSubmit: (configuration: DemoScanConfiguration) => void;
 }
 
-const initialConfiguration: ScanConfiguration = {
-  chatIds: ['saved', 'dev-team'],
-  rangeMode: 'since-last',
-  startDate: '',
-  endDate: '',
-  defaultProject: '',
-  defaultCategory: '',
-  defaultTags: [],
+const initialConfiguration: DemoScanConfiguration = {
+  chatIds: telegramChats.slice(0, 2).map((chat) => chat.id),
+  defaultTagIds: [],
+  rangeMode: 'sinceLast',
+};
+
+const rangeLabels: Record<DemoScanConfiguration['rangeMode'], string> = {
+  allHistory: '全部历史消息',
+  custom: '自定义时间',
+  last7Days: '最近 7 天',
+  sinceLast: '从上次扫描',
 };
 
 export function ScanDialog({
@@ -60,7 +60,7 @@ export function ScanDialog({
   onSubmit,
 }: ScanDialogProps) {
   const [configuration, setConfiguration] =
-    useState<ScanConfiguration>(initialConfiguration);
+    useState<DemoScanConfiguration>(initialConfiguration);
   const [error, setError] = useState('');
 
   function toggleChat(chatId: string) {
@@ -80,9 +80,9 @@ export function ScanDialog({
     }
     if (
       configuration.rangeMode === 'custom' &&
-      (!configuration.startDate ||
-        !configuration.endDate ||
-        configuration.startDate > configuration.endDate)
+      (!configuration.rangeFrom ||
+        !configuration.rangeTo ||
+        configuration.rangeFrom > configuration.rangeTo)
     ) {
       setError('请选择有效的自定义起止日期。');
       return;
@@ -120,7 +120,7 @@ export function ScanDialog({
                         onCheckedChange={() => toggleChat(chat.id)}
                       />
                       <div>
-                        <p className="font-medium">{chat.name}</p>
+                        <p className="font-medium">{chat.title}</p>
                         <p className="text-xs font-normal text-muted-foreground">
                           {chat.description}
                         </p>
@@ -138,25 +138,25 @@ export function ScanDialog({
                 onValueChange={(value) =>
                   setConfiguration((current) => ({
                     ...current,
-                    rangeMode: value as ScanRangeMode,
+                    rangeMode: String(
+                      value,
+                    ) as DemoScanConfiguration['rangeMode'],
                   }))
                 }
               >
                 <SelectTrigger id="scan-range" className="w-full">
                   <SelectValue>
                     {(value) =>
-                      value === 'since-last'
-                        ? '从上次扫描'
-                        : value === 'last-7-days'
-                          ? '最近 7 天'
-                          : '自定义时间'
+                      rangeLabels[value as DemoScanConfiguration['rangeMode']]
                     }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="since-last">从上次扫描</SelectItem>
-                  <SelectItem value="last-7-days">最近 7 天</SelectItem>
-                  <SelectItem value="custom">自定义时间</SelectItem>
+                  {Object.entries(rangeLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
@@ -168,11 +168,11 @@ export function ScanDialog({
                   <Input
                     id="scan-start-date"
                     type="date"
-                    value={configuration.startDate}
+                    value={configuration.rangeFrom ?? ''}
                     onChange={(event) =>
                       setConfiguration((current) => ({
                         ...current,
-                        startDate: event.target.value,
+                        rangeFrom: event.target.value,
                       }))
                     }
                   />
@@ -182,11 +182,11 @@ export function ScanDialog({
                   <Input
                     id="scan-end-date"
                     type="date"
-                    value={configuration.endDate}
+                    value={configuration.rangeTo ?? ''}
                     onChange={(event) =>
                       setConfiguration((current) => ({
                         ...current,
-                        endDate: event.target.value,
+                        rangeTo: event.target.value,
                       }))
                     }
                   />
@@ -203,26 +203,31 @@ export function ScanDialog({
                 <Field>
                   <FieldLabel htmlFor="scan-project">项目</FieldLabel>
                   <Select
-                    value={configuration.defaultProject || 'none'}
+                    value={configuration.defaultProjectId ?? 'none'}
                     onValueChange={(value) =>
                       setConfiguration((current) => ({
                         ...current,
-                        defaultProject: value === 'none' ? '' : String(value),
+                        defaultProjectId:
+                          value === 'none' ? undefined : String(value),
                       }))
                     }
                   >
                     <SelectTrigger id="scan-project" className="w-full">
                       <SelectValue>
                         {(value) =>
-                          value === 'none' ? '不预设' : String(value)
+                          value === 'none'
+                            ? '不预设'
+                            : (taxonomy.projects.find(
+                                (item) => item.id === value,
+                              )?.name ?? '未知项目')
                         }
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">不预设</SelectItem>
                       {taxonomy.projects.map((project) => (
-                        <SelectItem key={project} value={project}>
-                          {project}
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -231,26 +236,31 @@ export function ScanDialog({
                 <Field>
                   <FieldLabel htmlFor="scan-category">分类</FieldLabel>
                   <Select
-                    value={configuration.defaultCategory || 'none'}
+                    value={configuration.defaultCategoryId ?? 'none'}
                     onValueChange={(value) =>
                       setConfiguration((current) => ({
                         ...current,
-                        defaultCategory: value === 'none' ? '' : String(value),
+                        defaultCategoryId:
+                          value === 'none' ? undefined : String(value),
                       }))
                     }
                   >
                     <SelectTrigger id="scan-category" className="w-full">
                       <SelectValue>
                         {(value) =>
-                          value === 'none' ? '不预设' : String(value)
+                          value === 'none'
+                            ? '不预设'
+                            : (taxonomy.categories.find(
+                                (item) => item.id === value,
+                              )?.name ?? '未知分类')
                         }
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">不预设</SelectItem>
                       {taxonomy.categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -262,11 +272,11 @@ export function ScanDialog({
                 <TagPicker
                   id="scan-tags"
                   options={taxonomy.tags}
-                  value={configuration.defaultTags}
-                  onChange={(defaultTags) =>
+                  value={configuration.defaultTagIds}
+                  onChange={(defaultTagIds) =>
                     setConfiguration((current) => ({
                       ...current,
-                      defaultTags,
+                      defaultTagIds,
                     }))
                   }
                 />

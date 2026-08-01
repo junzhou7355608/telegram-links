@@ -10,58 +10,95 @@ import type {
 import { client } from './client.gen';
 import type {
   AdminLinksControllerArchiveData,
+  AdminLinksControllerArchiveErrors,
   AdminLinksControllerArchiveResponses,
   AdminLinksControllerBatchData,
+  AdminLinksControllerBatchErrors,
   AdminLinksControllerBatchResponses,
   AdminLinksControllerFindOneData,
+  AdminLinksControllerFindOneErrors,
   AdminLinksControllerFindOneResponses,
   AdminLinksControllerListData,
+  AdminLinksControllerListErrors,
   AdminLinksControllerListResponses,
   AdminLinksControllerOverviewData,
+  AdminLinksControllerOverviewErrors,
   AdminLinksControllerOverviewResponses,
   AdminLinksControllerRestoreData,
+  AdminLinksControllerRestoreErrors,
   AdminLinksControllerRestoreResponses,
   AdminLinksControllerUpdateData,
+  AdminLinksControllerUpdateErrors,
   AdminLinksControllerUpdateResponses,
   AdminSyncControllerCreateData,
+  AdminSyncControllerCreateErrors,
   AdminSyncControllerCreateResponses,
   AdminSyncControllerFindOneData,
+  AdminSyncControllerFindOneErrors,
   AdminSyncControllerFindOneResponses,
   AdminSyncControllerListData,
+  AdminSyncControllerListErrors,
   AdminSyncControllerListResponses,
   AdminTaxonomyControllerCreateData,
+  AdminTaxonomyControllerCreateErrors,
   AdminTaxonomyControllerCreateResponses,
   AdminTaxonomyControllerListData,
+  AdminTaxonomyControllerListErrors,
   AdminTaxonomyControllerListResponses,
   AdminTaxonomyControllerRemoveData,
+  AdminTaxonomyControllerRemoveErrors,
   AdminTaxonomyControllerRemoveResponses,
   AdminTaxonomyControllerRenameData,
+  AdminTaxonomyControllerRenameErrors,
   AdminTaxonomyControllerRenameResponses,
   AdminTelegramControllerAccountData,
+  AdminTelegramControllerAccountErrors,
   AdminTelegramControllerAccountResponses,
   AdminTelegramControllerListChatsData,
+  AdminTelegramControllerListChatsErrors,
   AdminTelegramControllerListChatsResponses,
   AdminTelegramControllerLogOutData,
+  AdminTelegramControllerLogOutErrors,
   AdminTelegramControllerLogOutResponses,
   AdminTelegramControllerRefreshChatsData,
+  AdminTelegramControllerRefreshChatsErrors,
   AdminTelegramControllerRefreshChatsResponses,
   AdminTelegramControllerSendCodeData,
+  AdminTelegramControllerSendCodeErrors,
   AdminTelegramControllerSendCodeResponses,
   AdminTelegramControllerUpdateChatData,
+  AdminTelegramControllerUpdateChatErrors,
   AdminTelegramControllerUpdateChatResponses,
   AdminTelegramControllerVerifyCodeData,
+  AdminTelegramControllerVerifyCodeErrors,
   AdminTelegramControllerVerifyCodeResponses,
   AdminTelegramControllerVerifyPasswordData,
+  AdminTelegramControllerVerifyPasswordErrors,
   AdminTelegramControllerVerifyPasswordResponses,
 } from './types.gen';
 import {
   zAdminLinksControllerArchiveResponse,
+  zAdminLinksControllerBatchResponse,
   zAdminLinksControllerFindOneResponse,
   zAdminLinksControllerListResponse,
+  zAdminLinksControllerOverviewResponse,
   zAdminLinksControllerRestoreResponse,
   zAdminLinksControllerUpdateResponse,
+  zAdminSyncControllerCreateResponse,
+  zAdminSyncControllerFindOneResponse,
+  zAdminSyncControllerListResponse,
+  zAdminTaxonomyControllerCreateResponse,
+  zAdminTaxonomyControllerListResponse,
   zAdminTaxonomyControllerRemoveResponse,
+  zAdminTaxonomyControllerRenameResponse,
+  zAdminTelegramControllerAccountResponse,
+  zAdminTelegramControllerListChatsResponse,
   zAdminTelegramControllerLogOutResponse,
+  zAdminTelegramControllerRefreshChatsResponse,
+  zAdminTelegramControllerSendCodeResponse,
+  zAdminTelegramControllerUpdateChatResponse,
+  zAdminTelegramControllerVerifyCodeResponse,
+  zAdminTelegramControllerVerifyPasswordResponse,
 } from './zod.gen';
 
 export type Options<
@@ -88,21 +125,31 @@ export const adminLinksControllerOverview = <
   options?: Options<AdminLinksControllerOverviewData, ThrowOnError>,
 ): RequestResult<
   AdminLinksControllerOverviewResponses,
-  unknown,
+  AdminLinksControllerOverviewErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
     AdminLinksControllerOverviewResponses,
-    unknown,
+    AdminLinksControllerOverviewErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/overview', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminLinksControllerOverviewResponse.parseAsync(data),
+    url: '/api/admin/v1/overview',
+    ...options,
+  });
 
 export const adminLinksControllerList = <ThrowOnError extends boolean = false>(
   options?: Options<AdminLinksControllerListData, ThrowOnError>,
-): RequestResult<AdminLinksControllerListResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminLinksControllerListResponses,
+  AdminLinksControllerListErrors,
+  ThrowOnError
+> =>
   (options?.client ?? client).get<
     AdminLinksControllerListResponses,
-    unknown,
+    AdminLinksControllerListErrors,
     ThrowOnError
   >({
     responseType: 'json',
@@ -114,12 +161,19 @@ export const adminLinksControllerList = <ThrowOnError extends boolean = false>(
 
 export const adminLinksControllerBatch = <ThrowOnError extends boolean = false>(
   options: Options<AdminLinksControllerBatchData, ThrowOnError>,
-): RequestResult<AdminLinksControllerBatchResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminLinksControllerBatchResponses,
+  AdminLinksControllerBatchErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).patch<
     AdminLinksControllerBatchResponses,
-    unknown,
+    AdminLinksControllerBatchErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminLinksControllerBatchResponse.parseAsync(data),
     url: '/api/admin/v1/links/batch',
     ...options,
     headers: {
@@ -132,10 +186,14 @@ export const adminLinksControllerArchive = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<AdminLinksControllerArchiveData, ThrowOnError>,
-): RequestResult<AdminLinksControllerArchiveResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminLinksControllerArchiveResponses,
+  AdminLinksControllerArchiveErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).delete<
     AdminLinksControllerArchiveResponses,
-    unknown,
+    AdminLinksControllerArchiveErrors,
     ThrowOnError
   >({
     responseValidator: async (data) =>
@@ -148,10 +206,14 @@ export const adminLinksControllerFindOne = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<AdminLinksControllerFindOneData, ThrowOnError>,
-): RequestResult<AdminLinksControllerFindOneResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminLinksControllerFindOneResponses,
+  AdminLinksControllerFindOneErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).get<
     AdminLinksControllerFindOneResponses,
-    unknown,
+    AdminLinksControllerFindOneErrors,
     ThrowOnError
   >({
     responseType: 'json',
@@ -165,10 +227,14 @@ export const adminLinksControllerUpdate = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<AdminLinksControllerUpdateData, ThrowOnError>,
-): RequestResult<AdminLinksControllerUpdateResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminLinksControllerUpdateResponses,
+  AdminLinksControllerUpdateErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).patch<
     AdminLinksControllerUpdateResponses,
-    unknown,
+    AdminLinksControllerUpdateErrors,
     ThrowOnError
   >({
     responseType: 'json',
@@ -186,10 +252,14 @@ export const adminLinksControllerRestore = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<AdminLinksControllerRestoreData, ThrowOnError>,
-): RequestResult<AdminLinksControllerRestoreResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminLinksControllerRestoreResponses,
+  AdminLinksControllerRestoreErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).post<
     AdminLinksControllerRestoreResponses,
-    unknown,
+    AdminLinksControllerRestoreErrors,
     ThrowOnError
   >({
     responseType: 'json',
@@ -201,21 +271,38 @@ export const adminLinksControllerRestore = <
 
 export const adminSyncControllerList = <ThrowOnError extends boolean = false>(
   options?: Options<AdminSyncControllerListData, ThrowOnError>,
-): RequestResult<AdminSyncControllerListResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminSyncControllerListResponses,
+  AdminSyncControllerListErrors,
+  ThrowOnError
+> =>
   (options?.client ?? client).get<
     AdminSyncControllerListResponses,
-    unknown,
+    AdminSyncControllerListErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/sync-jobs', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminSyncControllerListResponse.parseAsync(data),
+    url: '/api/admin/v1/sync-jobs',
+    ...options,
+  });
 
 export const adminSyncControllerCreate = <ThrowOnError extends boolean = false>(
   options: Options<AdminSyncControllerCreateData, ThrowOnError>,
-): RequestResult<AdminSyncControllerCreateResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminSyncControllerCreateResponses,
+  AdminSyncControllerCreateErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).post<
     AdminSyncControllerCreateResponses,
-    unknown,
+    AdminSyncControllerCreateErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminSyncControllerCreateResponse.parseAsync(data),
     url: '/api/admin/v1/sync-jobs',
     ...options,
     headers: {
@@ -228,23 +315,43 @@ export const adminSyncControllerFindOne = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<AdminSyncControllerFindOneData, ThrowOnError>,
-): RequestResult<AdminSyncControllerFindOneResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminSyncControllerFindOneResponses,
+  AdminSyncControllerFindOneErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).get<
     AdminSyncControllerFindOneResponses,
-    unknown,
+    AdminSyncControllerFindOneErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/sync-jobs/{id}', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminSyncControllerFindOneResponse.parseAsync(data),
+    url: '/api/admin/v1/sync-jobs/{id}',
+    ...options,
+  });
 
 export const adminTaxonomyControllerList = <
   ThrowOnError extends boolean = false,
 >(
   options: Options<AdminTaxonomyControllerListData, ThrowOnError>,
-): RequestResult<AdminTaxonomyControllerListResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AdminTaxonomyControllerListResponses,
+  AdminTaxonomyControllerListErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).get<
     AdminTaxonomyControllerListResponses,
-    unknown,
+    AdminTaxonomyControllerListErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/taxonomy/{kind}', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTaxonomyControllerListResponse.parseAsync(data),
+    url: '/api/admin/v1/taxonomy/{kind}',
+    ...options,
+  });
 
 export const adminTaxonomyControllerCreate = <
   ThrowOnError extends boolean = false,
@@ -252,14 +359,17 @@ export const adminTaxonomyControllerCreate = <
   options: Options<AdminTaxonomyControllerCreateData, ThrowOnError>,
 ): RequestResult<
   AdminTaxonomyControllerCreateResponses,
-  unknown,
+  AdminTaxonomyControllerCreateErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
     AdminTaxonomyControllerCreateResponses,
-    unknown,
+    AdminTaxonomyControllerCreateErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTaxonomyControllerCreateResponse.parseAsync(data),
     url: '/api/admin/v1/taxonomy/{kind}',
     ...options,
     headers: {
@@ -274,12 +384,12 @@ export const adminTaxonomyControllerRemove = <
   options: Options<AdminTaxonomyControllerRemoveData, ThrowOnError>,
 ): RequestResult<
   AdminTaxonomyControllerRemoveResponses,
-  unknown,
+  AdminTaxonomyControllerRemoveErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
     AdminTaxonomyControllerRemoveResponses,
-    unknown,
+    AdminTaxonomyControllerRemoveErrors,
     ThrowOnError
   >({
     responseValidator: async (data) =>
@@ -294,14 +404,17 @@ export const adminTaxonomyControllerRename = <
   options: Options<AdminTaxonomyControllerRenameData, ThrowOnError>,
 ): RequestResult<
   AdminTaxonomyControllerRenameResponses,
-  unknown,
+  AdminTaxonomyControllerRenameErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
     AdminTaxonomyControllerRenameResponses,
-    unknown,
+    AdminTaxonomyControllerRenameErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTaxonomyControllerRenameResponse.parseAsync(data),
     url: '/api/admin/v1/taxonomy/{kind}/{id}',
     ...options,
     headers: {
@@ -316,14 +429,20 @@ export const adminTelegramControllerAccount = <
   options?: Options<AdminTelegramControllerAccountData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerAccountResponses,
-  unknown,
+  AdminTelegramControllerAccountErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
     AdminTelegramControllerAccountResponses,
-    unknown,
+    AdminTelegramControllerAccountErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/telegram/account', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerAccountResponse.parseAsync(data),
+    url: '/api/admin/v1/telegram/account',
+    ...options,
+  });
 
 export const adminTelegramControllerSendCode = <
   ThrowOnError extends boolean = false,
@@ -331,14 +450,17 @@ export const adminTelegramControllerSendCode = <
   options: Options<AdminTelegramControllerSendCodeData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerSendCodeResponses,
-  unknown,
+  AdminTelegramControllerSendCodeErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
     AdminTelegramControllerSendCodeResponses,
-    unknown,
+    AdminTelegramControllerSendCodeErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerSendCodeResponse.parseAsync(data),
     url: '/api/admin/v1/telegram/auth/code',
     ...options,
     headers: {
@@ -353,14 +475,17 @@ export const adminTelegramControllerVerifyCode = <
   options: Options<AdminTelegramControllerVerifyCodeData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerVerifyCodeResponses,
-  unknown,
+  AdminTelegramControllerVerifyCodeErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
     AdminTelegramControllerVerifyCodeResponses,
-    unknown,
+    AdminTelegramControllerVerifyCodeErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerVerifyCodeResponse.parseAsync(data),
     url: '/api/admin/v1/telegram/auth/code/verify',
     ...options,
     headers: {
@@ -375,14 +500,17 @@ export const adminTelegramControllerVerifyPassword = <
   options: Options<AdminTelegramControllerVerifyPasswordData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerVerifyPasswordResponses,
-  unknown,
+  AdminTelegramControllerVerifyPasswordErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
     AdminTelegramControllerVerifyPasswordResponses,
-    unknown,
+    AdminTelegramControllerVerifyPasswordErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerVerifyPasswordResponse.parseAsync(data),
     url: '/api/admin/v1/telegram/auth/password/verify',
     ...options,
     headers: {
@@ -397,12 +525,12 @@ export const adminTelegramControllerLogOut = <
   options?: Options<AdminTelegramControllerLogOutData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerLogOutResponses,
-  unknown,
+  AdminTelegramControllerLogOutErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).delete<
     AdminTelegramControllerLogOutResponses,
-    unknown,
+    AdminTelegramControllerLogOutErrors,
     ThrowOnError
   >({
     responseValidator: async (data) =>
@@ -417,14 +545,20 @@ export const adminTelegramControllerRefreshChats = <
   options?: Options<AdminTelegramControllerRefreshChatsData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerRefreshChatsResponses,
-  unknown,
+  AdminTelegramControllerRefreshChatsErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).post<
     AdminTelegramControllerRefreshChatsResponses,
-    unknown,
+    AdminTelegramControllerRefreshChatsErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/telegram/chats/refresh', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerRefreshChatsResponse.parseAsync(data),
+    url: '/api/admin/v1/telegram/chats/refresh',
+    ...options,
+  });
 
 export const adminTelegramControllerListChats = <
   ThrowOnError extends boolean = false,
@@ -432,14 +566,20 @@ export const adminTelegramControllerListChats = <
   options?: Options<AdminTelegramControllerListChatsData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerListChatsResponses,
-  unknown,
+  AdminTelegramControllerListChatsErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
     AdminTelegramControllerListChatsResponses,
-    unknown,
+    AdminTelegramControllerListChatsErrors,
     ThrowOnError
-  >({ url: '/api/admin/v1/telegram/chats', ...options });
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerListChatsResponse.parseAsync(data),
+    url: '/api/admin/v1/telegram/chats',
+    ...options,
+  });
 
 export const adminTelegramControllerUpdateChat = <
   ThrowOnError extends boolean = false,
@@ -447,14 +587,17 @@ export const adminTelegramControllerUpdateChat = <
   options: Options<AdminTelegramControllerUpdateChatData, ThrowOnError>,
 ): RequestResult<
   AdminTelegramControllerUpdateChatResponses,
-  unknown,
+  AdminTelegramControllerUpdateChatErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
     AdminTelegramControllerUpdateChatResponses,
-    unknown,
+    AdminTelegramControllerUpdateChatErrors,
     ThrowOnError
   >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTelegramControllerUpdateChatResponse.parseAsync(data),
     url: '/api/admin/v1/telegram/chats/{id}',
     ...options,
     headers: {
