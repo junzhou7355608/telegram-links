@@ -28,6 +28,7 @@ import {
 interface AdminSidebarProps {
   jobCount: number;
   pendingCount: number;
+  serverState: 'connecting' | 'online' | 'offline';
   totalCount: number;
 }
 
@@ -71,6 +72,7 @@ const navigation = [
 
 export function AdminSidebar({
   pendingCount,
+  serverState,
   totalCount,
   jobCount,
 }: AdminSidebarProps) {
@@ -144,16 +146,26 @@ export function AdminSidebar({
             <CheckCircle2 className="size-3.5" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-xs font-medium">本地演示</p>
+            <p className="truncate text-xs font-medium">
+              {serverState === 'online'
+                ? 'Server 已连接'
+                : serverState === 'connecting'
+                  ? '正在连接 Server'
+                  : 'Server 连接失败'}
+            </p>
             <p className="truncate text-[11px] text-muted-foreground">
-              仅保存在当前浏览器
+              PostgreSQL 持久化
             </p>
           </div>
           <Badge
             variant="outline"
             className="group-data-[collapsible=icon]:hidden"
           >
-            本地
+            {serverState === 'online'
+              ? '在线'
+              : serverState === 'connecting'
+                ? '连接中'
+                : '离线'}
           </Badge>
         </div>
       </SidebarFooter>

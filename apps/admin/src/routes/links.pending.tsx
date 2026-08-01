@@ -14,8 +14,8 @@ function PendingLinksRoute() {
     <LinksPage
       pendingOnly
       search={search}
-      onSearchChange={(updater) => {
-        void navigate({ replace: true, search: updater });
+      onSearchChange={(updater, options) => {
+        void navigate({ replace: options?.replace, search: updater });
       }}
     />
   );

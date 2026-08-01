@@ -1,6 +1,6 @@
 import type { TaxonomyItemResponseDto } from '@/api/types.gen';
-import type { TaxonomyKind } from '@/components/providers/demo-admin-context';
-import type { DemoTaxonomyState } from '@/lib/admin-store';
+import type { TaxonomyCollections, TaxonomyKind } from '@/lib/admin-api';
+import { getAdminApiError } from '@/lib/api-error';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,12 +38,13 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface TaxonomyViewProps {
+  isPending: boolean;
   kind: TaxonomyKind;
-  taxonomy: DemoTaxonomyState;
+  taxonomy: TaxonomyCollections;
   onKindChange: (kind: TaxonomyKind) => void;
-  onAdd: (kind: TaxonomyKind, value: string) => string | null;
-  onRename: (kind: TaxonomyKind, id: string, value: string) => string | null;
-  onDelete: (kind: TaxonomyKind, id: string) => void;
+  onAdd: (kind: TaxonomyKind, value: string) => Promise<void>;
+  onRename: (kind: TaxonomyKind, id: string, value: string) => Promise<void>;
+  onDelete: (kind: TaxonomyKind, id: string) => Promise<void>;
 }
 
 const labels: Record<
@@ -75,6 +76,7 @@ interface TaxonomySectionProps extends Omit<
 }
 
 function TaxonomySection({
+  isPending,
   kind,
   taxonomy,
   onAdd,
@@ -89,15 +91,15 @@ function TaxonomySection({
   );
   const copy = labels[kind];
 
-  function addItem(event: React.FormEvent<HTMLFormElement>) {
+  async function addItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const error = onAdd(kind, newValue);
-    if (error) {
-      toast.error(error);
-      return;
+    try {
+      await onAdd(kind, newValue);
+      setNewValue('');
+      toast.success(`已新增${copy.singular}`);
+    } catch (error) {
+      toast.error(getAdminApiError(error).message);
     }
-    setNewValue('');
-    toast.success(`已新增${copy.singular}`);
   }
 
   function startRename(item: TaxonomyItemResponseDto) {
@@ -105,17 +107,17 @@ function TaxonomySection({
     setRenameValue(item.name);
   }
 
-  function saveRename() {
+  async function saveRename() {
     if (!editingId) {
       return;
     }
-    const error = onRename(kind, editingId, renameValue);
-    if (error) {
-      toast.error(error);
-      return;
+    try {
+      await onRename(kind, editingId, renameValue);
+      setEditingId(null);
+      toast.success(`已重命名${copy.singular}并更新现有链接`);
+    } catch (error) {
+      toast.error(getAdminApiError(error).message);
     }
-    setEditingId(null);
-    toast.success(`已重命名${copy.singular}并更新现有链接`);
   }
 
   return (
@@ -133,11 +135,12 @@ function TaxonomySection({
             <Input
               id={`new-${kind}`}
               value={newValue}
+              disabled={isPending}
               onChange={(event) => setNewValue(event.target.value)}
               placeholder={`输入新${copy.singular}名称`}
             />
           </Field>
-          <Button type="submit">
+          <Button type="submit" disabled={isPending || !newValue.trim()}>
             <Plus />
             新增
           </Button>
@@ -153,12 +156,13 @@ function TaxonomySection({
                 {isEditing ? (
                   <Input
                     value={renameValue}
+                    disabled={isPending}
                     onChange={(event) => setRenameValue(event.target.value)}
                     aria-label={`重命名 ${item.name}`}
                     autoFocus
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') {
-                        saveRename();
+                        void saveRename();
                       }
                       if (event.key === 'Escape') {
                         setEditingId(null);
@@ -178,7 +182,8 @@ function TaxonomySection({
                       variant="ghost"
                       size="icon-sm"
                       aria-label="保存重命名"
-                      onClick={saveRename}
+                      disabled={isPending}
+                      onClick={() => void saveRename()}
                     >
                       <Check />
                     </Button>
@@ -187,6 +192,7 @@ function TaxonomySection({
                       variant="ghost"
                       size="icon-sm"
                       aria-label="取消重命名"
+                      disabled={isPending}
                       onClick={() => setEditingId(null)}
                     >
                       <X />
@@ -199,6 +205,7 @@ function TaxonomySection({
                       variant="ghost"
                       size="icon-sm"
                       aria-label={`重命名 ${item.name}`}
+                      disabled={isPending}
                       onClick={() => startRename(item)}
                     >
                       <Pencil />
@@ -228,6 +235,7 @@ function TaxonomySection({
                         variant="ghost"
                         size="icon-sm"
                         aria-label={`删除 ${item.name}`}
+                        disabled={isPending}
                         onClick={() => setDeleteItem(item)}
                       >
                         <Trash2 />
@@ -259,12 +267,18 @@ function TaxonomySection({
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              disabled={isPending}
               onClick={() => {
                 if (deleteItem) {
-                  onDelete(kind, deleteItem.id);
-                  toast.success(`已删除${copy.singular}`);
+                  void onDelete(kind, deleteItem.id)
+                    .then(() => {
+                      toast.success(`已删除${copy.singular}`);
+                      setDeleteItem(null);
+                    })
+                    .catch((error: unknown) => {
+                      toast.error(getAdminApiError(error).message);
+                    });
                 }
-                setDeleteItem(null);
               }}
             >
               删除
@@ -277,6 +291,7 @@ function TaxonomySection({
 }
 
 export function TaxonomyView({
+  isPending,
   kind,
   taxonomy,
   onKindChange,
@@ -306,7 +321,12 @@ export function TaxonomyView({
         </TabsList>
         {(['projects', 'categories', 'tags'] as const).map((value) => (
           <TabsContent key={value} value={value} className="pt-2">
-            <TaxonomySection {...actions} kind={value} taxonomy={taxonomy} />
+            <TaxonomySection
+              {...actions}
+              isPending={isPending}
+              kind={value}
+              taxonomy={taxonomy}
+            />
           </TabsContent>
         ))}
       </Tabs>

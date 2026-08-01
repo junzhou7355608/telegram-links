@@ -7,12 +7,16 @@ import { ModeToggle } from '@/components/features/mode-toggle';
 interface WorkspaceHeaderProps {
   latestScanLabel: string;
   running: boolean;
+  scanDisabled: boolean;
+  scanLabel: string;
   onStartScan: () => void;
 }
 
 export function WorkspaceHeader({
   latestScanLabel,
   running,
+  scanDisabled,
+  scanLabel,
   onStartScan,
 }: WorkspaceHeaderProps) {
   return (
@@ -30,9 +34,13 @@ export function WorkspaceHeader({
           扫描中
         </Badge>
       ) : null}
-      <Button type="button" disabled={running} onClick={onStartScan}>
+      <Button
+        type="button"
+        disabled={running || scanDisabled}
+        onClick={onStartScan}
+      >
         {running ? <LoaderCircle className="animate-spin" /> : <Play />}
-        <span className="hidden sm:inline">开始扫描</span>
+        <span className="hidden sm:inline">{scanLabel}</span>
         <span className="sm:hidden">扫描</span>
       </Button>
       <ModeToggle />

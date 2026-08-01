@@ -3,7 +3,7 @@ import {
   formatDateTime,
   formatDuration,
   scanStageLabels,
-} from '@/lib/admin-store';
+} from '@/lib/admin-display';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
 import { Badge } from '@repo/ui/components/badge';
 import {
@@ -26,7 +26,6 @@ import {
 
 interface ScanJobsViewProps {
   jobs: SyncJobResponseDto[];
-  runningJob: SyncJobResponseDto | null;
 }
 
 const statusLabels: Record<SyncJobResponseDto['status'], string> = {
@@ -124,7 +123,7 @@ function JobCard({ job }: { job: SyncJobResponseDto }) {
   );
 }
 
-export function ScanJobsView({ jobs, runningJob }: ScanJobsViewProps) {
+export function ScanJobsView({ jobs }: ScanJobsViewProps) {
   return (
     <section aria-labelledby="scan-jobs-heading" className="grid gap-5">
       <div>
@@ -135,10 +134,9 @@ export function ScanJobsView({ jobs, runningJob }: ScanJobsViewProps) {
           扫描任务
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          查看演示扫描的来源范围、处理数量和去重结果。
+          查看真实扫描的来源范围、处理数量和去重结果。
         </p>
       </div>
-      {runningJob ? <JobCard job={runningJob} /> : null}
       {jobs.length > 0 ? (
         <div className="grid gap-3">
           {jobs.map((job) => (
@@ -152,7 +150,7 @@ export function ScanJobsView({ jobs, runningJob }: ScanJobsViewProps) {
           </span>
           <h3 className="mt-4 font-medium">还没有扫描记录</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            从页面右上角开始第一次模拟扫描。
+            从页面右上角开始第一次扫描。
           </p>
         </div>
       )}

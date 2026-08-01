@@ -29,4 +29,20 @@ describe('getAdminApiError', () => {
       statusCode: 0,
     });
   });
+
+  it('normalizes a Vite proxy failure without hiding structured errors', () => {
+    const error = new AxiosError('Bad Gateway', '502', undefined, undefined, {
+      config: { headers: new AxiosHeaders() },
+      data: 'Proxy request failed',
+      headers: {},
+      status: 502,
+      statusText: 'Bad Gateway',
+    });
+
+    expect(getAdminApiError(error)).toMatchObject({
+      code: 'SERVER_UNAVAILABLE',
+      message: '无法连接本地 Server，请确认服务已经启动。',
+      statusCode: 502,
+    });
+  });
 });

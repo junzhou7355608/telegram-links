@@ -1,6 +1,7 @@
 import type { BatchLinkPatchDto, LinkResponseDto } from '@/api/types.gen';
 import { TagPicker } from '@/components/features/tag-picker';
-import { environmentLabels, type DemoTaxonomyState } from '@/lib/admin-store';
+import { environmentLabels } from '@/lib/admin-display';
+import type { TaxonomyCollections } from '@/lib/admin-api';
 import { Button } from '@repo/ui/components/button';
 import {
   Dialog,
@@ -22,14 +23,16 @@ import { CheckCheck, ListChecks, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface BulkActionsProps {
+  isPending: boolean;
   selectedLinks: LinkResponseDto[];
-  taxonomy: DemoTaxonomyState;
+  taxonomy: TaxonomyCollections;
   onClear: () => void;
   onApply: (patch: BatchLinkPatchDto) => void;
   onComplete: () => void;
 }
 
 export function BulkActions({
+  isPending,
   selectedLinks,
   taxonomy,
   onClear,
@@ -70,11 +73,16 @@ export function BulkActions({
         <p className="mr-auto px-2 text-sm font-medium">
           已选择 {selectedLinks.length} 条
         </p>
-        <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isPending}
+          onClick={() => setOpen(true)}
+        >
           <ListChecks />
           批量设置
         </Button>
-        <Button type="button" onClick={onComplete}>
+        <Button type="button" disabled={isPending} onClick={onComplete}>
           <CheckCheck />
           标记完成
         </Button>
@@ -204,7 +212,7 @@ export function BulkActions({
             >
               取消
             </Button>
-            <Button type="button" onClick={apply}>
+            <Button type="button" disabled={isPending} onClick={apply}>
               应用修改
             </Button>
           </DialogFooter>

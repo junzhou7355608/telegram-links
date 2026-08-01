@@ -3,7 +3,7 @@ import {
   environmentLabels,
   formatDateTime,
   statusLabels,
-} from '@/lib/admin-store';
+} from '@/lib/admin-display';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -85,7 +85,7 @@ export function LinkList({
         </span>
         <h3 className="mt-4 font-medium">没有找到匹配的链接</h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          尝试减少筛选条件，或重置后查看全部演示记录。
+          尝试减少筛选条件，或重置后查看全部记录。
         </p>
         <Button
           type="button"

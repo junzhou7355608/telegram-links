@@ -24,6 +24,15 @@ export function getAdminApiError(error: unknown): AdminApiError {
     if (isApiError(error.response?.data)) {
       return error.response.data;
     }
+    if (error.response && [502, 503, 504].includes(error.response.status)) {
+      return {
+        code: 'SERVER_UNAVAILABLE',
+        message: '无法连接本地 Server，请确认服务已经启动。',
+        path: '',
+        statusCode: error.response.status,
+        timestamp: new Date().toISOString(),
+      };
+    }
     if (!error.response) {
       return {
         code: 'NETWORK_ERROR',

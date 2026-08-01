@@ -1,8 +1,20 @@
+import {
+  adminLinksControllerOverviewOptions,
+  adminSyncControllerCreateMutation,
+  adminSyncControllerListOptions,
+  adminTelegramControllerAccountOptions,
+} from '@/api/@tanstack/react-query.gen';
+import type { CreateSyncJobDto } from '@/api/types.gen';
 import { AdminSidebar } from '@/components/features/admin-sidebar';
 import { ScanDialog } from '@/components/features/scan-dialog';
 import { WorkspaceHeader } from '@/components/features/workspace-header';
-import { useDemoAdmin } from '@/components/providers/demo-admin-context';
-import { formatDateTime, scanStageLabels } from '@/lib/admin-store';
+import { ApiErrorState } from '@/components/layouts/api-state';
+import { invalidateSyncResults } from '@/lib/admin-api';
+import {
+  formatDateTime,
+  isActiveSyncJob,
+  scanStageLabels,
+} from '@/lib/admin-display';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
 import {
   Card,
@@ -12,7 +24,8 @@ import {
 } from '@repo/ui/components/card';
 import { Progress } from '@repo/ui/components/progress';
 import { SidebarInset, SidebarProvider } from '@repo/ui/components/sidebar';
-import { Outlet } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Outlet, useNavigate } from '@tanstack/react-router';
 import {
   Activity,
   CheckCircle2,
@@ -21,7 +34,8 @@ import {
   LoaderCircle,
   Plus,
 } from 'lucide-react';
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { toast } from 'sonner';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 
@@ -60,15 +74,45 @@ function StatCard({
 export function AdminShell() {
   const [sidebarDefaultOpen] = useState(loadSidebarDefaultOpen);
   const [scanDialogOpen, setScanDialogOpen] = useState(false);
-  const { runningJob, startScan, store } = useDemoAdmin();
-  const pendingCount = store.links.filter(
-    (link) => link.status === 'pending',
-  ).length;
-  const today = new Date().toLocaleDateString('en-CA');
-  const todayCount = store.links.filter(
-    (link) => new Date(link.createdAt).toLocaleDateString('en-CA') === today,
-  ).length;
-  const latestJob = store.jobs[0];
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const overviewQuery = useQuery(adminLinksControllerOverviewOptions());
+  const accountQuery = useQuery(adminTelegramControllerAccountOptions());
+  const latestJobQuery = useQuery({
+    ...adminSyncControllerListOptions({ query: { page: 1, pageSize: 1 } }),
+    refetchInterval: (query) =>
+      isActiveSyncJob(query.state.data?.items[0]) ? 2_000 : false,
+  });
+  const createJobMutation = useMutation(adminSyncControllerCreateMutation());
+  const latestJob = latestJobQuery.data?.items[0] ?? null;
+  const runningJob = isActiveSyncJob(latestJob) ? latestJob : null;
+  const previousJobStatus = useRef(latestJob?.status);
+  const overview = overviewQuery.data;
+  const authorized = accountQuery.data?.status === 'authorized';
+  const serverState =
+    overviewQuery.error || accountQuery.error || latestJobQuery.error
+      ? ('offline' as const)
+      : overviewQuery.data && accountQuery.data && latestJobQuery.data
+        ? ('online' as const)
+        : ('connecting' as const);
+
+  useEffect(() => {
+    const previous = previousJobStatus.current;
+    if (
+      (previous === 'queued' || previous === 'running') &&
+      latestJob &&
+      !isActiveSyncJob(latestJob)
+    ) {
+      void invalidateSyncResults(queryClient);
+      toast.success(
+        latestJob.status === 'succeeded'
+          ? '扫描任务已完成'
+          : '扫描任务已结束，请查看任务详情',
+      );
+    }
+    previousJobStatus.current = latestJob?.status;
+  }, [latestJob, queryClient]);
+
   const latestScanLabel = runningJob
     ? runningJob.stage
       ? scanStageLabels[runningJob.stage]
@@ -77,21 +121,42 @@ export function AdminShell() {
       ? `${latestJob.status === 'succeeded' ? '成功' : '已结束'} · ${formatDateTime(latestJob.startedAt)}`
       : '尚未扫描';
 
+  async function startScan(configuration: CreateSyncJobDto) {
+    await createJobMutation.mutateAsync({ body: configuration });
+    await invalidateSyncResults(queryClient);
+    toast.success('扫描任务已创建，可继续整理其他链接');
+  }
+
+  function handleScanAction() {
+    if (!authorized) {
+      void navigate({ to: '/telegram', search: { page: 1 } });
+      return;
+    }
+    setScanDialogOpen(true);
+  }
+
   return (
     <SidebarProvider
       defaultOpen={sidebarDefaultOpen}
       style={{ '--sidebar-width': '15rem' } as CSSProperties}
     >
       <AdminSidebar
-        pendingCount={pendingCount}
-        totalCount={store.links.length}
-        jobCount={store.jobs.length}
+        pendingCount={overview?.pending ?? 0}
+        totalCount={overview?.total ?? 0}
+        jobCount={latestJobQuery.data?.pagination.total ?? 0}
+        serverState={serverState}
       />
       <SidebarInset className="min-w-0">
         <WorkspaceHeader
           latestScanLabel={latestScanLabel}
-          running={runningJob !== null}
-          onStartScan={() => setScanDialogOpen(true)}
+          running={runningJob !== null || createJobMutation.isPending}
+          scanDisabled={
+            accountQuery.isPending ||
+            Boolean(accountQuery.error) ||
+            Boolean(latestJobQuery.error)
+          }
+          scanLabel={authorized ? '开始扫描' : '连接 Telegram'}
+          onStartScan={handleScanAction}
         />
 
         <main
@@ -99,31 +164,48 @@ export function AdminShell() {
           className="scroll-mt-16 px-4 py-5 sm:px-6 sm:py-6 lg:px-8"
         >
           <div className="mx-auto grid min-w-0 max-w-[1480px] gap-5 [&>*]:min-w-0">
+            {overviewQuery.error ? (
+              <ApiErrorState
+                error={overviewQuery.error}
+                onRetry={() => void overviewQuery.refetch()}
+              />
+            ) : null}
+
             <section
               aria-label="工作台概览"
               className="grid grid-cols-2 gap-3 xl:grid-cols-4"
             >
               <StatCard
                 label="待整理"
-                value={pendingCount}
+                value={overview?.pending ?? '—'}
                 detail="需要补充项目与用途"
                 icon={Inbox}
               />
               <StatCard
                 label="今日新增"
-                value={todayCount}
-                detail="来自本地扫描演示"
+                value={overview?.todayAdded ?? '—'}
+                detail="来自 Telegram 扫描"
                 icon={Plus}
               />
               <StatCard
                 label="链接总数"
-                value={store.links.length}
-                detail={`${store.links.length - pendingCount} 条已整理`}
+                value={overview?.total ?? '—'}
+                detail={
+                  overview
+                    ? `${overview.total - overview.pending} 条已整理`
+                    : '等待服务端数据'
+                }
                 icon={Database}
               />
               <StatCard
                 label="最近扫描"
-                value={runningJob ? `${runningJob.progress}%` : '已结束'}
+                value={
+                  runningJob
+                    ? `${runningJob.progress}%`
+                    : latestJob
+                      ? '已结束'
+                      : '—'
+                }
                 detail={
                   runningJob
                     ? runningJob.stage
@@ -163,12 +245,15 @@ export function AdminShell() {
         </main>
       </SidebarInset>
 
-      <ScanDialog
-        open={scanDialogOpen}
-        taxonomy={store.taxonomy}
-        onOpenChange={setScanDialogOpen}
-        onSubmit={startScan}
-      />
+      {scanDialogOpen ? (
+        <ScanDialog
+          authorized={authorized}
+          isPending={createJobMutation.isPending}
+          open={scanDialogOpen}
+          onOpenChange={setScanDialogOpen}
+          onSubmit={startScan}
+        />
+      ) : null}
     </SidebarProvider>
   );
 }

@@ -1,13 +1,22 @@
-import type { LinkResponseDto } from '@/api/types.gen';
+import type { LinkResponseDto, UpdateLinkDto } from '@/api/types.gen';
 import { TagPicker } from '@/components/features/tag-picker';
 import {
-  canCompleteLink,
   environmentLabels,
   formatDateTime,
-  getDomain,
   isValidHttpUrl,
-  type DemoTaxonomyState,
-} from '@/lib/admin-store';
+} from '@/lib/admin-display';
+import type { TaxonomyCollections } from '@/lib/admin-api';
+import { getAdminApiError } from '@/lib/api-error';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@repo/ui/components/alert-dialog';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -34,7 +43,14 @@ import {
   SheetTitle,
 } from '@repo/ui/components/sheet';
 import { Textarea } from '@repo/ui/components/textarea';
-import { Copy, ExternalLink, MessageCircle } from 'lucide-react';
+import {
+  Archive,
+  Copy,
+  ExternalLink,
+  LoaderCircle,
+  MessageCircle,
+  RotateCcw,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -49,16 +65,22 @@ interface LinkDraft {
 }
 
 interface LinkEditSheetProps {
+  isPending: boolean;
   link: LinkResponseDto;
-  taxonomy: DemoTaxonomyState;
+  taxonomy: TaxonomyCollections;
+  onArchive: () => Promise<void>;
   onOpenChange: (open: boolean) => void;
-  onSave: (link: LinkResponseDto) => void;
+  onRestore: () => Promise<void>;
+  onSave: (body: UpdateLinkDto) => Promise<void>;
 }
 
 export function LinkEditSheet({
+  isPending,
   link,
   taxonomy,
+  onArchive,
   onOpenChange,
+  onRestore,
   onSave,
 }: LinkEditSheetProps) {
   const [draft, setDraft] = useState<LinkDraft>({
@@ -71,6 +93,7 @@ export function LinkEditSheet({
     url: link.url,
   });
   const [error, setError] = useState('');
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   function update<Key extends keyof LinkDraft>(
     key: Key,
@@ -79,38 +102,58 @@ export function LinkEditSheet({
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function save(status: LinkResponseDto['status']) {
-    const url = draft.url.trim();
-    const next: LinkResponseDto = {
-      ...link,
-      category:
-        taxonomy.categories.find((item) => item.id === draft.categoryId) ??
-        null,
-      domain: getDomain(url),
+  async function save(status: LinkResponseDto['status']) {
+    const body: UpdateLinkDto = {
+      categoryId: draft.categoryId || null,
       environment: draft.environment,
-      project:
-        taxonomy.projects.find((item) => item.id === draft.projectId) ?? null,
+      projectId: draft.projectId || null,
       purpose: draft.purpose.trim() || null,
       status,
-      tags: taxonomy.tags.filter((item) => draft.tagIds.includes(item.id)),
+      tagIds: draft.tagIds,
       title: draft.title.trim(),
-      updatedAt: new Date().toISOString(),
-      url,
+      url: draft.url.trim(),
     };
 
-    if (status === 'organized' && !canCompleteLink(next)) {
-      setError('完成整理前，请填写标题、合法 URL、项目、用途和分类。');
+    if (!isValidHttpUrl(body.url ?? '')) {
+      setError('URL 必须是有效的 HTTP 或 HTTPS 地址。');
       return;
     }
-    if (next.url && !isValidHttpUrl(next.url)) {
-      setError('URL 必须是有效的 HTTP 或 HTTPS 地址。');
+    if (
+      status === 'organized' &&
+      (!body.title || !body.projectId || !body.purpose || !body.categoryId)
+    ) {
+      setError('完成整理前，请填写标题、合法 URL、项目、用途和分类。');
       return;
     }
 
     setError('');
-    onSave(next);
-    onOpenChange(false);
-    toast.success(status === 'organized' ? '已保存并完成整理' : '草稿已保存');
+    try {
+      await onSave(body);
+      toast.success(status === 'organized' ? '已保存并完成整理' : '草稿已保存');
+      onOpenChange(false);
+    } catch (caught) {
+      setError(getAdminApiError(caught).message);
+    }
+  }
+
+  async function archive() {
+    try {
+      await onArchive();
+      toast.success('链接已归档');
+      setArchiveOpen(false);
+      onOpenChange(false);
+    } catch (caught) {
+      toast.error(getAdminApiError(caught).message);
+    }
+  }
+
+  async function restore() {
+    try {
+      await onRestore();
+      toast.success('链接已恢复');
+    } catch (caught) {
+      toast.error(getAdminApiError(caught).message);
+    }
   }
 
   async function copyUrl() {
@@ -122,7 +165,8 @@ export function LinkEditSheet({
     }
   }
 
-  const source = link.latestSource;
+  const sources =
+    link.sources ?? (link.latestSource ? [link.latestSource] : []);
 
   return (
     <Sheet open onOpenChange={onOpenChange}>
@@ -135,6 +179,9 @@ export function LinkEditSheet({
             >
               {link.status === 'pending' ? '待整理' : '已整理'}
             </Badge>
+            {link.archivedAt ? (
+              <Badge variant="destructive">已归档</Badge>
+            ) : null}
           </div>
           <SheetDescription>
             编辑链接属性；Telegram 来源上下文保持只读。
@@ -148,6 +195,7 @@ export function LinkEditSheet({
               <Input
                 id="edit-title"
                 value={draft.title}
+                disabled={isPending}
                 onChange={(event) => update('title', event.target.value)}
                 placeholder="例如：Atlas 正式站"
               />
@@ -157,6 +205,7 @@ export function LinkEditSheet({
               <Input
                 id="edit-url"
                 value={draft.url}
+                disabled={isPending}
                 onChange={(event) => update('url', event.target.value)}
                 className="font-mono text-xs"
               />
@@ -174,14 +223,9 @@ export function LinkEditSheet({
                   type="button"
                   variant="outline"
                   size="sm"
-                  nativeButton={false}
-                  render={
-                    <a
-                      href={draft.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-disabled={!isValidHttpUrl(draft.url)}
-                    />
+                  disabled={!isValidHttpUrl(draft.url)}
+                  onClick={() =>
+                    window.open(draft.url, '_blank', 'noopener,noreferrer')
                   }
                 >
                   <ExternalLink />
@@ -195,6 +239,7 @@ export function LinkEditSheet({
                 <FieldLabel htmlFor="edit-project">项目</FieldLabel>
                 <Select
                   value={draft.projectId || 'none'}
+                  disabled={isPending}
                   onValueChange={(value) =>
                     update('projectId', value === 'none' ? '' : String(value))
                   }
@@ -223,6 +268,7 @@ export function LinkEditSheet({
                 <FieldLabel htmlFor="edit-category">分类</FieldLabel>
                 <Select
                   value={draft.categoryId || 'none'}
+                  disabled={isPending}
                   onValueChange={(value) =>
                     update('categoryId', value === 'none' ? '' : String(value))
                   }
@@ -255,6 +301,7 @@ export function LinkEditSheet({
               <Textarea
                 id="edit-purpose"
                 value={draft.purpose}
+                disabled={isPending}
                 onChange={(event) => update('purpose', event.target.value)}
                 placeholder="这个链接属于什么项目，用来做什么？"
                 rows={3}
@@ -266,6 +313,7 @@ export function LinkEditSheet({
                 <FieldLabel htmlFor="edit-environment">环境</FieldLabel>
                 <Select
                   value={draft.environment}
+                  disabled={isPending}
                   onValueChange={(value) =>
                     update(
                       'environment',
@@ -303,7 +351,7 @@ export function LinkEditSheet({
             </div>
             {error ? <FieldError>{error}</FieldError> : null}
             <FieldDescription>
-              保存草稿允许字段不完整；标记完成时会检查必填项。
+              保存草稿允许待整理链接字段不完整；标记完成时会检查必填项。
             </FieldDescription>
           </FieldGroup>
 
@@ -313,58 +361,112 @@ export function LinkEditSheet({
           >
             <div className="border-b px-4 py-3">
               <h3 id="source-heading" className="font-medium">
-                Telegram 来源
+                Telegram 来源（{link.sourceCount}）
               </h3>
             </div>
-            {source ? (
-              <>
-                <dl className="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-3 p-4 text-sm">
-                  <dt className="text-muted-foreground">聊天</dt>
-                  <dd>{source.chatName}</dd>
-                  <dt className="text-muted-foreground">采集时间</dt>
-                  <dd>{formatDateTime(source.capturedAt)}</dd>
-                  <dt className="text-muted-foreground">原消息</dt>
-                  <dd className="leading-relaxed">{source.messagePreview}</dd>
-                </dl>
-                {source.messageUrl ? (
-                  <div className="border-t p-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      nativeButton={false}
-                      render={
-                        <a
-                          href={source.messageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        />
-                      }
-                    >
-                      <MessageCircle />
-                      打开原消息
-                    </Button>
+            {sources.length > 0 ? (
+              <div className="divide-y">
+                {sources.map((source) => (
+                  <div key={source.id} className="space-y-3 p-4 text-sm">
+                    <dl className="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-2">
+                      <dt className="text-muted-foreground">聊天</dt>
+                      <dd>{source.chatName}</dd>
+                      <dt className="text-muted-foreground">采集时间</dt>
+                      <dd>{formatDateTime(source.capturedAt)}</dd>
+                      <dt className="text-muted-foreground">原消息</dt>
+                      <dd className="leading-relaxed">
+                        {source.messageText ?? source.messagePreview}
+                      </dd>
+                    </dl>
+                    {source.messageUrl ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        nativeButton={false}
+                        render={
+                          <a
+                            href={source.messageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          />
+                        }
+                      >
+                        <MessageCircle />
+                        打开原消息
+                      </Button>
+                    ) : null}
                   </div>
-                ) : null}
-              </>
+                ))}
+              </div>
             ) : (
               <p className="p-4 text-sm text-muted-foreground">暂无来源信息</p>
             )}
           </section>
         </div>
 
-        <SheetFooter className="sticky bottom-0 border-t bg-background">
-          <Button type="button" onClick={() => save('organized')}>
-            保存并完成
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => save(link.status)}
-          >
-            保存草稿
-          </Button>
+        <SheetFooter className="sticky bottom-0 flex-row border-t bg-background">
+          {link.archivedAt ? (
+            <Button type="button" disabled={isPending} onClick={restore}>
+              {isPending ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <RotateCcw />
+              )}
+              恢复链接
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="button"
+                disabled={isPending}
+                onClick={() => save('organized')}
+              >
+                {isPending ? <LoaderCircle className="animate-spin" /> : null}
+                保存并完成
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => save(link.status)}
+              >
+                保存草稿
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isPending}
+                className="sm:ml-auto"
+                onClick={() => setArchiveOpen(true)}
+              >
+                <Archive />
+                归档
+              </Button>
+            </>
+          )}
         </SheetFooter>
       </SheetContent>
+
+      <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>归档这个链接？</AlertDialogTitle>
+            <AlertDialogDescription>
+              归档后默认不会出现在列表中，可以通过“包含归档”筛选后恢复。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isPending}
+              onClick={() => void archive()}
+            >
+              归档
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

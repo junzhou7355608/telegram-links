@@ -1,11 +1,8 @@
-import type { LinkResponseDto } from '@/api/types.gen';
+import { SourceChatPicker } from '@/components/features/source-chat-picker';
 import { TagPicker } from '@/components/features/tag-picker';
 import type { LinksSearch } from '@/lib/admin-search';
-import {
-  environmentLabels,
-  statusLabels,
-  type DemoTaxonomyState,
-} from '@/lib/admin-store';
+import { environmentLabels, statusLabels } from '@/lib/admin-display';
+import type { TaxonomyCollections } from '@/lib/admin-api';
 import { Button } from '@repo/ui/components/button';
 import {
   InputGroup,
@@ -31,7 +28,6 @@ import {
   SheetTrigger,
 } from '@repo/ui/components/sheet';
 import { Archive, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
-import { useMemo } from 'react';
 
 interface FilterOption {
   label: string;
@@ -88,16 +84,14 @@ function FilterSelect({
 }
 
 interface FilterFieldsProps {
-  chats: FilterOption[];
   filters: LinksSearch;
   showStatus: boolean;
   stacked?: boolean;
-  taxonomy: DemoTaxonomyState;
+  taxonomy: TaxonomyCollections;
   onChange: (filters: LinksSearch) => void;
 }
 
 function FilterFields({
-  chats,
   filters,
   showStatus,
   stacked = false,
@@ -154,13 +148,17 @@ function FilterFields({
           update('environment', value as LinksSearch['environment'] | undefined)
         }
       />
-      <FilterSelect
-        label="来源"
-        value={filters.sourceChatId}
-        options={chats}
-        stacked={stacked}
-        onChange={(value) => update('sourceChatId', value)}
-      />
+      <label className={stacked ? 'grid gap-2' : 'contents'}>
+        {stacked ? (
+          <span className="text-xs font-medium text-muted-foreground">
+            来源
+          </span>
+        ) : null}
+        <SourceChatPicker
+          value={filters.sourceChatId}
+          onChange={(value) => update('sourceChatId', value)}
+        />
+      </label>
       {showStatus ? (
         <FilterSelect
           label="状态"
@@ -219,32 +217,25 @@ function FilterFields({
 
 interface LinkFiltersProps {
   filters: LinksSearch;
-  links: LinkResponseDto[];
-  taxonomy: DemoTaxonomyState;
+  searchValue: string;
+  taxonomy: TaxonomyCollections;
   showStatus: boolean;
   resultCount: number;
   onChange: (filters: LinksSearch) => void;
   onReset: () => void;
+  onSearchValueChange: (value: string) => void;
 }
 
 export function LinkFiltersBar({
   filters,
-  links,
+  searchValue,
   taxonomy,
   showStatus,
   resultCount,
   onChange,
   onReset,
+  onSearchValueChange,
 }: LinkFiltersProps) {
-  const chats = useMemo(() => {
-    const values = new Map<string, string>();
-    links.forEach((link) => {
-      if (link.latestSource) {
-        values.set(link.latestSource.chatId, link.latestSource.chatName);
-      }
-    });
-    return [...values].map(([value, label]) => ({ label, value }));
-  }, [links]);
   const activeFilterCount = [
     filters.projectId,
     filters.categoryId,
@@ -264,23 +255,17 @@ export function LinkFiltersBar({
             <Search aria-hidden="true" />
           </InputGroupAddon>
           <InputGroupInput
-            value={filters.q ?? ''}
-            onChange={(event) =>
-              onChange({
-                ...filters,
-                page: 1,
-                q: event.target.value || undefined,
-              })
-            }
+            value={searchValue}
+            onChange={(event) => onSearchValueChange(event.target.value)}
             placeholder="搜索标题、URL、项目、用途、标签或来源"
             aria-label="搜索链接"
           />
-          {filters.q ? (
+          {searchValue ? (
             <InputGroupAddon align="inline-end">
               <InputGroupButton
                 size="icon-xs"
                 aria-label="清空搜索"
-                onClick={() => onChange({ ...filters, page: 1, q: undefined })}
+                onClick={() => onSearchValueChange('')}
               >
                 <X />
               </InputGroupButton>
@@ -311,7 +296,6 @@ export function LinkFiltersBar({
             </SheetHeader>
             <div className="px-4">
               <FilterFields
-                chats={chats}
                 filters={filters}
                 showStatus={showStatus}
                 stacked
@@ -334,7 +318,6 @@ export function LinkFiltersBar({
 
       <div className="hidden items-center justify-between gap-3 md:flex">
         <FilterFields
-          chats={chats}
           filters={filters}
           showStatus={showStatus}
           taxonomy={taxonomy}

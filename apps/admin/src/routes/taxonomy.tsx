@@ -1,6 +1,18 @@
+import {
+  adminTaxonomyControllerCreateMutation,
+  adminTaxonomyControllerRemoveMutation,
+  adminTaxonomyControllerRenameMutation,
+} from '@/api/@tanstack/react-query.gen';
 import { TaxonomyView } from '@/components/features/taxonomy-view';
-import { useDemoAdmin } from '@/components/providers/demo-admin-context';
+import { ApiErrorState, PageSkeleton } from '@/components/layouts/api-state';
+import { useTaxonomy } from '@/hooks/use-taxonomy';
+import {
+  invalidateLinks,
+  invalidateTaxonomy,
+  type TaxonomyKind,
+} from '@/lib/admin-api';
 import { taxonomySearchSchema } from '@/lib/admin-search';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/taxonomy')({
@@ -11,22 +23,60 @@ export const Route = createFileRoute('/taxonomy')({
 function TaxonomyRoute() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const {
-    addTaxonomy,
-    deleteTaxonomy,
-    renameTaxonomy,
-    store: { taxonomy },
-  } = useDemoAdmin();
+  const queryClient = useQueryClient();
+  const taxonomyQuery = useTaxonomy();
+  const createMutation = useMutation(adminTaxonomyControllerCreateMutation());
+  const renameMutation = useMutation(adminTaxonomyControllerRenameMutation());
+  const removeMutation = useMutation(adminTaxonomyControllerRemoveMutation());
+  const isPending =
+    createMutation.isPending ||
+    renameMutation.isPending ||
+    removeMutation.isPending;
+
+  async function create(kind: TaxonomyKind, name: string) {
+    await createMutation.mutateAsync({ body: { name }, path: { kind } });
+    await invalidateTaxonomy(queryClient);
+  }
+
+  async function rename(kind: TaxonomyKind, id: string, name: string) {
+    await renameMutation.mutateAsync({
+      body: { name },
+      path: { id, kind },
+    });
+    await Promise.all([
+      invalidateTaxonomy(queryClient),
+      invalidateLinks(queryClient),
+    ]);
+  }
+
+  async function remove(kind: TaxonomyKind, id: string) {
+    await removeMutation.mutateAsync({ path: { id, kind } });
+    await invalidateTaxonomy(queryClient);
+  }
+
+  if (taxonomyQuery.isPending) {
+    return <PageSkeleton rows={5} />;
+  }
+  if (taxonomyQuery.error) {
+    return (
+      <ApiErrorState
+        error={taxonomyQuery.error}
+        onRetry={() => void taxonomyQuery.refetch()}
+      />
+    );
+  }
+
   return (
     <TaxonomyView
+      isPending={isPending}
       kind={search.kind}
-      taxonomy={taxonomy}
+      taxonomy={taxonomyQuery.taxonomy}
       onKindChange={(kind) => {
         void navigate({ search: { kind } });
       }}
-      onAdd={addTaxonomy}
-      onRename={renameTaxonomy}
-      onDelete={deleteTaxonomy}
+      onAdd={create}
+      onRename={rename}
+      onDelete={remove}
     />
   );
 }
