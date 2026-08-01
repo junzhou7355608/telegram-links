@@ -1,7 +1,23 @@
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from './prisma.service';
+import {
+  databaseSchemaFromConnectionString,
+  PrismaService,
+} from './prisma.service';
 
 describe('PrismaService', () => {
+  it('passes an explicit schema to the Prisma PostgreSQL adapter', () => {
+    expect(
+      databaseSchemaFromConnectionString(
+        'postgresql://user:password@localhost:5433/database?schema=telegram_links_test',
+      ),
+    ).toBe('telegram_links_test');
+    expect(
+      databaseSchemaFromConnectionString(
+        'postgresql://user:password@localhost:5433/database',
+      ),
+    ).toBe('public');
+  });
+
   const databaseUrl =
     'postgresql://telegram_links:telegram_links@localhost:5433/telegram_links';
 
