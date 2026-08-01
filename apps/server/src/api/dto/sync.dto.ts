@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   ArrayUnique,
   IsArray,
   IsDate,
@@ -44,12 +45,18 @@ export enum SyncJobChatStatusDtoValue {
 }
 
 export class CreateSyncJobDto {
-  @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
-  @IsOptional()
+  @ApiProperty({
+    format: 'uuid',
+    isArray: true,
+    minItems: 1,
+    type: String,
+    uniqueItems: true,
+  })
   @IsArray()
+  @ArrayNotEmpty()
   @ArrayUnique()
   @IsUUID('4', { each: true })
-  chatIds?: string[];
+  chatIds!: string[];
 
   @ApiProperty({ enum: SyncRangeDtoValue })
   @IsEnum(SyncRangeDtoValue)

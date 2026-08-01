@@ -4,9 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  Param,
-  Patch,
-  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -27,8 +24,7 @@ import {
   SendCodeResponseDto,
   TelegramAccountResponseDto,
   TelegramAuthResultResponseDto,
-  TelegramChatResponseDto,
-  UpdateChatDto,
+  TelegramChatScanOptionsResponseDto,
   VerifyCodeDto,
   VerifyPasswordDto,
 } from './dto/telegram.dto';
@@ -89,12 +85,9 @@ export class AdminTelegramController {
     return this.chats.list(query);
   }
 
-  @Patch('chats/:id')
-  @ApiOkResponse({ type: TelegramChatResponseDto })
-  updateChat(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body() body: UpdateChatDto,
-  ) {
-    return this.chats.setEnabled(id, body.isEnabled);
+  @Get('chats/scan-options')
+  @ApiOkResponse({ type: TelegramChatScanOptionsResponseDto })
+  scanOptions() {
+    return this.chats.scanOptions();
   }
 }

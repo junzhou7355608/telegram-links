@@ -265,7 +265,14 @@ describe('Server API (e2e)', () => {
     const app = moduleFixture.createNestApplication();
     configureApplication(app);
     await app.init();
-    await clearDatabase(app.get(PrismaService));
+    const prisma = app.get(PrismaService);
+    if (!prisma.schemaName.toLowerCase().includes('test')) {
+      await app.close();
+      throw new Error(
+        `E2E Prisma adapter resolved unsafe schema: ${prisma.schemaName}`,
+      );
+    }
+    await clearDatabase(prisma);
     return app;
   }
 
@@ -320,7 +327,15 @@ describe('Server API (e2e)', () => {
       expect(document.paths).toHaveProperty('/api/admin/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/ai/settings');
       expect(document.paths).toHaveProperty('/api/admin/v1/telegram/auth/code');
-      expect(JSON.stringify(document)).not.toMatch(/isFavorite|favorites/u);
+      expect(document.paths).toHaveProperty(
+        '/api/admin/v1/telegram/chats/scan-options',
+      );
+      expect(document.paths).not.toHaveProperty(
+        '/api/admin/v1/telegram/chats/{id}',
+      );
+      expect(JSON.stringify(document)).not.toMatch(
+        /isEnabled|isFavorite|favorites/u,
+      );
       for (const [path, pathItem] of Object.entries(document.paths)) {
         for (const [method, operation] of Object.entries(pathItem)) {
           if (!operation.responses) {
@@ -378,11 +393,31 @@ describe('Server API (e2e)', () => {
       const chatItems = responseBody<{
         items: Array<{ id: string; title: string }>;
       }>(chats).items;
+      const unavailableChat = chatItems.find(
+        (chat) => chat.title === '异常测试群',
+      );
       const sourceChat = chatItems.find((chat) => chat.title === '研发协作群');
-      if (!sourceChat) {
-        throw new Error('Expected the fake source chat');
+      if (!sourceChat || !unavailableChat) {
+        throw new Error('Expected the fake Telegram chats');
       }
       const chatId = sourceChat.id;
+      await app.get(PrismaService).telegramChat.update({
+        data: { isAvailable: false },
+        where: { id: unavailableChat.id },
+      });
+      const scanOptions = await request(server)
+        .get('/api/admin/v1/telegram/chats/scan-options')
+        .expect(200);
+      const optionItems = responseBody<{
+        items: Array<{ id: string; title: string }>;
+      }>(scanOptions).items;
+      expect(optionItems).toHaveLength(2);
+      expect(optionItems.map(({ id }) => id)).not.toContain(unavailableChat.id);
+      expect(JSON.stringify(scanOptions.body)).not.toContain('isEnabled');
+      await app.get(PrismaService).telegramChat.update({
+        data: { isAvailable: true },
+        where: { id: unavailableChat.id },
+      });
 
       const project = await request(server)
         .post('/api/admin/v1/taxonomy/projects')
@@ -428,6 +463,44 @@ describe('Server API (e2e)', () => {
             }),
           );
         });
+
+      await request(server)
+        .post('/api/admin/v1/sync-jobs')
+        .send({ rangeMode: 'allHistory' })
+        .expect(400);
+      await request(server)
+        .post('/api/admin/v1/sync-jobs')
+        .send({ chatIds: [], rangeMode: 'allHistory' })
+        .expect(400);
+      await request(server)
+        .post('/api/admin/v1/sync-jobs')
+        .send({
+          chatIds: ['00000000-0000-4000-8000-000000000001'],
+          rangeMode: 'allHistory',
+        })
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'INVALID_SYNC_CHATS' }),
+          );
+        });
+      await app.get(PrismaService).telegramChat.update({
+        data: { isAvailable: false },
+        where: { id: chatId },
+      });
+      await request(server)
+        .post('/api/admin/v1/sync-jobs')
+        .send({ chatIds: [chatId], rangeMode: 'allHistory' })
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'INVALID_SYNC_CHATS' }),
+          );
+        });
+      await app.get(PrismaService).telegramChat.update({
+        data: { isAvailable: true },
+        where: { id: chatId },
+      });
 
       const createdJob = await request(server)
         .post('/api/admin/v1/sync-jobs')
@@ -631,7 +704,10 @@ describe('Server API (e2e)', () => {
       expect(typeof validationBody.timestamp).toBe('string');
       await request(server)
         .post('/api/admin/v1/sync-jobs')
-        .send({ rangeMode: 'allHistory' })
+        .send({
+          chatIds: ['00000000-0000-4000-8000-000000000001'],
+          rangeMode: 'allHistory',
+        })
         .expect(503)
         .expect((response) => {
           expect(response.body).toEqual(

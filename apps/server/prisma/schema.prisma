@@ -85,7 +85,6 @@ model TelegramChat {
   type                TelegramChatType
   title               String
   username            String?
-  isEnabled           Boolean           @default(false)
   isAvailable         Boolean           @default(true)
   lastSyncedMessageId Int?
   lastSyncedAt        DateTime?
@@ -96,7 +95,7 @@ model TelegramChat {
   syncJobChats        SyncJobChat[]
 
   @@unique([accountId, telegramPeerId])
-  @@index([isEnabled, isAvailable])
+  @@index([isAvailable, title])
   @@index([type])
 }
 

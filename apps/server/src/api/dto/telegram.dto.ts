@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsEnum,
   IsOptional,
   IsString,
@@ -77,12 +76,6 @@ export class ChatQueryDto extends PaginationQueryDto {
   type?: ChatTypeValue;
 }
 
-export class UpdateChatDto {
-  @ApiProperty({ type: Boolean })
-  @IsBoolean()
-  isEnabled!: boolean;
-}
-
 export class TelegramAccountProfileResponseDto {
   @ApiProperty({ nullable: true, type: String })
   displayName!: string | null;
@@ -149,9 +142,6 @@ export class TelegramChatResponseDto {
   username!: string | null;
 
   @ApiProperty({ type: Boolean })
-  isEnabled!: boolean;
-
-  @ApiProperty({ type: Boolean })
   isAvailable!: boolean;
 
   @ApiProperty({ nullable: true, type: Number })
@@ -173,4 +163,26 @@ export class PaginatedTelegramChatsResponseDto {
 
   @ApiProperty({ type: PaginationMetaResponseDto })
   pagination!: PaginationMetaResponseDto;
+}
+
+export class TelegramChatScanOptionResponseDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  id!: string;
+
+  @ApiProperty({ type: String })
+  telegramPeerId!: string;
+
+  @ApiProperty({ enum: ChatTypeValue })
+  type!: ChatTypeValue;
+
+  @ApiProperty({ type: String })
+  title!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  username!: string | null;
+}
+
+export class TelegramChatScanOptionsResponseDto {
+  @ApiProperty({ isArray: true, type: TelegramChatScanOptionResponseDto })
+  items!: TelegramChatScanOptionResponseDto[];
 }

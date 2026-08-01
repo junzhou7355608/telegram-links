@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TelegramChatType } from '../generated/prisma/client';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { paginationMeta } from '../common/pagination.dto';
@@ -90,7 +90,7 @@ export class TelegramChatsService {
     };
     const [items, total] = await Promise.all([
       this.prisma.telegramChat.findMany({
-        orderBy: [{ isEnabled: 'desc' }, { title: 'asc' }],
+        orderBy: [{ isAvailable: 'desc' }, { title: 'asc' }],
         skip: (input.page - 1) * input.pageSize,
         take: input.pageSize,
         where,
@@ -103,26 +103,30 @@ export class TelegramChatsService {
     };
   }
 
-  async setEnabled(id: string, isEnabled: boolean) {
-    const exists = await this.prisma.telegramChat.findUnique({ where: { id } });
-    if (!exists) {
-      throw new NotFoundException({
-        code: 'CHAT_NOT_FOUND',
-        message: '未找到 Telegram 聊天。',
-      });
-    }
-    const chat = await this.prisma.telegramChat.update({
-      data: { isEnabled },
-      where: { id },
+  async scanOptions() {
+    const items = await this.prisma.telegramChat.findMany({
+      orderBy: { title: 'asc' },
+      select: {
+        id: true,
+        telegramPeerId: true,
+        title: true,
+        type: true,
+        username: true,
+      },
+      where: { accountId: ACCOUNT_ID, isAvailable: true },
     });
-    return this.toResponse(chat);
+    return {
+      items: items.map((chat) => ({
+        ...chat,
+        type: chat.type.toLowerCase(),
+      })),
+    };
   }
 
   private toResponse(chat: {
     createdAt: Date;
     id: string;
     isAvailable: boolean;
-    isEnabled: boolean;
     lastSyncedAt: Date | null;
     lastSyncedMessageId: number | null;
     telegramPeerId: string;
@@ -135,7 +139,6 @@ export class TelegramChatsService {
       createdAt: chat.createdAt.toISOString(),
       id: chat.id,
       isAvailable: chat.isAvailable,
-      isEnabled: chat.isEnabled,
       lastSyncedAt: chat.lastSyncedAt?.toISOString() ?? null,
       lastSyncedMessageId: chat.lastSyncedMessageId,
       telegramPeerId: chat.telegramPeerId,

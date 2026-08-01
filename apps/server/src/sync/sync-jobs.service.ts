@@ -48,7 +48,7 @@ export type SyncRangeValue =
   | 'allHistory';
 
 export interface CreateSyncJobInput {
-  chatIds?: string[];
+  chatIds: string[];
   defaultCategoryId?: string;
   defaultProjectId?: string;
   defaultTagIds?: string[];
@@ -119,15 +119,11 @@ export class SyncJobsService implements OnModuleInit {
       }
       this.validateRange(input);
       await this.validateDefaults(input);
+      const chatIds = [...new Set(input.chatIds)];
       const chats = await this.prisma.telegramChat.findMany({
-        where: input.chatIds?.length
-          ? { id: { in: [...new Set(input.chatIds)] }, isAvailable: true }
-          : { isAvailable: true, isEnabled: true },
+        where: { id: { in: chatIds }, isAvailable: true },
       });
-      const expectedCount = input.chatIds
-        ? new Set(input.chatIds).size
-        : chats.length;
-      if (chats.length === 0 || chats.length !== expectedCount) {
+      if (chats.length === 0 || chats.length !== chatIds.length) {
         throw new BadRequestException({
           code: 'INVALID_SYNC_CHATS',
           message: '请至少选择一个可用的 Telegram 聊天。',
