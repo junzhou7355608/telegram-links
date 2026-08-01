@@ -1,4 +1,8 @@
-import type { LinkResponseDto, UpdateLinkDto } from '@/api/types.gen';
+import type {
+  AdminLinkResponseDto,
+  ApplyAiSuggestionsDto,
+  UpdateLinkDto,
+} from '@/api/types.gen';
 import { TagPicker } from '@/components/features/tag-picker';
 import {
   environmentLabels,
@@ -19,6 +23,7 @@ import {
 } from '@repo/ui/components/alert-dialog';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
+import { Checkbox } from '@repo/ui/components/checkbox';
 import {
   Field,
   FieldDescription,
@@ -50,13 +55,14 @@ import {
   LoaderCircle,
   MessageCircle,
   RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface LinkDraft {
   categoryId: string;
-  environment: LinkResponseDto['environment'];
+  environment: AdminLinkResponseDto['environment'];
   projectId: string;
   purpose: string;
   tagIds: string[];
@@ -66,9 +72,10 @@ interface LinkDraft {
 
 interface LinkEditSheetProps {
   isPending: boolean;
-  link: LinkResponseDto;
+  link: AdminLinkResponseDto;
   taxonomy: TaxonomyCollections;
   onArchive: () => Promise<void>;
+  onApplyAiSuggestions: (body: ApplyAiSuggestionsDto) => Promise<void>;
   onOpenChange: (open: boolean) => void;
   onRestore: () => Promise<void>;
   onSave: (body: UpdateLinkDto) => Promise<void>;
@@ -79,6 +86,7 @@ export function LinkEditSheet({
   link,
   taxonomy,
   onArchive,
+  onApplyAiSuggestions,
   onOpenChange,
   onRestore,
   onSave,
@@ -94,6 +102,15 @@ export function LinkEditSheet({
   });
   const [error, setError] = useState('');
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [applyProject, setApplyProject] = useState(
+    Boolean(link.aiAnalysis?.suggestedProjectName),
+  );
+  const [applyCategory, setApplyCategory] = useState(
+    Boolean(link.aiAnalysis?.suggestedCategoryName),
+  );
+  const [suggestedTagNames, setSuggestedTagNames] = useState(
+    link.aiAnalysis?.suggestedTagNames ?? [],
+  );
 
   function update<Key extends keyof LinkDraft>(
     key: Key,
@@ -102,7 +119,7 @@ export function LinkEditSheet({
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  async function save(status: LinkResponseDto['status']) {
+  async function save(status: AdminLinkResponseDto['status']) {
     const body: UpdateLinkDto = {
       categoryId: draft.categoryId || null,
       environment: draft.environment,
@@ -162,6 +179,24 @@ export function LinkEditSheet({
       toast.success('链接已复制');
     } catch {
       toast.error('复制失败，请手动复制');
+    }
+  }
+
+  async function applySuggestions() {
+    const analysis = link.aiAnalysis;
+    if (!analysis) {
+      return;
+    }
+    try {
+      await onApplyAiSuggestions({
+        analysisId: analysis.id,
+        applyCategory,
+        applyProject,
+        tagNames: suggestedTagNames,
+      });
+      toast.success('AI 新词建议已应用');
+    } catch (caught) {
+      toast.error(getAdminApiError(caught).message);
     }
   }
 
@@ -317,7 +352,7 @@ export function LinkEditSheet({
                   onValueChange={(value) =>
                     update(
                       'environment',
-                      String(value) as LinkResponseDto['environment'],
+                      String(value) as AdminLinkResponseDto['environment'],
                     )
                   }
                 >
@@ -325,7 +360,7 @@ export function LinkEditSheet({
                     <SelectValue>
                       {(value) =>
                         environmentLabels[
-                          value as LinkResponseDto['environment']
+                          value as AdminLinkResponseDto['environment']
                         ]
                       }
                     </SelectValue>
@@ -354,6 +389,109 @@ export function LinkEditSheet({
               保存草稿允许待整理链接字段不完整；标记完成时会检查必填项。
             </FieldDescription>
           </FieldGroup>
+
+          {link.aiAnalysis ? (
+            <section
+              aria-labelledby="ai-analysis-heading"
+              className="rounded-xl border"
+            >
+              <div className="flex items-start justify-between gap-3 border-b px-4 py-3">
+                <div>
+                  <h3
+                    id="ai-analysis-heading"
+                    className="flex items-center gap-2 font-medium"
+                  >
+                    <Sparkles className="size-4" />
+                    AI 识别
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {link.aiAnalysis.model} · 置信度{' '}
+                    {Math.round(link.aiAnalysis.confidence * 100)}%
+                  </p>
+                </div>
+                {link.aiAnalysis.appliedAt ? (
+                  <Badge variant="outline">建议已应用</Badge>
+                ) : null}
+              </div>
+              <div className="space-y-4 p-4 text-sm">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    识别依据
+                  </p>
+                  <p className="mt-1 leading-relaxed">
+                    {link.aiAnalysis.rationale}
+                  </p>
+                </div>
+                {link.aiAnalysis.suggestedProjectName ||
+                link.aiAnalysis.suggestedCategoryName ||
+                link.aiAnalysis.suggestedTagNames.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      新基础资料建议（确认后创建或复用）
+                    </p>
+                    {link.aiAnalysis.suggestedProjectName ? (
+                      <label className="flex items-center gap-2">
+                        <Checkbox
+                          checked={applyProject}
+                          disabled={isPending}
+                          onCheckedChange={(checked) =>
+                            setApplyProject(checked === true)
+                          }
+                        />
+                        项目：{link.aiAnalysis.suggestedProjectName}
+                      </label>
+                    ) : null}
+                    {link.aiAnalysis.suggestedCategoryName ? (
+                      <label className="flex items-center gap-2">
+                        <Checkbox
+                          checked={applyCategory}
+                          disabled={isPending}
+                          onCheckedChange={(checked) =>
+                            setApplyCategory(checked === true)
+                          }
+                        />
+                        分类：{link.aiAnalysis.suggestedCategoryName}
+                      </label>
+                    ) : null}
+                    {link.aiAnalysis.suggestedTagNames.map((name) => (
+                      <label key={name} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={suggestedTagNames.includes(name)}
+                          disabled={isPending}
+                          onCheckedChange={(checked) =>
+                            setSuggestedTagNames((current) =>
+                              checked === true
+                                ? [...new Set([...current, name])]
+                                : current.filter((value) => value !== name),
+                            )
+                          }
+                        />
+                        标签：{name}
+                      </label>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={() => void applySuggestions()}
+                    >
+                      {isPending ? (
+                        <LoaderCircle className="animate-spin" />
+                      ) : (
+                        <Sparkles />
+                      )}
+                      应用所选建议
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    已有基础资料已自动应用，没有需要创建的新词。
+                  </p>
+                )}
+              </div>
+            </section>
+          ) : null}
 
           <section
             aria-labelledby="source-heading"

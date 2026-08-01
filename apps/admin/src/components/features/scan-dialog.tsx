@@ -55,6 +55,7 @@ interface ScanConfiguration {
 }
 
 interface ScanDialogProps {
+  aiModel: string | null;
   authorized: boolean;
   isPending: boolean;
   open: boolean;
@@ -76,6 +77,7 @@ const rangeLabels: Record<CreateSyncJobDto['rangeMode'], string> = {
 };
 
 export function ScanDialog({
+  aiModel,
   authorized,
   isPending,
   open,
@@ -158,7 +160,11 @@ export function ScanDialog({
         <DialogHeader>
           <DialogTitle>开始扫描</DialogTitle>
           <DialogDescription>
-            选择 Telegram 聊天、时间范围和新链接的默认整理属性。
+            选择 Telegram 聊天、时间范围和新链接的默认整理属性。链接将由{' '}
+            <span className="font-medium text-foreground">
+              {aiModel ?? '未选择模型'}
+            </span>{' '}
+            识别。
           </DialogDescription>
         </DialogHeader>
 

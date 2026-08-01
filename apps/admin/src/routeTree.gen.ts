@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as AiSettingsRouteImport } from './routes/ai-settings';
 import { Route as LinksRouteImport } from './routes/links';
 import { Route as SyncJobsRouteImport } from './routes/sync-jobs';
 import { Route as TaxonomyRouteImport } from './routes/taxonomy';
@@ -20,6 +21,11 @@ import { Route as LinksPendingRouteImport } from './routes/links.pending';
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const AiSettingsRoute = AiSettingsRouteImport.update({
+  id: '/ai-settings',
+  path: '/ai-settings',
   getParentRoute: () => rootRouteImport,
 } as any);
 const LinksRoute = LinksRouteImport.update({
@@ -55,6 +61,7 @@ const LinksPendingRoute = LinksPendingRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
+  '/ai-settings': typeof AiSettingsRoute;
   '/links': typeof LinksRouteWithChildren;
   '/sync-jobs': typeof SyncJobsRoute;
   '/taxonomy': typeof TaxonomyRoute;
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
+  '/ai-settings': typeof AiSettingsRoute;
   '/sync-jobs': typeof SyncJobsRoute;
   '/taxonomy': typeof TaxonomyRoute;
   '/telegram': typeof TelegramRoute;
@@ -73,6 +81,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   '/': typeof IndexRoute;
+  '/ai-settings': typeof AiSettingsRoute;
   '/links': typeof LinksRouteWithChildren;
   '/sync-jobs': typeof SyncJobsRoute;
   '/taxonomy': typeof TaxonomyRoute;
@@ -84,6 +93,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
+    | '/ai-settings'
     | '/links'
     | '/sync-jobs'
     | '/taxonomy'
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
+    | '/ai-settings'
     | '/sync-jobs'
     | '/taxonomy'
     | '/telegram'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ai-settings'
     | '/links'
     | '/sync-jobs'
     | '/taxonomy'
@@ -111,6 +123,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
+  AiSettingsRoute: typeof AiSettingsRoute;
   LinksRoute: typeof LinksRouteWithChildren;
   SyncJobsRoute: typeof SyncJobsRoute;
   TaxonomyRoute: typeof TaxonomyRoute;
@@ -124,6 +137,13 @@ declare module '@tanstack/react-router' {
       path: '/';
       fullPath: '/';
       preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/ai-settings': {
+      id: '/ai-settings';
+      path: '/ai-settings';
+      fullPath: '/ai-settings';
+      preLoaderRoute: typeof AiSettingsRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/links': {
@@ -185,6 +205,7 @@ const LinksRouteWithChildren = LinksRoute._addFileChildren(LinksRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AiSettingsRoute: AiSettingsRoute,
   LinksRoute: LinksRouteWithChildren,
   SyncJobsRoute: SyncJobsRoute,
   TaxonomyRoute: TaxonomyRoute,

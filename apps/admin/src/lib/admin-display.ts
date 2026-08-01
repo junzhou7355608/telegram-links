@@ -17,6 +17,7 @@ export const scanStageLabels: Record<
   NonNullable<SyncJobResponseDto['stage']>,
   string
 > = {
+  classifying: '使用 AI 识别链接',
   connecting: '连接 Telegram',
   reading: '读取消息',
   extracting: '提取链接',

@@ -21,6 +21,7 @@ import {
   Inbox,
   Link2,
   MessageCircleMore,
+  Sparkles,
   ScanSearch,
   Tags,
 } from 'lucide-react';
@@ -33,6 +34,13 @@ interface AdminSidebarProps {
 }
 
 const navigation = [
+  {
+    count: null,
+    icon: Sparkles,
+    label: 'AI 设置',
+    search: {},
+    to: '/ai-settings' as const,
+  },
   {
     count: 'pending' as const,
     icon: Inbox,

@@ -83,7 +83,17 @@ function JobCard({ job }: { job: SyncJobResponseDto }) {
             <ProgressValue />
           </Progress>
         ) : null}
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 lg:grid-cols-6">
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 lg:grid-cols-8">
+          <div>
+            <dt className="text-xs text-muted-foreground">AI 模型</dt>
+            <dd className="mt-1 truncate" title={job.aiModel ?? undefined}>
+              {job.aiModel ?? '—'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Token</dt>
+            <dd className="mt-1 font-mono">{job.totalTokens}</dd>
+          </div>
           <div>
             <dt className="text-xs text-muted-foreground">开始时间</dt>
             <dd className="mt-1">{formatDateTime(job.startedAt)}</dd>

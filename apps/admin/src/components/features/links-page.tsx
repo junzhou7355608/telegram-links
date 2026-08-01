@@ -1,12 +1,17 @@
 import {
   adminLinksControllerArchiveMutation,
+  adminLinksControllerApplyAiSuggestionsMutation,
   adminLinksControllerBatchMutation,
   adminLinksControllerFindOneOptions,
   adminLinksControllerListOptions,
   adminLinksControllerRestoreMutation,
   adminLinksControllerUpdateMutation,
 } from '@/api/@tanstack/react-query.gen';
-import type { BatchLinkPatchDto, UpdateLinkDto } from '@/api/types.gen';
+import type {
+  ApplyAiSuggestionsDto,
+  BatchLinkPatchDto,
+  UpdateLinkDto,
+} from '@/api/types.gen';
 import { BulkActions } from '@/components/features/bulk-actions';
 import { LinkEditSheet } from '@/components/features/link-edit-sheet';
 import { LinkFiltersBar } from '@/components/features/link-filters';
@@ -74,6 +79,9 @@ export function LinksPage({
     enabled: Boolean(search.linkId),
   });
   const updateMutation = useMutation(adminLinksControllerUpdateMutation());
+  const applyAiMutation = useMutation(
+    adminLinksControllerApplyAiSuggestionsMutation(),
+  );
   const batchMutation = useMutation(adminLinksControllerBatchMutation());
   const archiveMutation = useMutation(adminLinksControllerArchiveMutation());
   const restoreMutation = useMutation(adminLinksControllerRestoreMutation());
@@ -82,6 +90,7 @@ export function LinksPage({
   useApiErrorToast(detailQuery.error);
   const mutationPending =
     updateMutation.isPending ||
+    applyAiMutation.isPending ||
     batchMutation.isPending ||
     archiveMutation.isPending ||
     restoreMutation.isPending;
@@ -173,6 +182,15 @@ export function LinksPage({
     await invalidateLinks(queryClient, id);
   }
 
+  async function applyAiSuggestions(body: ApplyAiSuggestionsDto) {
+    const id = search.linkId;
+    if (!id) {
+      return;
+    }
+    await applyAiMutation.mutateAsync({ body, path: { id } });
+    await invalidateLinks(queryClient, id);
+  }
+
   return (
     <section aria-labelledby="review-heading" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -240,11 +258,12 @@ export function LinksPage({
 
       {detailQuery.data ? (
         <LinkEditSheet
-          key={detailQuery.data.id}
+          key={`${detailQuery.data.id}:${detailQuery.data.updatedAt}:${detailQuery.data.aiAnalysis?.appliedAt ?? ''}`}
           isPending={mutationPending}
           link={detailQuery.data}
           taxonomy={taxonomyQuery.taxonomy}
           onArchive={archiveLink}
+          onApplyAiSuggestions={applyAiSuggestions}
           onRestore={restoreLink}
           onSave={saveLink}
           onOpenChange={(open) => {
