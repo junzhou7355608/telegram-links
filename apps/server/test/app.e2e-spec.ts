@@ -3,15 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
-import {
-  AiGateway,
-  AiGatewayError,
-  type AiClassificationInput,
-  type AiClassificationResult,
-  type AiRuntime,
-} from '../src/ai/ai.gateway';
 import { configureApplication } from '../src/app.setup';
-import { LinkEnvironmentValue } from '../src/common/link-values';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 import { SyncRangeMode } from '../src/generated/prisma/client';
 import { SyncJobsService } from '../src/sync/sync-jobs.service';
@@ -54,7 +46,7 @@ class FakeTelegramGateway extends TelegramGateway {
     },
     {
       telegramPeerId: '-1007777777777',
-      title: 'AI 失败测试群',
+      title: '链接扫描测试群',
       type: 'group',
     },
   ];
@@ -94,16 +86,17 @@ class FakeTelegramGateway extends TelegramGateway {
       urls: [
         'https://github.com/example/project',
         'https://docs.example.com/start',
+        'https://github.com/example/project?tab=readme',
       ],
     },
   ];
 
-  readonly aiFailureMessage: GatewayMessage = {
+  readonly extraMessage: GatewayMessage = {
     context: { previous: [] },
     messageId: 201,
     sentAt: new Date('2026-07-30T10:00:00.000Z'),
-    text: 'AI 失败测试 https://fail.example.com',
-    urls: ['https://fail.example.com'],
+    text: '链接扫描测试 https://scan.example.com',
+    urls: ['https://scan.example.com'],
   };
 
   isConfigured(): boolean {
@@ -164,7 +157,7 @@ class FakeTelegramGateway extends TelegramGateway {
     }
     const messages =
       telegramPeerId === '-1007777777777'
-        ? [this.aiFailureMessage]
+        ? [this.extraMessage]
         : this.messages;
     for (const message of messages) {
       if (range.minId && message.messageId <= range.minId) {
@@ -188,61 +181,6 @@ class FakeTelegramGateway extends TelegramGateway {
   async disconnect(): Promise<void> {}
 }
 
-class FakeAiGateway extends AiGateway {
-  readonly inputs: AiClassificationInput[] = [];
-
-  listModels(apiKey: string) {
-    if (apiKey !== 'test-kimi-key') {
-      throw new Error('invalid fake key');
-    }
-    return Promise.resolve([
-      {
-        contextLength: 262_144,
-        id: 'kimi-k2.5',
-        ownedBy: 'moonshot',
-        supportsReasoning: true,
-      },
-    ]);
-  }
-
-  classify(
-    runtime: AiRuntime,
-    input: AiClassificationInput,
-  ): Promise<AiClassificationResult> {
-    this.inputs.push(input);
-    if (
-      input.urls.some(({ normalizedUrl }) =>
-        normalizedUrl.includes('fail.example.com'),
-      )
-    ) {
-      throw new AiGatewayError('unavailable', 'Fake AI failure');
-    }
-    return Promise.resolve({
-      items: input.urls.map(({ normalizedUrl }) => ({
-        categoryId: input.categories[0]?.id ?? null,
-        confidence: 0.92,
-        environment: LinkEnvironmentValue.Production,
-        normalizedUrl,
-        projectId: input.projects[0]?.id ?? null,
-        purpose: 'Fake AI 识别的项目资源',
-        rationale: '消息上下文包含项目和资源用途。',
-        suggestedCategoryName: null,
-        suggestedProjectName: null,
-        suggestedTagNames: ['AI 建议'],
-        tagIds: input.tags.map(({ id }) => id),
-        title: normalizedUrl.includes('github.com')
-          ? 'Atlas repository'
-          : 'Atlas documentation',
-      })),
-      usage: {
-        completionTokens: 30,
-        promptTokens: 120,
-        totalTokens: 150,
-      },
-    });
-  }
-}
-
 describe('Server API (e2e)', () => {
   async function createTestApplication(
     swaggerEnabled: boolean,
@@ -257,8 +195,6 @@ describe('Server API (e2e)', () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(AiGateway)
-      .useClass(FakeAiGateway)
       .overrideProvider(TelegramGateway)
       .useClass(FakeTelegramGateway)
       .compile();
@@ -277,7 +213,6 @@ describe('Server API (e2e)', () => {
   }
 
   async function clearDatabase(prisma: PrismaService): Promise<void> {
-    await prisma.aiAnalysis.deleteMany();
     await prisma.linkSource.deleteMany();
     await prisma.linkTag.deleteMany();
     await prisma.telegramMessage.deleteMany();
@@ -286,10 +221,8 @@ describe('Server API (e2e)', () => {
     await prisma.link.deleteMany();
     await prisma.tag.deleteMany();
     await prisma.category.deleteMany();
-    await prisma.project.deleteMany();
     await prisma.telegramChat.deleteMany();
     await prisma.telegramAccount.deleteMany();
-    await prisma.aiSettings.deleteMany();
   }
 
   async function closeApplication(app: INestApplication<App>): Promise<void> {
@@ -325,7 +258,7 @@ describe('Server API (e2e)', () => {
       });
       expect(document.paths).toHaveProperty('/api/web/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/links');
-      expect(document.paths).toHaveProperty('/api/admin/v1/ai/settings');
+      expect(document.paths).not.toHaveProperty('/api/admin/v1/ai/settings');
       expect(document.paths).toHaveProperty('/api/admin/v1/telegram/auth/code');
       expect(document.paths).toHaveProperty(
         '/api/admin/v1/telegram/chats/scan-options',
@@ -419,14 +352,6 @@ describe('Server API (e2e)', () => {
         where: { id: unavailableChat.id },
       });
 
-      const project = await request(server)
-        .post('/api/admin/v1/taxonomy/projects')
-        .send({ name: 'Atlas' })
-        .expect(201);
-      expect(project.body).toEqual(
-        expect.objectContaining({ name: 'Atlas', referenceCount: 0 }),
-      );
-      expect(project.body).not.toHaveProperty('normalizedName');
       const category = await request(server)
         .post('/api/admin/v1/taxonomy/categories')
         .send({ name: '代码仓库' })
@@ -435,34 +360,8 @@ describe('Server API (e2e)', () => {
         .post('/api/admin/v1/taxonomy/tags')
         .send({ name: '后端' })
         .expect(201);
-      const projectBody = responseBody<{ id: string }>(project);
       const categoryBody = responseBody<{ id: string }>(category);
       const tagBody = responseBody<{ id: string }>(tag);
-
-      await request(server)
-        .put('/api/admin/v1/ai/settings/key')
-        .send({ apiKey: 'test-kimi-key' })
-        .expect(200)
-        .expect((response) => {
-          expect(response.body).not.toHaveProperty('apiKey');
-        });
-      const encryptedSettings = await app
-        .get(PrismaService)
-        .aiSettings.findUniqueOrThrow({ where: { id: 'default' } });
-      expect(encryptedSettings.apiKeyCiphertext).not.toBe('test-kimi-key');
-      expect(JSON.stringify(encryptedSettings)).not.toContain('test-kimi-key');
-      await request(server)
-        .put('/api/admin/v1/ai/settings/model')
-        .send({ model: 'kimi-k2.5' })
-        .expect(200)
-        .expect((response) => {
-          expect(response.body).toEqual(
-            expect.objectContaining({
-              ready: true,
-              selectedModel: 'kimi-k2.5',
-            }),
-          );
-        });
 
       await request(server)
         .post('/api/admin/v1/sync-jobs')
@@ -507,7 +406,6 @@ describe('Server API (e2e)', () => {
         .send({
           chatIds: [chatId],
           defaultCategoryId: categoryBody.id,
-          defaultProjectId: projectBody.id,
           defaultTagIds: [tagBody.id],
           rangeMode: 'allHistory',
         })
@@ -517,21 +415,11 @@ describe('Server API (e2e)', () => {
         responseBody<{ id: string }>(createdJob).id,
       );
       expect(job).toMatchObject({
-        aiModel: 'kimi-k2.5',
         duplicateCount: 1,
         foundCount: 3,
         newCount: 2,
         status: 'succeeded',
-        totalTokens: 300,
       });
-      const aiInputs = app.get<FakeAiGateway>(AiGateway);
-      const contextualInput = aiInputs.inputs.find(
-        ({ context }) => context.reply !== null,
-      );
-      expect(contextualInput?.context.reply?.text).toBe('请归类到研发资料。');
-      expect(
-        contextualInput?.context.neighbors.map(({ text }) => text),
-      ).toContain('这是 Atlas 项目的正式仓库和文档。');
       const partialJob = await request(server)
         .post('/api/admin/v1/sync-jobs')
         .send({
@@ -552,28 +440,26 @@ describe('Server API (e2e)', () => {
       expect(partialResult.chats).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            chatTitle: 'AI 失败测试群',
+            chatTitle: '链接扫描测试群',
             foundCount: 1,
             newCount: 1,
             status: 'succeeded',
           }),
         ]),
       );
-      const aiFailureChat = await app
+      const extraChat = await app
         .get(PrismaService)
         .telegramChat.findFirst({
-          where: { title: 'AI 失败测试群' },
+          where: { title: '链接扫描测试群' },
         });
-      expect(aiFailureChat?.lastSyncedMessageId).toBe(201);
+      expect(extraChat?.lastSyncedMessageId).toBe(201);
       await expect(
         app.get(PrismaService).link.findUnique({
-          include: { _count: { select: { aiAnalyses: true } } },
-          where: { normalizedUrl: 'https://fail.example.com/' },
+          where: { domain: 'scan.example.com' },
         }),
       ).resolves.toMatchObject({
-        _count: { aiAnalyses: 0 },
         status: 'PENDING',
-        title: 'fail.example.com',
+        title: 'scan.example.com',
       });
 
       const webLinks = await request(server)
@@ -595,34 +481,55 @@ describe('Server API (e2e)', () => {
       const detail = await request(server)
         .get(`/api/web/v1/links/${linkId}`)
         .expect(200);
-      expect(responseBody<{ sourceCount: number }>(detail).sourceCount).toBe(2);
+      const detailBody = responseBody<{
+        sourceCount: number;
+        sources: Array<{ rawUrl: string }>;
+        url: string;
+      }>(detail);
+      expect(detailBody.sourceCount).toBe(3);
+      expect(detailBody.url).toBe(
+        'https://github.com/example/project?tab=readme',
+      );
+      expect(detailBody.sources.map(({ rawUrl }) => rawUrl)).toContain(
+        'https://github.com/example/project?tab=readme',
+      );
+      await request(server)
+        .patch(`/api/admin/v1/links/${linkId}`)
+        .send({ url: 'https://github.com/example/project?manual=1' })
+        .expect(200)
+        .expect((response) => {
+          expect(responseBody<{ url: string }>(response).url).toBe(
+            'https://github.com/example/project?manual=1',
+          );
+        });
+      await request(server)
+        .get(`/api/admin/v1/links?sourceChatId=${chatId}`)
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<{ pagination: { total: number } }>(response).pagination
+              .total,
+          ).toBe(2);
+        });
+      const docsLink = await app.get(PrismaService).link.findUniqueOrThrow({
+        where: { domain: 'docs.example.com' },
+      });
+      await request(server)
+        .patch(`/api/admin/v1/links/${linkId}`)
+        .send({ url: `${docsLink.url}?conflict=1` })
+        .expect(409)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'LINK_DOMAIN_CONFLICT' }),
+          );
+        });
       expect(detail.body).not.toHaveProperty('isFavorite');
       const adminDetail = await request(server)
         .get(`/api/admin/v1/links/${linkId}`)
         .expect(200);
-      const analysis = responseBody<{
-        aiAnalysis: { id: string; suggestedTagNames: string[] };
-      }>(adminDetail).aiAnalysis;
-      expect(analysis.suggestedTagNames).toContain('AI 建议');
-      await request(server)
-        .post(`/api/admin/v1/links/${linkId}/ai-suggestions/apply`)
-        .send({
-          analysisId: analysis.id,
-          applyCategory: false,
-          applyProject: false,
-          tagNames: ['AI 建议'],
-        })
-        .expect(200)
-        .expect((response) => {
-          const body = responseBody<{
-            tags: Array<{ id: string; name: string }>;
-          }>(response);
-          expect(body.tags).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({ name: 'AI 建议' }),
-            ]),
-          );
-        });
+      expect(adminDetail.body).not.toHaveProperty('aiAnalysis');
+      expect(adminDetail.body).not.toHaveProperty('project');
+      expect(adminDetail.body).not.toHaveProperty('environment');
       const overview = await request(server)
         .get('/api/web/v1/overview')
         .expect(200);
@@ -672,7 +579,7 @@ describe('Server API (e2e)', () => {
         .expect((response) => {
           expect(response.body).toEqual(
             expect.objectContaining({
-              code: 'LINK_URL_CONFLICT',
+              code: 'LINK_DOMAIN_CONFLICT',
               path: `/api/admin/v1/links/${otherLink.id}`,
               statusCode: 409,
             }),
@@ -685,9 +592,8 @@ describe('Server API (e2e)', () => {
         .post(`/api/admin/v1/links/${linkId}/restore`)
         .expect(200);
       await request(server)
-        .delete(`/api/admin/v1/taxonomy/projects/${projectBody.id}`)
+        .delete(`/api/admin/v1/taxonomy/categories/${categoryBody.id}`)
         .expect(409);
-      expect(await app.get(PrismaService).aiAnalysis.count()).toBe(2);
     } finally {
       await closeApplication(app);
     }
@@ -725,10 +631,10 @@ describe('Server API (e2e)', () => {
           chatIds: ['00000000-0000-4000-8000-000000000001'],
           rangeMode: 'allHistory',
         })
-        .expect(503)
+        .expect(401)
         .expect((response) => {
           expect(response.body).toEqual(
-            expect.objectContaining({ code: 'AI_NOT_CONFIGURED' }),
+            expect.objectContaining({ code: 'TELEGRAM_NOT_AUTHORIZED' }),
           );
         });
       const prisma = app.get(PrismaService);

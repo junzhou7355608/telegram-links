@@ -9,12 +9,10 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
 import {
-  LinkEnvironmentValue,
   LinkSortValue,
   LinkViewValue,
   OrganizationStatusValue,
@@ -22,7 +20,6 @@ import {
 import { PaginationQueryDto } from '../../common/pagination.dto';
 import { SyncJobStatusDtoValue } from './sync.dto';
 import { PaginationMetaResponseDto } from './pagination.dto';
-import { AiAnalysisResponseDto } from './ai.dto';
 
 export class LinkQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ type: String })
@@ -35,23 +32,10 @@ export class LinkQueryDto extends PaginationQueryDto {
   @IsEnum(LinkViewValue)
   view?: LinkViewValue;
 
-  @ApiPropertyOptional({ description: 'UUID 或 unassigned', type: String })
-  @IsOptional()
-  @IsString()
-  @Matches(
-    /^(?:unassigned|[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/iu,
-  )
-  projectId?: string;
-
   @ApiPropertyOptional({ format: 'uuid', type: String })
   @IsOptional()
   @IsUUID()
   categoryId?: string;
-
-  @ApiPropertyOptional({ enum: LinkEnvironmentValue })
-  @IsOptional()
-  @IsEnum(LinkEnvironmentValue)
-  environment?: LinkEnvironmentValue;
 
   @ApiPropertyOptional({ enum: OrganizationStatusValue })
   @IsOptional()
@@ -109,20 +93,10 @@ export class UpdateLinkDto {
   @MaxLength(4000)
   purpose?: string | null;
 
-  @ApiPropertyOptional({ enum: LinkEnvironmentValue })
-  @IsOptional()
-  @IsEnum(LinkEnvironmentValue)
-  environment?: LinkEnvironmentValue;
-
   @ApiPropertyOptional({ enum: OrganizationStatusValue })
   @IsOptional()
   @IsEnum(OrganizationStatusValue)
   status?: OrganizationStatusValue;
-
-  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
-  @IsOptional()
-  @IsUUID()
-  projectId?: string | null;
 
   @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
   @IsOptional()
@@ -158,6 +132,15 @@ export class BatchUpdateLinksDto {
   @ValidateNested()
   @Type(() => BatchLinkPatchDto)
   patch!: BatchLinkPatchDto;
+}
+
+export class BatchArchiveLinksDto {
+  @ApiProperty({ format: 'uuid', isArray: true, type: String })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  ids!: string[];
 }
 
 export class TaxonomyReferenceResponseDto {
@@ -213,14 +196,8 @@ export class LinkResponseDto {
   @ApiProperty({ type: String })
   domain!: string;
 
-  @ApiProperty({ enum: LinkEnvironmentValue })
-  environment!: LinkEnvironmentValue;
-
   @ApiProperty({ enum: OrganizationStatusValue })
   status!: OrganizationStatusValue;
-
-  @ApiProperty({ nullable: true, type: TaxonomyReferenceResponseDto })
-  project!: TaxonomyReferenceResponseDto | null;
 
   @ApiProperty({ nullable: true, type: TaxonomyReferenceResponseDto })
   category!: TaxonomyReferenceResponseDto | null;
@@ -253,10 +230,7 @@ export class LinkResponseDto {
   archivedAt!: string | null;
 }
 
-export class AdminLinkResponseDto extends LinkResponseDto {
-  @ApiProperty({ nullable: true, type: AiAnalysisResponseDto })
-  aiAnalysis!: AiAnalysisResponseDto | null;
-}
+export class AdminLinkResponseDto extends LinkResponseDto {}
 
 export class PaginatedLinksResponseDto {
   @ApiProperty({ isArray: true, type: LinkResponseDto })
@@ -355,7 +329,4 @@ export class WebOverviewResponseDto {
 
   @ApiProperty({ nullable: true, type: WebLatestSyncResponseDto })
   latestSync!: WebLatestSyncResponseDto | null;
-
-  @ApiProperty({ isArray: true, type: OverviewCountResponseDto })
-  projects!: OverviewCountResponseDto[];
 }

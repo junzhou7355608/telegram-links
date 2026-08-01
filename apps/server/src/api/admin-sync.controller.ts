@@ -11,7 +11,7 @@ import {
 import { ApiAcceptedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../common/pagination.dto';
 import { SyncJobsService } from '../sync/sync-jobs.service';
-import { ApiAiErrorResponses } from './dto/error.dto';
+import { ApiTelegramErrorResponses } from './dto/error.dto';
 import {
   CreateSyncJobDto,
   PaginatedSyncJobsResponseDto,
@@ -19,7 +19,7 @@ import {
 } from './dto/sync.dto';
 
 @ApiTags('Admin - Sync jobs')
-@ApiAiErrorResponses()
+@ApiTelegramErrorResponses()
 @Controller('admin/v1/sync-jobs')
 export class AdminSyncController {
   constructor(private readonly jobs: SyncJobsService) {}

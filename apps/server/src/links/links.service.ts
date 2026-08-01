@@ -8,21 +8,17 @@ import {
 import { OrganizationStatus, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import {
-  fromLinkEnvironment,
   fromOrganizationStatus,
   LinkSortValue,
   LinkViewValue,
   requireHttpUrl,
-  toLinkEnvironment,
   toOrganizationStatus,
-  type LinkEnvironmentValue,
   type OrganizationStatusValue,
 } from '../common/link-values';
 import { paginationMeta } from '../common/pagination.dto';
 
 const linkInclude = {
   category: true,
-  project: true,
   sources: {
     include: { message: { include: { chat: true } } },
   },
@@ -39,11 +35,9 @@ function enumValue(value: string): string {
 
 export interface LinkListInput {
   categoryId?: string;
-  environment?: LinkEnvironmentValue;
   includeArchived?: boolean;
   page: number;
   pageSize: number;
-  projectId?: string;
   query?: string;
   sort?: LinkSortValue;
   sourceChatId?: string;
@@ -54,8 +48,6 @@ export interface LinkListInput {
 
 export interface UpdateLinkInput {
   categoryId?: string | null;
-  environment?: LinkEnvironmentValue;
-  projectId?: string | null;
   purpose?: string | null;
   status?: OrganizationStatusValue;
   tagIds?: string[];
@@ -115,7 +107,7 @@ export class LinksService {
   async webOverview() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const active = { archivedAt: null };
-    const [total, pending, recent, latestJob, projects, categories] =
+    const [total, pending, recent, latestJob, categories] =
       await Promise.all([
         this.prisma.link.count({ where: active }),
         this.prisma.link.count({
@@ -127,14 +119,6 @@ export class LinksService {
         this.prisma.syncJob.findFirst({
           orderBy: { createdAt: 'desc' },
           select: { finishedAt: true, status: true },
-        }),
-        this.prisma.project.findMany({
-          include: {
-            _count: {
-              select: { links: { where: { archivedAt: null } } },
-            },
-          },
-          orderBy: { name: 'asc' },
         }),
         this.prisma.category.findMany({
           include: {
@@ -153,11 +137,6 @@ export class LinksService {
             status: enumValue(latestJob.status),
           }
         : null,
-      projects: projects.map((project) => ({
-        count: project._count.links,
-        id: project.id,
-        name: project.name,
-      })),
       categories: categories.map((category) => ({
         count: category._count.links,
         id: category.id,
@@ -216,14 +195,14 @@ export class LinksService {
     }
 
     const normalized = input.url ? requireHttpUrl(input.url) : null;
-    if (normalized && normalized.normalizedUrl !== current.normalizedUrl) {
+    if (normalized && normalized.domain !== current.domain) {
       const conflict = await this.prisma.link.findUnique({
-        where: { normalizedUrl: normalized.normalizedUrl },
+        where: { domain: normalized.domain },
       });
       if (conflict) {
         throw new ConflictException({
-          code: 'LINK_URL_CONFLICT',
-          message: '标准化后的 URL 已存在。',
+          code: 'LINK_DOMAIN_CONFLICT',
+          message: '该域名已存在。',
         });
       }
     }
@@ -231,8 +210,6 @@ export class LinksService {
     const next = {
       categoryId:
         input.categoryId === undefined ? current.categoryId : input.categoryId,
-      projectId:
-        input.projectId === undefined ? current.projectId : input.projectId,
       purpose:
         input.purpose === undefined
           ? current.purpose
@@ -246,17 +223,13 @@ export class LinksService {
     if (next.status === OrganizationStatus.ORGANIZED) {
       this.assertCanOrganize(next);
     }
-    await this.assertTaxonomy(next.projectId, next.categoryId, input.tagIds);
+    await this.assertTaxonomy(next.categoryId, input.tagIds);
 
     await this.prisma.link.update({
       data: {
         categoryId: next.categoryId,
         domain: normalized?.domain,
-        environment: input.environment
-          ? toLinkEnvironment(input.environment)
-          : undefined,
         normalizedUrl: normalized?.normalizedUrl,
-        projectId: next.projectId,
         purpose: next.purpose,
         status: next.status,
         tags: input.tagIds
@@ -313,6 +286,45 @@ export class LinksService {
     return { skipped, updatedIds };
   }
 
+  async batchArchive(ids: string[]) {
+    const uniqueIds = [...new Set(ids)];
+    const links = await this.prisma.link.findMany({
+      select: { archivedAt: true, id: true },
+      where: { id: { in: uniqueIds } },
+    });
+    const linksById = new Map(links.map((link) => [link.id, link]));
+    const updatedIds: string[] = [];
+    const skipped: { code: string; id: string; message: string }[] = [];
+
+    for (const id of uniqueIds) {
+      const link = linksById.get(id);
+      if (!link) {
+        skipped.push({
+          code: 'LINK_NOT_FOUND',
+          id,
+          message: '未找到链接。',
+        });
+      } else if (link.archivedAt) {
+        skipped.push({
+          code: 'LINK_ALREADY_ARCHIVED',
+          id,
+          message: '链接已经归档。',
+        });
+      } else {
+        updatedIds.push(id);
+      }
+    }
+
+    if (updatedIds.length > 0) {
+      await this.prisma.link.updateMany({
+        data: { archivedAt: new Date() },
+        where: { id: { in: updatedIds }, archivedAt: null },
+      });
+    }
+
+    return { skipped, updatedIds };
+  }
+
   async archive(id: string): Promise<void> {
     await this.ensureExists(id);
     await this.prisma.link.update({
@@ -339,14 +351,6 @@ export class LinksService {
     return {
       ...(webOnly || !input.includeArchived ? { archivedAt: null } : {}),
       ...(input.categoryId ? { categoryId: input.categoryId } : {}),
-      ...(input.projectId === 'unassigned'
-        ? { projectId: null }
-        : input.projectId
-          ? { projectId: input.projectId }
-          : {}),
-      ...(input.environment
-        ? { environment: toLinkEnvironment(input.environment) }
-        : {}),
       ...(input.status
         ? { status: toOrganizationStatus(input.status) }
         : view === LinkViewValue.Pending
@@ -372,9 +376,6 @@ export class LinksService {
               { url: { contains: query, mode: 'insensitive' } },
               { domain: { contains: query, mode: 'insensitive' } },
               { purpose: { contains: query, mode: 'insensitive' } },
-              {
-                project: { name: { contains: query, mode: 'insensitive' } },
-              },
               {
                 category: { name: { contains: query, mode: 'insensitive' } },
               },
@@ -432,13 +433,9 @@ export class LinksService {
         : null,
       createdAt: link.createdAt.toISOString(),
       domain: link.domain,
-      environment: fromLinkEnvironment(link.environment),
       firstDiscoveredAt: link.firstDiscoveredAt.toISOString(),
       id: link.id,
       latestSource: sources[0] ?? null,
-      project: link.project
-        ? { id: link.project.id, name: link.project.name }
-        : null,
       purpose: link.purpose,
       sourceCount: sources.length,
       sources: includeAllSources ? sources : undefined,
@@ -456,34 +453,28 @@ export class LinksService {
 
   private assertCanOrganize(input: {
     categoryId: string | null;
-    projectId: string | null;
     purpose: string | null;
     title: string;
     url: string;
   }): void {
     if (
       !input.title ||
-      !input.projectId ||
       !input.purpose ||
       !input.categoryId ||
       !requireHttpUrl(input.url)
     ) {
       throw new BadRequestException({
         code: 'LINK_INCOMPLETE',
-        message: '完成整理需要标题、URL、项目、用途和分类。',
+        message: '完成整理需要标题、URL、用途和分类。',
       });
     }
   }
 
   private async assertTaxonomy(
-    projectId: string | null,
     categoryId: string | null,
     tagIds?: string[],
   ): Promise<void> {
-    const [projects, categories, tags] = await Promise.all([
-      projectId
-        ? this.prisma.project.count({ where: { id: projectId } })
-        : Promise.resolve(1),
+    const [categories, tags] = await Promise.all([
       categoryId
         ? this.prisma.category.count({ where: { id: categoryId } })
         : Promise.resolve(1),
@@ -491,14 +482,10 @@ export class LinksService {
         ? this.prisma.tag.count({ where: { id: { in: [...new Set(tagIds)] } } })
         : Promise.resolve(0),
     ]);
-    if (
-      projects !== 1 ||
-      categories !== 1 ||
-      (tagIds && tags !== new Set(tagIds).size)
-    ) {
+    if (categories !== 1 || (tagIds && tags !== new Set(tagIds).size)) {
       throw new BadRequestException({
         code: 'INVALID_TAXONOMY_REFERENCE',
-        message: '项目、分类或标签不存在。',
+        message: '分类或标签不存在。',
       });
     }
   }

@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -8,31 +9,26 @@ import {
   Patch,
   Post,
   Query,
-  Body,
 } from '@nestjs/common';
 import { ApiNoContentResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { LinksService } from '../links/links.service';
-import { AiService } from '../ai/ai.service';
 import {
   AdminLinkResponseDto,
   AdminOverviewResponseDto,
+  BatchArchiveLinksDto,
   BatchUpdateLinksResponseDto,
   BatchUpdateLinksDto,
   LinkQueryDto,
   PaginatedLinksResponseDto,
   UpdateLinkDto,
 } from './dto/link.dto';
-import { ApplyAiSuggestionsDto } from './dto/ai.dto';
 import { ApiCommonErrorResponses } from './dto/error.dto';
 
 @ApiTags('Admin - Links')
 @ApiCommonErrorResponses()
 @Controller('admin/v1')
 export class AdminLinksController {
-  constructor(
-    private readonly ai: AiService,
-    private readonly links: LinksService,
-  ) {}
+  constructor(private readonly links: LinksService) {}
 
   @Get('overview')
   @ApiOkResponse({ type: AdminOverviewResponseDto })
@@ -45,11 +41,9 @@ export class AdminLinksController {
   list(@Query() query: LinkQueryDto) {
     return this.links.list({
       categoryId: query.categoryId,
-      environment: query.environment,
       includeArchived: query.includeArchived,
       page: query.page,
       pageSize: query.pageSize,
-      projectId: query.projectId,
       query: query.q,
       sort: query.sort,
       sourceChatId: query.sourceChatId,
@@ -63,6 +57,13 @@ export class AdminLinksController {
   @ApiOkResponse({ type: BatchUpdateLinksResponseDto })
   batch(@Body() body: BatchUpdateLinksDto) {
     return this.links.batchUpdate(body.ids, body.patch);
+  }
+
+  @Post('links/batch/archive')
+  @HttpCode(200)
+  @ApiOkResponse({ type: BatchUpdateLinksResponseDto })
+  batchArchive(@Body() body: BatchArchiveLinksDto) {
+    return this.links.batchArchive(body.ids);
   }
 
   @Get('links/:id')
@@ -96,22 +97,7 @@ export class AdminLinksController {
     return this.adminLink(id);
   }
 
-  @Post('links/:id/ai-suggestions/apply')
-  @HttpCode(200)
-  @ApiOkResponse({ type: AdminLinkResponseDto })
-  async applyAiSuggestions(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-    @Body() body: ApplyAiSuggestionsDto,
-  ) {
-    await this.ai.applySuggestions(id, body);
-    return this.adminLink(id);
-  }
-
-  private async adminLink(id: string) {
-    const [link, aiAnalysis] = await Promise.all([
-      this.links.findOne(id),
-      this.ai.latestAnalysis(id),
-    ]);
-    return { ...link, aiAnalysis };
+  private adminLink(id: string) {
+    return this.links.findOne(id);
   }
 }

@@ -15,13 +15,6 @@ enum TelegramChatType {
   CHANNEL
 }
 
-enum LinkEnvironment {
-  PRODUCTION
-  TEST
-  DEVELOPMENT
-  UNKNOWN
-}
-
 enum OrganizationStatus {
   PENDING
   ORGANIZED
@@ -40,13 +33,8 @@ enum SyncStage {
   CONNECTING
   READING
   EXTRACTING
-  CLASSIFYING
   DEDUPLICATING
   SAVING
-}
-
-enum AiProvider {
-  KIMI
 }
 
 enum SyncRangeMode {
@@ -117,15 +105,6 @@ model TelegramMessage {
   @@index([sentAt])
 }
 
-model Project {
-  id             String   @id @default(uuid()) @db.Uuid
-  name           String
-  normalizedName String   @unique
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  links          Link[]
-}
-
 model Category {
   id             String   @id @default(uuid()) @db.Uuid
   name           String
@@ -147,30 +126,23 @@ model Tag {
 model Link {
   id                String             @id @default(uuid()) @db.Uuid
   url               String             @db.Text
-  normalizedUrl     String             @unique @db.Text
-  domain            String
+  normalizedUrl     String             @db.Text
+  domain            String             @unique
   title             String
   purpose           String?            @db.Text
-  environment       LinkEnvironment    @default(UNKNOWN)
   status            OrganizationStatus @default(PENDING)
-  projectId         String?            @db.Uuid
   categoryId        String?            @db.Uuid
   archivedAt        DateTime?
   firstDiscoveredAt DateTime           @default(now())
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
-  project           Project?           @relation(fields: [projectId], references: [id], onDelete: Restrict)
   category          Category?          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   tags              LinkTag[]
   sources           LinkSource[]
-  aiAnalyses        AiAnalysis[]
 
   @@index([archivedAt, createdAt])
   @@index([status])
-  @@index([environment])
-  @@index([projectId])
   @@index([categoryId])
-  @@index([domain])
 }
 
 model LinkTag {
@@ -192,14 +164,8 @@ model SyncJob {
   rangeMode         SyncRangeMode
   rangeFrom         DateTime?
   rangeTo           DateTime?
-  defaultProjectId  String?       @db.Uuid
   defaultCategoryId String?       @db.Uuid
   defaultTagIds     Json
-  aiProvider        AiProvider?
-  aiModel           String?
-  promptTokens      Int           @default(0)
-  completionTokens  Int           @default(0)
-  totalTokens       Int           @default(0)
   messageCount      Int           @default(0)
   foundCount        Int           @default(0)
   newCount          Int           @default(0)
@@ -225,11 +191,6 @@ model SyncJobChat {
   foundCount            Int               @default(0)
   newCount              Int               @default(0)
   duplicateCount        Int               @default(0)
-  aiProvider            AiProvider?
-  aiModel               String?
-  promptTokens          Int               @default(0)
-  completionTokens      Int               @default(0)
-  totalTokens           Int               @default(0)
   maxProcessedMessageId Int?
   error                 String?           @db.Text
   startedAt             DateTime?
@@ -244,57 +205,18 @@ model SyncJobChat {
 }
 
 model LinkSource {
-  id         String          @id @default(uuid()) @db.Uuid
-  linkId     String          @db.Uuid
-  messageId  String          @db.Uuid
-  syncJobId  String?         @db.Uuid
-  rawUrl     String          @db.Text
-  createdAt  DateTime        @default(now())
-  link       Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  message    TelegramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  syncJob    SyncJob?        @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
-  aiAnalysis AiAnalysis?
+  id            String          @id @default(uuid()) @db.Uuid
+  linkId        String          @db.Uuid
+  messageId     String          @db.Uuid
+  syncJobId     String?         @db.Uuid
+  rawUrl        String          @db.Text
+  normalizedUrl String          @db.Text
+  createdAt     DateTime        @default(now())
+  link          Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  message       TelegramMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  syncJob       SyncJob?        @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
 
-  @@unique([linkId, messageId])
+  @@unique([linkId, messageId, normalizedUrl])
   @@index([messageId])
   @@index([syncJobId])
-}
-
-model AiSettings {
-  id               String     @id @default("default")
-  provider         AiProvider @default(KIMI)
-  apiKeyCiphertext String?    @db.Text
-  apiKeyIv         String?
-  apiKeyAuthTag    String?
-  selectedModel    String?
-  lastValidatedAt  DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-}
-
-model AiAnalysis {
-  id                    String          @id @default(uuid()) @db.Uuid
-  linkId                String          @db.Uuid
-  linkSourceId          String          @unique @db.Uuid
-  provider              AiProvider
-  model                 String
-  confidence            Float
-  rationale             String          @db.Text
-  resultTitle           String
-  resultPurpose         String?         @db.Text
-  resultEnvironment     LinkEnvironment
-  suggestedProjectName  String?
-  suggestedCategoryName String?
-  suggestedTagNames     Json
-  appliedResult         Json
-  appliedAt             DateTime?
-  promptTokens          Int             @default(0)
-  completionTokens      Int             @default(0)
-  totalTokens           Int             @default(0)
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
-  link                  Link            @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  linkSource            LinkSource      @relation(fields: [linkSourceId], references: [id], onDelete: Cascade)
-
-  @@index([linkId, createdAt])
 }

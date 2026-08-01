@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 
-export type TaxonomyKind = 'projects' | 'categories' | 'tags';
+export type TaxonomyKind = 'categories' | 'tags';
 
 function normalizeName(value: string): string {
   return value.trim().toLocaleLowerCase('zh-CN');
@@ -17,17 +17,6 @@ export class TaxonomyService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(kind: TaxonomyKind) {
-    if (kind === 'projects') {
-      const items = await this.prisma.project.findMany({
-        include: { _count: { select: { links: true } } },
-        orderBy: { name: 'asc' },
-      });
-      return items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        referenceCount: item._count.links,
-      }));
-    }
     if (kind === 'categories') {
       const items = await this.prisma.category.findMany({
         include: { _count: { select: { links: true } } },
@@ -54,12 +43,6 @@ export class TaxonomyService {
     const name = this.requireName(value);
     const normalizedName = normalizeName(name);
     await this.ensureUnique(kind, normalizedName);
-    if (kind === 'projects') {
-      const item = await this.prisma.project.create({
-        data: { name, normalizedName },
-      });
-      return { id: item.id, name: item.name, referenceCount: 0 };
-    }
     if (kind === 'categories') {
       const item = await this.prisma.category.create({
         data: { name, normalizedName },
@@ -77,17 +60,6 @@ export class TaxonomyService {
     const name = this.requireName(value);
     const normalizedName = normalizeName(name);
     await this.ensureUnique(kind, normalizedName, id);
-    if (kind === 'projects') {
-      const item = await this.prisma.project.update({
-        data: { name, normalizedName },
-        where: { id },
-      });
-      return {
-        id: item.id,
-        name: item.name,
-        referenceCount: await this.referenceCount(kind, id),
-      };
-    }
     if (kind === 'categories') {
       const item = await this.prisma.category.update({
         data: { name, normalizedName },
@@ -113,20 +85,16 @@ export class TaxonomyService {
   async remove(kind: TaxonomyKind, id: string): Promise<void> {
     await this.ensureExists(kind, id);
     const references =
-      kind === 'projects'
-        ? await this.prisma.link.count({ where: { projectId: id } })
-        : kind === 'categories'
-          ? await this.prisma.link.count({ where: { categoryId: id } })
-          : await this.prisma.linkTag.count({ where: { tagId: id } });
+      kind === 'categories'
+        ? await this.prisma.link.count({ where: { categoryId: id } })
+        : await this.prisma.linkTag.count({ where: { tagId: id } });
     if (references > 0) {
       throw new ConflictException({
         code: 'TAXONOMY_IN_USE',
         message: `该条目仍被 ${references} 条链接引用。`,
       });
     }
-    if (kind === 'projects') {
-      await this.prisma.project.delete({ where: { id } });
-    } else if (kind === 'categories') {
+    if (kind === 'categories') {
       await this.prisma.category.delete({ where: { id } });
     } else {
       await this.prisma.tag.delete({ where: { id } });
@@ -154,11 +122,9 @@ export class TaxonomyService {
       ...(excludingId ? { id: { not: excludingId } } : {}),
     };
     const count =
-      kind === 'projects'
-        ? await this.prisma.project.count({ where })
-        : kind === 'categories'
-          ? await this.prisma.category.count({ where })
-          : await this.prisma.tag.count({ where });
+      kind === 'categories'
+        ? await this.prisma.category.count({ where })
+        : await this.prisma.tag.count({ where });
     if (count > 0) {
       throw new ConflictException({
         code: 'TAXONOMY_NAME_CONFLICT',
@@ -169,11 +135,9 @@ export class TaxonomyService {
 
   private async ensureExists(kind: TaxonomyKind, id: string): Promise<void> {
     const count =
-      kind === 'projects'
-        ? await this.prisma.project.count({ where: { id } })
-        : kind === 'categories'
-          ? await this.prisma.category.count({ where: { id } })
-          : await this.prisma.tag.count({ where: { id } });
+      kind === 'categories'
+        ? await this.prisma.category.count({ where: { id } })
+        : await this.prisma.tag.count({ where: { id } });
     if (count === 0) {
       throw new NotFoundException({
         code: 'TAXONOMY_NOT_FOUND',
@@ -183,9 +147,6 @@ export class TaxonomyService {
   }
 
   private referenceCount(kind: TaxonomyKind, id: string): Promise<number> {
-    if (kind === 'projects') {
-      return this.prisma.link.count({ where: { projectId: id } });
-    }
     if (kind === 'categories') {
       return this.prisma.link.count({ where: { categoryId: id } });
     }

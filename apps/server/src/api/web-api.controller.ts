@@ -27,10 +27,8 @@ export class WebApiController {
     return this.links.list(
       {
         categoryId: query.categoryId,
-        environment: query.environment,
         page: query.page,
         pageSize: query.pageSize,
-        projectId: query.projectId,
         query: query.q,
         sort: query.sort,
         status: query.status,

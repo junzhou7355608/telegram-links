@@ -1,15 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import {
-  LinkEnvironment,
-  OrganizationStatus,
-} from '../generated/prisma/client';
-
-export enum LinkEnvironmentValue {
-  Production = 'production',
-  Test = 'test',
-  Development = 'development',
-  Unknown = 'unknown',
-}
+import { OrganizationStatus } from '../generated/prisma/client';
 
 export enum OrganizationStatusValue {
   Pending = 'pending',
@@ -26,20 +16,6 @@ export enum LinkSortValue {
   Newest = 'newest',
   Oldest = 'oldest',
   Title = 'title',
-}
-
-export function toLinkEnvironment(value: LinkEnvironmentValue) {
-  const mapping: Record<LinkEnvironmentValue, LinkEnvironment> = {
-    [LinkEnvironmentValue.Production]: LinkEnvironment.PRODUCTION,
-    [LinkEnvironmentValue.Test]: LinkEnvironment.TEST,
-    [LinkEnvironmentValue.Development]: LinkEnvironment.DEVELOPMENT,
-    [LinkEnvironmentValue.Unknown]: LinkEnvironment.UNKNOWN,
-  };
-  return mapping[value];
-}
-
-export function fromLinkEnvironment(value: LinkEnvironment) {
-  return value.toLowerCase() as LinkEnvironmentValue;
 }
 
 export function toOrganizationStatus(value: OrganizationStatusValue) {

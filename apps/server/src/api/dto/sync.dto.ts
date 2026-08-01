@@ -32,7 +32,6 @@ export enum SyncStageDtoValue {
   Connecting = 'connecting',
   Reading = 'reading',
   Extracting = 'extracting',
-  Classifying = 'classifying',
   Deduplicating = 'deduplicating',
   Saving = 'saving',
 }
@@ -77,11 +76,6 @@ export class CreateSyncJobDto {
   @ApiPropertyOptional({ format: 'uuid', type: String })
   @IsOptional()
   @IsUUID()
-  defaultProjectId?: string;
-
-  @ApiPropertyOptional({ format: 'uuid', type: String })
-  @IsOptional()
-  @IsUUID()
   defaultCategoryId?: string;
 
   @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
@@ -95,7 +89,6 @@ export class CreateSyncJobDto {
     return {
       chatIds: this.chatIds,
       defaultCategoryId: this.defaultCategoryId,
-      defaultProjectId: this.defaultProjectId,
       defaultTagIds: this.defaultTagIds,
       rangeFrom: this.rangeFrom,
       rangeMode: this.rangeMode,
@@ -114,12 +107,6 @@ export class SyncJobChatResponseDto {
   @ApiProperty({ type: String })
   chatTitle!: string;
 
-  @ApiProperty({ enum: ['kimi', null], nullable: true })
-  aiProvider!: 'kimi' | null;
-
-  @ApiProperty({ nullable: true, type: String })
-  aiModel!: string | null;
-
   @ApiProperty({ enum: SyncJobChatStatusDtoValue })
   status!: SyncJobChatStatusDtoValue;
 
@@ -134,15 +121,6 @@ export class SyncJobChatResponseDto {
 
   @ApiProperty({ type: Number })
   duplicateCount!: number;
-
-  @ApiProperty({ type: Number })
-  promptTokens!: number;
-
-  @ApiProperty({ type: Number })
-  completionTokens!: number;
-
-  @ApiProperty({ type: Number })
-  totalTokens!: number;
 
   @ApiProperty({ nullable: true, type: Number })
   maxProcessedMessageId!: number | null;
@@ -183,28 +161,10 @@ export class SyncJobResponseDto {
   rangeTo!: string | null;
 
   @ApiProperty({ format: 'uuid', nullable: true, type: String })
-  defaultProjectId!: string | null;
-
-  @ApiProperty({ format: 'uuid', nullable: true, type: String })
   defaultCategoryId!: string | null;
 
   @ApiProperty({ format: 'uuid', isArray: true, type: String })
   defaultTagIds!: string[];
-
-  @ApiProperty({ enum: ['kimi', null], nullable: true })
-  aiProvider!: 'kimi' | null;
-
-  @ApiProperty({ nullable: true, type: String })
-  aiModel!: string | null;
-
-  @ApiProperty({ type: Number })
-  promptTokens!: number;
-
-  @ApiProperty({ type: Number })
-  completionTokens!: number;
-
-  @ApiProperty({ type: Number })
-  totalTokens!: number;
 
   @ApiProperty({ type: Number })
   messageCount!: number;

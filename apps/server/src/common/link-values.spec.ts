@@ -15,6 +15,18 @@ describe('link values', () => {
     expect(normalizeHttpUrl('ftp://example.com/file')).toBeNull();
   });
 
+  it('uses the exact lowercase hostname as the domain identity', () => {
+    expect(normalizeHttpUrl('http://EXAMPLE.com:8443/path?a=1')?.domain).toBe(
+      'example.com',
+    );
+    expect(normalizeHttpUrl('https://www.example.com/path')?.domain).toBe(
+      'www.example.com',
+    );
+    expect(normalizeHttpUrl('https://api.example.com/path')?.domain).toBe(
+      'api.example.com',
+    );
+  });
+
   it('extracts plain URLs next to Chinese punctuation', () => {
     expect(
       extractPlainHttpUrls(

@@ -29,12 +29,12 @@ import {
 } from './dto/taxonomy.dto';
 
 function taxonomyKind(value: string): TaxonomyKind {
-  if (value === 'projects' || value === 'categories' || value === 'tags') {
+  if (value === 'categories' || value === 'tags') {
     return value;
   }
   throw new BadRequestException({
     code: 'INVALID_TAXONOMY_KIND',
-    message: '基础资料类型必须是 projects、categories 或 tags。',
+    message: '基础资料类型必须是 categories 或 tags。',
   });
 }
 
