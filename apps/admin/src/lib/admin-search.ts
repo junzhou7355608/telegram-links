@@ -20,17 +20,9 @@ const tagIds = z
 
 export const linksSearchSchema = z.object({
   categoryId: optionalUuid,
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional()
-    .catch(undefined),
   includeArchived: z.boolean().optional().catch(undefined),
   linkId: optionalUuid,
   page,
-  projectId: z
-    .union([z.literal('unassigned'), z.string().uuid()])
-    .optional()
-    .catch(undefined),
   q: optionalText,
   sort: z.enum(['newest', 'oldest', 'title']).catch('newest').default('newest'),
   sourceChatId: optionalUuid,
@@ -42,9 +34,9 @@ export const syncJobsSearchSchema = z.object({ page });
 
 export const taxonomySearchSchema = z.object({
   kind: z
-    .enum(['projects', 'categories', 'tags'])
-    .catch('projects')
-    .default('projects'),
+    .enum(['categories', 'tags'])
+    .catch('categories')
+    .default('categories'),
 });
 
 export const telegramSearchSchema = z.object({

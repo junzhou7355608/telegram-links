@@ -1,6 +1,10 @@
-import { AiSettingsPage } from '@/components/features/ai-settings-page';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/ai-settings')({
-  component: AiSettingsPage,
+  beforeLoad: () => {
+    throw redirect({
+      to: '/links/pending',
+      search: { page: 1, sort: 'newest' },
+    });
+  },
 });

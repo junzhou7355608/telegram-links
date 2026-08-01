@@ -1,17 +1,13 @@
 import {
   adminLinksControllerArchiveMutation,
-  adminLinksControllerApplyAiSuggestionsMutation,
+  adminLinksControllerBatchArchiveMutation,
   adminLinksControllerBatchMutation,
   adminLinksControllerFindOneOptions,
   adminLinksControllerListOptions,
   adminLinksControllerRestoreMutation,
   adminLinksControllerUpdateMutation,
 } from '@/api/@tanstack/react-query.gen';
-import type {
-  ApplyAiSuggestionsDto,
-  BatchLinkPatchDto,
-  UpdateLinkDto,
-} from '@/api/types.gen';
+import type { BatchLinkPatchDto, UpdateLinkDto } from '@/api/types.gen';
 import { BulkActions } from '@/components/features/bulk-actions';
 import { LinkEditSheet } from '@/components/features/link-edit-sheet';
 import { LinkFiltersBar } from '@/components/features/link-filters';
@@ -79,10 +75,10 @@ export function LinksPage({
     enabled: Boolean(search.linkId),
   });
   const updateMutation = useMutation(adminLinksControllerUpdateMutation());
-  const applyAiMutation = useMutation(
-    adminLinksControllerApplyAiSuggestionsMutation(),
-  );
   const batchMutation = useMutation(adminLinksControllerBatchMutation());
+  const batchArchiveMutation = useMutation(
+    adminLinksControllerBatchArchiveMutation(),
+  );
   const archiveMutation = useMutation(adminLinksControllerArchiveMutation());
   const restoreMutation = useMutation(adminLinksControllerRestoreMutation());
   useApiErrorToast(linksQuery.error);
@@ -90,8 +86,8 @@ export function LinksPage({
   useApiErrorToast(detailQuery.error);
   const mutationPending =
     updateMutation.isPending ||
-    applyAiMutation.isPending ||
     batchMutation.isPending ||
+    batchArchiveMutation.isPending ||
     archiveMutation.isPending ||
     restoreMutation.isPending;
   const links = linksQuery.data?.items ?? [];
@@ -106,6 +102,13 @@ export function LinksPage({
       });
     }
   }, [debouncedSearch, onSearchChange, search.q]);
+
+  useEffect(() => {
+    const parameters = new URLSearchParams(window.location.search);
+    if (parameters.has('projectId') || parameters.has('environment')) {
+      onSearchChange((current) => ({ ...current }), { replace: true });
+    }
+  }, [onSearchChange]);
 
   useEffect(() => {
     if (pagination && search.page > pagination.totalPages) {
@@ -155,6 +158,30 @@ export function LinksPage({
     await applyPatch({ status: 'organized' });
   }
 
+  async function archiveSelected() {
+    const ids = selectedLinks
+      .filter((link) => !link.archivedAt)
+      .map((link) => link.id);
+    if (ids.length === 0) {
+      return;
+    }
+    try {
+      const result = await batchArchiveMutation.mutateAsync({ body: { ids } });
+      await invalidateLinks(queryClient);
+      if (result.updatedIds.length > 0) {
+        toast.success(`已归档 ${result.updatedIds.length} 条链接`);
+      }
+      if (result.skipped.length > 0) {
+        toast.warning(
+          `${result.skipped.length} 条未归档：${result.skipped[0]?.message ?? '链接状态已变化'}`,
+        );
+      }
+      setSelectedIds(new Set());
+    } catch (error) {
+      toast.error(getAdminApiError(error).message);
+    }
+  }
+
   async function saveLink(body: UpdateLinkDto) {
     const id = search.linkId;
     if (!id) {
@@ -182,15 +209,6 @@ export function LinksPage({
     await invalidateLinks(queryClient, id);
   }
 
-  async function applyAiSuggestions(body: ApplyAiSuggestionsDto) {
-    const id = search.linkId;
-    if (!id) {
-      return;
-    }
-    await applyAiMutation.mutateAsync({ body, path: { id } });
-    await invalidateLinks(queryClient, id);
-  }
-
   return (
     <section aria-labelledby="review-heading" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -203,7 +221,7 @@ export function LinksPage({
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {pendingOnly
-              ? '补充项目、用途和分类后标记完成。'
+              ? '补充用途与分类后标记完成。'
               : '检索并维护服务端保存的链接。'}
           </p>
         </div>
@@ -227,6 +245,7 @@ export function LinksPage({
         isPending={mutationPending}
         selectedLinks={selectedLinks}
         taxonomy={taxonomyQuery.taxonomy}
+        onArchive={() => void archiveSelected()}
         onClear={() => setSelectedIds(new Set())}
         onApply={(patch) => void applyPatch(patch)}
         onComplete={() => void completeSelected()}
@@ -258,12 +277,11 @@ export function LinksPage({
 
       {detailQuery.data ? (
         <LinkEditSheet
-          key={`${detailQuery.data.id}:${detailQuery.data.updatedAt}:${detailQuery.data.aiAnalysis?.appliedAt ?? ''}`}
+          key={`${detailQuery.data.id}:${detailQuery.data.updatedAt}`}
           isPending={mutationPending}
           link={detailQuery.data}
           taxonomy={taxonomyQuery.taxonomy}
           onArchive={archiveLink}
-          onApplyAiSuggestions={applyAiSuggestions}
           onRestore={restoreLink}
           onSave={saveLink}
           onOpenChange={(open) => {

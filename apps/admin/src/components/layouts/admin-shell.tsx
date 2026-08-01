@@ -1,5 +1,4 @@
 import {
-  adminAiControllerSettingsOptions,
   adminLinksControllerOverviewOptions,
   adminSyncControllerCreateMutation,
   adminSyncControllerListOptions,
@@ -78,7 +77,6 @@ export function AdminShell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const overviewQuery = useQuery(adminLinksControllerOverviewOptions());
-  const aiSettingsQuery = useQuery(adminAiControllerSettingsOptions());
   const accountQuery = useQuery(adminTelegramControllerAccountOptions());
   const latestJobQuery = useQuery({
     ...adminSyncControllerListOptions({ query: { page: 1, pageSize: 1 } }),
@@ -86,7 +84,6 @@ export function AdminShell() {
       isActiveSyncJob(query.state.data?.items[0]) ? 2_000 : false,
   });
   useApiErrorToast(overviewQuery.error);
-  useApiErrorToast(aiSettingsQuery.error);
   useApiErrorToast(accountQuery.error);
   useApiErrorToast(latestJobQuery.error);
   const createJobMutation = useMutation(adminSyncControllerCreateMutation());
@@ -95,15 +92,12 @@ export function AdminShell() {
   const previousJobStatus = useRef(latestJob?.status);
   const overview = overviewQuery.data;
   const authorized = accountQuery.data?.status === 'authorized';
-  const aiReady = aiSettingsQuery.data?.ready === true;
   const serverState =
     overviewQuery.error ||
-    aiSettingsQuery.error ||
     accountQuery.error ||
     latestJobQuery.error
       ? ('offline' as const)
       : overviewQuery.data &&
-          aiSettingsQuery.data &&
           accountQuery.data &&
           latestJobQuery.data
         ? ('online' as const)
@@ -141,10 +135,6 @@ export function AdminShell() {
   }
 
   function handleScanAction() {
-    if (!aiReady) {
-      void navigate({ to: '/ai-settings' });
-      return;
-    }
     if (!authorized) {
       void navigate({ to: '/telegram', search: { page: 1 } });
       return;
@@ -168,15 +158,11 @@ export function AdminShell() {
           latestScanLabel={latestScanLabel}
           running={runningJob !== null || createJobMutation.isPending}
           scanDisabled={
-            aiSettingsQuery.isPending ||
             accountQuery.isPending ||
-            Boolean(aiSettingsQuery.error) ||
             Boolean(accountQuery.error) ||
             Boolean(latestJobQuery.error)
           }
-          scanLabel={
-            !aiReady ? '配置 AI' : authorized ? '开始扫描' : '连接 Telegram'
-          }
+          scanLabel={authorized ? '开始扫描' : '连接 Telegram'}
           onStartScan={handleScanAction}
         />
 
@@ -192,7 +178,7 @@ export function AdminShell() {
               <StatCard
                 label="待整理"
                 value={overview?.pending ?? '—'}
-                detail="需要补充项目与用途"
+                detail="需要补充用途与分类"
                 icon={Inbox}
               />
               <StatCard
@@ -261,7 +247,6 @@ export function AdminShell() {
 
       {scanDialogOpen ? (
         <ScanDialog
-          aiModel={aiSettingsQuery.data?.selectedModel ?? null}
           authorized={authorized}
           isPending={createJobMutation.isPending}
           open={scanDialogOpen}

@@ -1,7 +1,7 @@
 import { SourceChatPicker } from '@/components/features/source-chat-picker';
 import { TagPicker } from '@/components/features/tag-picker';
 import type { LinksSearch } from '@/lib/admin-search';
-import { environmentLabels, statusLabels } from '@/lib/admin-display';
+import { statusLabels } from '@/lib/admin-display';
 import type { TaxonomyCollections } from '@/lib/admin-api';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -114,19 +114,6 @@ function FilterFields({
       }
     >
       <FilterSelect
-        label="项目"
-        value={filters.projectId}
-        options={[
-          { label: '未设置', value: 'unassigned' },
-          ...taxonomy.projects.map((item) => ({
-            label: item.name,
-            value: item.id,
-          })),
-        ]}
-        stacked={stacked}
-        onChange={(value) => update('projectId', value)}
-      />
-      <FilterSelect
         label="分类"
         value={filters.categoryId}
         options={taxonomy.categories.map((item) => ({
@@ -135,18 +122,6 @@ function FilterFields({
         }))}
         stacked={stacked}
         onChange={(value) => update('categoryId', value)}
-      />
-      <FilterSelect
-        label="环境"
-        value={filters.environment}
-        options={Object.entries(environmentLabels).map(([value, label]) => ({
-          label,
-          value,
-        }))}
-        stacked={stacked}
-        onChange={(value) =>
-          update('environment', value as LinksSearch['environment'] | undefined)
-        }
       />
       <label className={stacked ? 'grid gap-2' : 'contents'}>
         {stacked ? (
@@ -237,9 +212,7 @@ export function LinkFiltersBar({
   onSearchValueChange,
 }: LinkFiltersProps) {
   const activeFilterCount = [
-    filters.projectId,
     filters.categoryId,
-    filters.environment,
     filters.sourceChatId,
     showStatus && filters.status,
     filters.sort !== 'newest',
@@ -257,7 +230,7 @@ export function LinkFiltersBar({
           <InputGroupInput
             value={searchValue}
             onChange={(event) => onSearchValueChange(event.target.value)}
-            placeholder="搜索标题、URL、项目、用途、标签或来源"
+            placeholder="搜索标题、URL、用途、分类、标签或来源"
             aria-label="搜索链接"
           />
           {searchValue ? (

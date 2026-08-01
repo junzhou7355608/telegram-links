@@ -14,7 +14,6 @@ describe('Admin route search schemas', () => {
     expect(
       linksSearchSchema.parse({
         categoryId: 'invalid',
-        environment: 'staging',
         page: '-2',
         sort: 'invalid',
       }),
@@ -42,7 +41,7 @@ describe('Admin route search schemas', () => {
 
   it('normalizes taxonomy and Telegram defaults', () => {
     expect(taxonomySearchSchema.parse({ kind: 'invalid' })).toEqual({
-      kind: 'projects',
+      kind: 'categories',
     });
     expect(telegramSearchSchema.parse({ page: 'nope', type: 'bot' })).toEqual({
       page: 1,

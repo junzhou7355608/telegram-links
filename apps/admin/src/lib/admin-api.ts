@@ -18,13 +18,12 @@ import type { QueryClient } from '@tanstack/react-query';
 export const ADMIN_LINK_PAGE_SIZE = 8;
 export const ADMIN_JOB_PAGE_SIZE = 6;
 export const ADMIN_CHAT_PAGE_SIZE = 8;
-export const taxonomyKinds = ['projects', 'categories', 'tags'] as const;
+export const taxonomyKinds = ['categories', 'tags'] as const;
 
 export type TaxonomyKind = (typeof taxonomyKinds)[number];
 
 export interface TaxonomyCollections {
   categories: TaxonomyItemResponseDto[];
-  projects: TaxonomyItemResponseDto[];
   tags: TaxonomyItemResponseDto[];
 }
 
@@ -34,11 +33,9 @@ export function createLinksQuery(
 ): NonNullable<AdminLinksControllerListData['query']> {
   return {
     categoryId: search.categoryId,
-    environment: search.environment,
     includeArchived: search.includeArchived || undefined,
     page: search.page,
     pageSize: ADMIN_LINK_PAGE_SIZE,
-    projectId: search.projectId,
     q: search.q,
     sort: search.sort,
     sourceChatId: search.sourceChatId,

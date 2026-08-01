@@ -15,6 +15,7 @@ import {
 import { taxonomySearchSchema } from '@/lib/admin-search';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
 
 export const Route = createFileRoute('/taxonomy')({
   validateSearch: taxonomySearchSchema,
@@ -34,6 +35,13 @@ function TaxonomyRoute() {
     renameMutation.isPending ||
     removeMutation.isPending;
   useApiErrorToast(taxonomyQuery.error);
+
+  useEffect(() => {
+    const parameters = new URLSearchParams(window.location.search);
+    if (parameters.get('kind') === 'projects') {
+      void navigate({ replace: true, search: { kind: 'categories' } });
+    }
+  }, [navigate]);
 
   async function create(kind: TaxonomyKind, name: string) {
     await createMutation.mutateAsync({ body: { name }, path: { kind } });

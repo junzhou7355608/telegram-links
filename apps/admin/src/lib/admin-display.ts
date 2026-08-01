@@ -1,13 +1,5 @@
 import type { LinkResponseDto, SyncJobResponseDto } from '@/api/types.gen';
 
-export const environmentLabels: Record<LinkResponseDto['environment'], string> =
-  {
-    production: '正式',
-    test: '测试',
-    development: '开发',
-    unknown: '未知',
-  };
-
 export const statusLabels: Record<LinkResponseDto['status'], string> = {
   pending: '待整理',
   organized: '已整理',
@@ -17,7 +9,6 @@ export const scanStageLabels: Record<
   NonNullable<SyncJobResponseDto['stage']>,
   string
 > = {
-  classifying: '使用 AI 识别链接',
   connecting: '连接 Telegram',
   reading: '读取消息',
   extracting: '提取链接',

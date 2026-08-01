@@ -40,7 +40,6 @@ export type WebOverviewResponseDto = {
   categories: Array<OverviewCountResponseDto>;
   counts: WebOverviewCountsResponseDto;
   latestSync: WebLatestSyncResponseDto | null;
-  projects: Array<OverviewCountResponseDto>;
 };
 
 export type TaxonomyReferenceResponseDto = {
@@ -66,9 +65,7 @@ export type LinkResponseDto = {
   title: string;
   url: string;
   domain: string;
-  environment: 'production' | 'test' | 'development' | 'unknown';
   status: 'pending' | 'organized';
-  project: TaxonomyReferenceResponseDto | null;
   category: TaxonomyReferenceResponseDto | null;
   tags: Array<TaxonomyReferenceResponseDto>;
   purpose: string | null;
@@ -91,33 +88,6 @@ export type PaginationMetaResponseDto = {
 export type PaginatedLinksResponseDto = {
   items: Array<LinkResponseDto>;
   pagination: PaginationMetaResponseDto;
-};
-
-export type AiSettingsResponseDto = {
-  configured: boolean;
-  selectedModel: string | null;
-  ready: boolean;
-  provider: 'kimi';
-  lastValidatedAt: string | null;
-};
-
-export type SetAiApiKeyDto = {
-  apiKey: string;
-};
-
-export type AiModelResponseDto = {
-  contextLength: number | null;
-  id: string;
-  ownedBy: string;
-  supportsReasoning: boolean;
-};
-
-export type AiModelsResponseDto = {
-  items: Array<AiModelResponseDto>;
-};
-
-export type SetAiModelDto = {
-  model: string;
 };
 
 export type LatestSyncSummaryResponseDto = {
@@ -145,9 +115,7 @@ export type BatchLinkPatchDto = {
   title?: string;
   url?: string;
   purpose?: string | null;
-  environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
   addTagIds?: Array<string>;
@@ -169,17 +137,8 @@ export type BatchUpdateLinksResponseDto = {
   skipped: Array<BatchSkippedLinkResponseDto>;
 };
 
-export type AiAnalysisResponseDto = {
-  id: string;
-  provider: 'kimi';
-  model: string;
-  confidence: number;
-  rationale: string;
-  suggestedProjectName: string | null;
-  suggestedCategoryName: string | null;
-  suggestedTagNames: Array<string>;
-  appliedAt: string | null;
-  createdAt: string;
+export type BatchArchiveLinksDto = {
+  ids: Array<string>;
 };
 
 export type AdminLinkResponseDto = {
@@ -187,9 +146,7 @@ export type AdminLinkResponseDto = {
   title: string;
   url: string;
   domain: string;
-  environment: 'production' | 'test' | 'development' | 'unknown';
   status: 'pending' | 'organized';
-  project: TaxonomyReferenceResponseDto | null;
   category: TaxonomyReferenceResponseDto | null;
   tags: Array<TaxonomyReferenceResponseDto>;
   purpose: string | null;
@@ -200,25 +157,15 @@ export type AdminLinkResponseDto = {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
-  aiAnalysis: AiAnalysisResponseDto | null;
 };
 
 export type UpdateLinkDto = {
   title?: string;
   url?: string;
   purpose?: string | null;
-  environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
-};
-
-export type ApplyAiSuggestionsDto = {
-  analysisId: string;
-  applyProject: boolean;
-  applyCategory: boolean;
-  tagNames: Array<string>;
 };
 
 export type CreateSyncJobDto = {
@@ -226,7 +173,6 @@ export type CreateSyncJobDto = {
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom?: string;
   rangeTo?: string;
-  defaultProjectId?: string;
   defaultCategoryId?: string;
   defaultTagIds?: Array<string>;
 };
@@ -235,16 +181,11 @@ export type SyncJobChatResponseDto = {
   id: string;
   chatId: string;
   chatTitle: string;
-  aiProvider: 'kimi' | null;
-  aiModel: string | null;
   status: 'pending' | 'running' | 'succeeded' | 'failed';
   messageCount: number;
   foundCount: number;
   newCount: number;
   duplicateCount: number;
-  promptTokens: number;
-  completionTokens: number;
-  totalTokens: number;
   maxProcessedMessageId: number | null;
   error: string | null;
   startedAt: string | null;
@@ -264,7 +205,6 @@ export type SyncJobResponseDto = {
     | 'connecting'
     | 'reading'
     | 'extracting'
-    | 'classifying'
     | 'deduplicating'
     | 'saving'
     | null;
@@ -272,14 +212,8 @@ export type SyncJobResponseDto = {
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom: string | null;
   rangeTo: string | null;
-  defaultProjectId: string | null;
   defaultCategoryId: string | null;
   defaultTagIds: Array<string>;
-  aiProvider: 'kimi' | null;
-  aiModel: string | null;
-  promptTokens: number;
-  completionTokens: number;
-  totalTokens: number;
   messageCount: number;
   foundCount: number;
   newCount: number;
@@ -387,139 +321,6 @@ export type VerifyPasswordDtoWritable = {
   password: string;
 };
 
-export type AdminAiControllerSettingsData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/admin/v1/ai/settings';
-};
-
-export type AdminAiControllerSettingsErrors = {
-  400: ApiErrorResponseDto;
-  404: ApiErrorResponseDto;
-  409: ApiErrorResponseDto;
-  500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
-  503: ApiErrorResponseDto;
-};
-
-export type AdminAiControllerSettingsError =
-  AdminAiControllerSettingsErrors[keyof AdminAiControllerSettingsErrors];
-
-export type AdminAiControllerSettingsResponses = {
-  200: AiSettingsResponseDto;
-};
-
-export type AdminAiControllerSettingsResponse =
-  AdminAiControllerSettingsResponses[keyof AdminAiControllerSettingsResponses];
-
-export type AdminAiControllerClearKeyData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/admin/v1/ai/settings/key';
-};
-
-export type AdminAiControllerClearKeyErrors = {
-  400: ApiErrorResponseDto;
-  404: ApiErrorResponseDto;
-  409: ApiErrorResponseDto;
-  500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
-  503: ApiErrorResponseDto;
-};
-
-export type AdminAiControllerClearKeyError =
-  AdminAiControllerClearKeyErrors[keyof AdminAiControllerClearKeyErrors];
-
-export type AdminAiControllerClearKeyResponses = {
-  /**
-   * Kimi API Key 已清除。
-   */
-  204: void;
-};
-
-export type AdminAiControllerClearKeyResponse =
-  AdminAiControllerClearKeyResponses[keyof AdminAiControllerClearKeyResponses];
-
-export type AdminAiControllerSetKeyData = {
-  body: SetAiApiKeyDto;
-  path?: never;
-  query?: never;
-  url: '/api/admin/v1/ai/settings/key';
-};
-
-export type AdminAiControllerSetKeyErrors = {
-  400: ApiErrorResponseDto;
-  404: ApiErrorResponseDto;
-  409: ApiErrorResponseDto;
-  500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
-  503: ApiErrorResponseDto;
-};
-
-export type AdminAiControllerSetKeyError =
-  AdminAiControllerSetKeyErrors[keyof AdminAiControllerSetKeyErrors];
-
-export type AdminAiControllerSetKeyResponses = {
-  200: AiSettingsResponseDto;
-};
-
-export type AdminAiControllerSetKeyResponse =
-  AdminAiControllerSetKeyResponses[keyof AdminAiControllerSetKeyResponses];
-
-export type AdminAiControllerModelsData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/admin/v1/ai/models';
-};
-
-export type AdminAiControllerModelsErrors = {
-  400: ApiErrorResponseDto;
-  404: ApiErrorResponseDto;
-  409: ApiErrorResponseDto;
-  500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
-  503: ApiErrorResponseDto;
-};
-
-export type AdminAiControllerModelsError =
-  AdminAiControllerModelsErrors[keyof AdminAiControllerModelsErrors];
-
-export type AdminAiControllerModelsResponses = {
-  200: AiModelsResponseDto;
-};
-
-export type AdminAiControllerModelsResponse =
-  AdminAiControllerModelsResponses[keyof AdminAiControllerModelsResponses];
-
-export type AdminAiControllerSetModelData = {
-  body: SetAiModelDto;
-  path?: never;
-  query?: never;
-  url: '/api/admin/v1/ai/settings/model';
-};
-
-export type AdminAiControllerSetModelErrors = {
-  400: ApiErrorResponseDto;
-  404: ApiErrorResponseDto;
-  409: ApiErrorResponseDto;
-  500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
-  503: ApiErrorResponseDto;
-};
-
-export type AdminAiControllerSetModelError =
-  AdminAiControllerSetModelErrors[keyof AdminAiControllerSetModelErrors];
-
-export type AdminAiControllerSetModelResponses = {
-  200: AiSettingsResponseDto;
-};
-
-export type AdminAiControllerSetModelResponse =
-  AdminAiControllerSetModelResponses[keyof AdminAiControllerSetModelResponses];
-
 export type AdminLinksControllerOverviewData = {
   body?: never;
   path?: never;
@@ -552,12 +353,7 @@ export type AdminLinksControllerListData = {
     pageSize?: number;
     q?: string;
     view?: 'all' | 'recent' | 'pending';
-    /**
-     * UUID 或 unassigned
-     */
-    projectId?: string;
     categoryId?: string;
-    environment?: 'production' | 'test' | 'development' | 'unknown';
     status?: 'pending' | 'organized';
     sort?: 'newest' | 'oldest' | 'title';
     sourceChatId?: string;
@@ -607,6 +403,30 @@ export type AdminLinksControllerBatchResponses = {
 
 export type AdminLinksControllerBatchResponse =
   AdminLinksControllerBatchResponses[keyof AdminLinksControllerBatchResponses];
+
+export type AdminLinksControllerBatchArchiveData = {
+  body: BatchArchiveLinksDto;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/links/batch/archive';
+};
+
+export type AdminLinksControllerBatchArchiveErrors = {
+  400: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerBatchArchiveError =
+  AdminLinksControllerBatchArchiveErrors[keyof AdminLinksControllerBatchArchiveErrors];
+
+export type AdminLinksControllerBatchArchiveResponses = {
+  200: BatchUpdateLinksResponseDto;
+};
+
+export type AdminLinksControllerBatchArchiveResponse =
+  AdminLinksControllerBatchArchiveResponses[keyof AdminLinksControllerBatchArchiveResponses];
 
 export type AdminLinksControllerArchiveData = {
   body?: never;
@@ -715,32 +535,6 @@ export type AdminLinksControllerRestoreResponses = {
 export type AdminLinksControllerRestoreResponse =
   AdminLinksControllerRestoreResponses[keyof AdminLinksControllerRestoreResponses];
 
-export type AdminLinksControllerApplyAiSuggestionsData = {
-  body: ApplyAiSuggestionsDto;
-  path: {
-    id: string;
-  };
-  query?: never;
-  url: '/api/admin/v1/links/{id}/ai-suggestions/apply';
-};
-
-export type AdminLinksControllerApplyAiSuggestionsErrors = {
-  400: ApiErrorResponseDto;
-  404: ApiErrorResponseDto;
-  409: ApiErrorResponseDto;
-  500: ApiErrorResponseDto;
-};
-
-export type AdminLinksControllerApplyAiSuggestionsError =
-  AdminLinksControllerApplyAiSuggestionsErrors[keyof AdminLinksControllerApplyAiSuggestionsErrors];
-
-export type AdminLinksControllerApplyAiSuggestionsResponses = {
-  200: AdminLinkResponseDto;
-};
-
-export type AdminLinksControllerApplyAiSuggestionsResponse =
-  AdminLinksControllerApplyAiSuggestionsResponses[keyof AdminLinksControllerApplyAiSuggestionsResponses];
-
 export type AdminSyncControllerListData = {
   body?: never;
   path?: never;
@@ -753,10 +547,11 @@ export type AdminSyncControllerListData = {
 
 export type AdminSyncControllerListErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
   503: ApiErrorResponseDto;
 };
 
@@ -779,10 +574,11 @@ export type AdminSyncControllerCreateData = {
 
 export type AdminSyncControllerCreateErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
   503: ApiErrorResponseDto;
 };
 
@@ -807,10 +603,11 @@ export type AdminSyncControllerFindOneData = {
 
 export type AdminSyncControllerFindOneErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
+  410: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
-  502: ApiErrorResponseDto;
   503: ApiErrorResponseDto;
 };
 
@@ -827,7 +624,7 @@ export type AdminSyncControllerFindOneResponse =
 export type AdminTaxonomyControllerListData = {
   body?: never;
   path: {
-    kind: 'projects' | 'categories' | 'tags';
+    kind: 'categories' | 'tags';
   };
   query?: never;
   url: '/api/admin/v1/taxonomy/{kind}';
@@ -853,7 +650,7 @@ export type AdminTaxonomyControllerListResponse =
 export type AdminTaxonomyControllerCreateData = {
   body: TaxonomyNameDto;
   path: {
-    kind: 'projects' | 'categories' | 'tags';
+    kind: 'categories' | 'tags';
   };
   query?: never;
   url: '/api/admin/v1/taxonomy/{kind}';
@@ -879,7 +676,7 @@ export type AdminTaxonomyControllerCreateResponse =
 export type AdminTaxonomyControllerRemoveData = {
   body?: never;
   path: {
-    kind: 'projects' | 'categories' | 'tags';
+    kind: 'categories' | 'tags';
     id: string;
   };
   query?: never;
@@ -909,7 +706,7 @@ export type AdminTaxonomyControllerRemoveResponse =
 export type AdminTaxonomyControllerRenameData = {
   body: TaxonomyNameDto;
   path: {
-    kind: 'projects' | 'categories' | 'tags';
+    kind: 'categories' | 'tags';
     id: string;
   };
   query?: never;

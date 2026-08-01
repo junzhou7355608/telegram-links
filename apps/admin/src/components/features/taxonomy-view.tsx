@@ -51,11 +51,6 @@ const labels: Record<
   TaxonomyKind,
   { singular: string; plural: string; description: string }
 > = {
-  projects: {
-    singular: '项目',
-    plural: '项目',
-    description: '标记链接所属的产品或工作项目。',
-  },
   categories: {
     singular: '分类',
     plural: '分类',
@@ -307,7 +302,7 @@ export function TaxonomyView({
           基础资料
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          管理项目、分类和标签。当前 Tab 保存在 URL。
+          管理分类和标签。当前 Tab 保存在 URL。
         </p>
       </div>
       <Tabs
@@ -315,11 +310,10 @@ export function TaxonomyView({
         onValueChange={(value) => onKindChange(String(value) as TaxonomyKind)}
       >
         <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="projects">项目</TabsTrigger>
           <TabsTrigger value="categories">分类</TabsTrigger>
           <TabsTrigger value="tags">标签</TabsTrigger>
         </TabsList>
-        {(['projects', 'categories', 'tags'] as const).map((value) => (
+        {(['categories', 'tags'] as const).map((value) => (
           <TabsContent key={value} value={value} className="pt-2">
             <TaxonomySection
               {...actions}

@@ -10,14 +10,9 @@ import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
 import {
-  adminAiControllerClearKey,
-  adminAiControllerModels,
-  adminAiControllerSetKey,
-  adminAiControllerSetModel,
-  adminAiControllerSettings,
-  adminLinksControllerApplyAiSuggestions,
   adminLinksControllerArchive,
   adminLinksControllerBatch,
+  adminLinksControllerBatchArchive,
   adminLinksControllerFindOne,
   adminLinksControllerList,
   adminLinksControllerOverview,
@@ -41,27 +36,12 @@ import {
   type Options,
 } from '../sdk.gen';
 import type {
-  AdminAiControllerClearKeyData,
-  AdminAiControllerClearKeyError,
-  AdminAiControllerClearKeyResponse,
-  AdminAiControllerModelsData,
-  AdminAiControllerModelsError,
-  AdminAiControllerModelsResponse,
-  AdminAiControllerSetKeyData,
-  AdminAiControllerSetKeyError,
-  AdminAiControllerSetKeyResponse,
-  AdminAiControllerSetModelData,
-  AdminAiControllerSetModelError,
-  AdminAiControllerSetModelResponse,
-  AdminAiControllerSettingsData,
-  AdminAiControllerSettingsError,
-  AdminAiControllerSettingsResponse,
-  AdminLinksControllerApplyAiSuggestionsData,
-  AdminLinksControllerApplyAiSuggestionsError,
-  AdminLinksControllerApplyAiSuggestionsResponse,
   AdminLinksControllerArchiveData,
   AdminLinksControllerArchiveError,
   AdminLinksControllerArchiveResponse,
+  AdminLinksControllerBatchArchiveData,
+  AdminLinksControllerBatchArchiveError,
+  AdminLinksControllerBatchArchiveResponse,
   AdminLinksControllerBatchData,
   AdminLinksControllerBatchError,
   AdminLinksControllerBatchResponse,
@@ -165,128 +145,6 @@ const createQueryKey = <TOptions extends Options>(
     params.query = options.query;
   }
   return [params];
-};
-
-export const adminAiControllerSettingsQueryKey = (
-  options?: Options<AdminAiControllerSettingsData>,
-) => createQueryKey('adminAiControllerSettings', options);
-
-export const adminAiControllerSettingsOptions = (
-  options?: Options<AdminAiControllerSettingsData>,
-) =>
-  queryOptions<
-    AdminAiControllerSettingsResponse,
-    AxiosError<AdminAiControllerSettingsError>,
-    AdminAiControllerSettingsResponse,
-    ReturnType<typeof adminAiControllerSettingsQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await adminAiControllerSettings({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: adminAiControllerSettingsQueryKey(options),
-  });
-
-export const adminAiControllerClearKeyMutation = (
-  options?: Partial<Options<AdminAiControllerClearKeyData>>,
-): UseMutationOptions<
-  AdminAiControllerClearKeyResponse,
-  AxiosError<AdminAiControllerClearKeyError>,
-  Options<AdminAiControllerClearKeyData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AdminAiControllerClearKeyResponse,
-    AxiosError<AdminAiControllerClearKeyError>,
-    Options<AdminAiControllerClearKeyData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await adminAiControllerClearKey({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const adminAiControllerSetKeyMutation = (
-  options?: Partial<Options<AdminAiControllerSetKeyData>>,
-): UseMutationOptions<
-  AdminAiControllerSetKeyResponse,
-  AxiosError<AdminAiControllerSetKeyError>,
-  Options<AdminAiControllerSetKeyData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AdminAiControllerSetKeyResponse,
-    AxiosError<AdminAiControllerSetKeyError>,
-    Options<AdminAiControllerSetKeyData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await adminAiControllerSetKey({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const adminAiControllerModelsQueryKey = (
-  options?: Options<AdminAiControllerModelsData>,
-) => createQueryKey('adminAiControllerModels', options);
-
-export const adminAiControllerModelsOptions = (
-  options?: Options<AdminAiControllerModelsData>,
-) =>
-  queryOptions<
-    AdminAiControllerModelsResponse,
-    AxiosError<AdminAiControllerModelsError>,
-    AdminAiControllerModelsResponse,
-    ReturnType<typeof adminAiControllerModelsQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await adminAiControllerModels({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: adminAiControllerModelsQueryKey(options),
-  });
-
-export const adminAiControllerSetModelMutation = (
-  options?: Partial<Options<AdminAiControllerSetModelData>>,
-): UseMutationOptions<
-  AdminAiControllerSetModelResponse,
-  AxiosError<AdminAiControllerSetModelError>,
-  Options<AdminAiControllerSetModelData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AdminAiControllerSetModelResponse,
-    AxiosError<AdminAiControllerSetModelError>,
-    Options<AdminAiControllerSetModelData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await adminAiControllerSetModel({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
 };
 
 export const adminLinksControllerOverviewQueryKey = (
@@ -444,6 +302,30 @@ export const adminLinksControllerBatchMutation = (
   return mutationOptions;
 };
 
+export const adminLinksControllerBatchArchiveMutation = (
+  options?: Partial<Options<AdminLinksControllerBatchArchiveData>>,
+): UseMutationOptions<
+  AdminLinksControllerBatchArchiveResponse,
+  AxiosError<AdminLinksControllerBatchArchiveError>,
+  Options<AdminLinksControllerBatchArchiveData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AdminLinksControllerBatchArchiveResponse,
+    AxiosError<AdminLinksControllerBatchArchiveError>,
+    Options<AdminLinksControllerBatchArchiveData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await adminLinksControllerBatchArchive({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const adminLinksControllerArchiveMutation = (
   options?: Partial<Options<AdminLinksControllerArchiveData>>,
 ): UseMutationOptions<
@@ -531,30 +413,6 @@ export const adminLinksControllerRestoreMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await adminLinksControllerRestore({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const adminLinksControllerApplyAiSuggestionsMutation = (
-  options?: Partial<Options<AdminLinksControllerApplyAiSuggestionsData>>,
-): UseMutationOptions<
-  AdminLinksControllerApplyAiSuggestionsResponse,
-  AxiosError<AdminLinksControllerApplyAiSuggestionsError>,
-  Options<AdminLinksControllerApplyAiSuggestionsData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AdminLinksControllerApplyAiSuggestionsResponse,
-    AxiosError<AdminLinksControllerApplyAiSuggestionsError>,
-    Options<AdminLinksControllerApplyAiSuggestionsData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await adminLinksControllerApplyAiSuggestions({
         ...options,
         ...fnOptions,
         throwOnError: true,

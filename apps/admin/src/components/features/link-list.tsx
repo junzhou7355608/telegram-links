@@ -1,9 +1,5 @@
 import type { LinkResponseDto } from '@/api/types.gen';
-import {
-  environmentLabels,
-  formatDateTime,
-  statusLabels,
-} from '@/lib/admin-display';
+import { formatDateTime, statusLabels } from '@/lib/admin-display';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -33,19 +29,23 @@ interface LinkListProps {
 }
 
 function titleFor(link: LinkResponseDto) {
-  return link.title || '未命名链接';
+  return link.domain;
 }
 
 function StatusBadges({ link }: { link: LinkResponseDto }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      <Badge variant="outline">{environmentLabels[link.environment]}</Badge>
       <Badge variant={link.status === 'pending' ? 'secondary' : 'outline'}>
         {statusLabels[link.status]}
       </Badge>
       {link.category ? (
         <Badge variant="outline">{link.category.name}</Badge>
       ) : null}
+      {link.tags.map((tag) => (
+        <Badge key={tag.id} variant="outline">
+          {tag.name}
+        </Badge>
+      ))}
     </div>
   );
 }
@@ -121,14 +121,7 @@ export function LinkList({
                 />
               </div>
               <div className="min-w-0">
-                <CardTitle
-                  className={!link.title ? 'text-muted-foreground' : ''}
-                >
-                  {titleFor(link)}
-                </CardTitle>
-                <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-                  {link.domain}
-                </p>
+                <CardTitle className="font-mono">{link.domain}</CardTitle>
               </div>
               <Button
                 type="button"
@@ -146,10 +139,10 @@ export function LinkList({
             <CardContent className="grid gap-3">
               <StatusBadges link={link} />
               <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-xs">
-                <dt className="text-muted-foreground">项目</dt>
-                <dd>{link.project?.name ?? '未设置'}</dd>
                 <dt className="text-muted-foreground">分类</dt>
                 <dd>{link.category?.name ?? '未设置'}</dd>
+                <dt className="text-muted-foreground">标签</dt>
+                <dd>{link.tags.map((tag) => tag.name).join('、') || '未设置'}</dd>
                 <dt className="text-muted-foreground">来源</dt>
                 <dd className="truncate">
                   {link.latestSource?.chatName ?? '—'}
@@ -179,10 +172,9 @@ export function LinkList({
                   aria-label="选择当前页全部链接"
                 />
               </TableHead>
-              <TableHead className="w-[36%]">链接</TableHead>
-              <TableHead className="w-28">项目</TableHead>
-              <TableHead className="hidden w-28 lg:table-cell">分类</TableHead>
-              <TableHead className="w-24">环境</TableHead>
+              <TableHead className="w-[40%]">链接</TableHead>
+              <TableHead className="w-32">分类</TableHead>
+              <TableHead className="hidden w-48 lg:table-cell">标签</TableHead>
               <TableHead className="hidden w-36 xl:table-cell">来源</TableHead>
               <TableHead className="w-24">状态</TableHead>
               <TableHead className="w-16 pr-4 text-right">
@@ -225,27 +217,23 @@ export function LinkList({
                       <Link2 className="size-3.5" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
-                      <p
-                        className={`truncate font-medium ${
-                          link.title ? '' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {titleFor(link)}
-                      </p>
-                      <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-                        {link.url}
+                      <p className="truncate font-mono font-medium">
+                        {link.domain}
                       </p>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{link.project?.name ?? '—'}</TableCell>
+                <TableCell>{link.category?.name ?? '—'}</TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  {link.category?.name ?? '—'}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">
-                    {environmentLabels[link.environment]}
-                  </Badge>
+                  <div className="flex flex-wrap gap-1">
+                    {link.tags.length > 0
+                      ? link.tags.map((tag) => (
+                          <Badge key={tag.id} variant="outline">
+                            {tag.name}
+                          </Badge>
+                        ))
+                      : '—'}
+                  </div>
                 </TableCell>
                 <TableCell className="hidden xl:table-cell">
                   <p className="truncate">

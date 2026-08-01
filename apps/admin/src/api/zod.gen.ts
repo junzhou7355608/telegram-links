@@ -39,7 +39,6 @@ export const zWebOverviewResponseDto = z.object({
   categories: z.array(zOverviewCountResponseDto),
   counts: zWebOverviewCountsResponseDto,
   latestSync: zWebLatestSyncResponseDto.nullable(),
-  projects: z.array(zOverviewCountResponseDto),
 });
 
 export const zTaxonomyReferenceResponseDto = z.object({
@@ -65,9 +64,7 @@ export const zLinkResponseDto = z.object({
   title: z.string(),
   url: z.string(),
   domain: z.string(),
-  environment: z.enum(['production', 'test', 'development', 'unknown']),
   status: z.enum(['pending', 'organized']),
-  project: zTaxonomyReferenceResponseDto.nullable(),
   category: zTaxonomyReferenceResponseDto.nullable(),
   tags: z.array(zTaxonomyReferenceResponseDto),
   purpose: z.string().nullable(),
@@ -90,33 +87,6 @@ export const zPaginationMetaResponseDto = z.object({
 export const zPaginatedLinksResponseDto = z.object({
   items: z.array(zLinkResponseDto),
   pagination: zPaginationMetaResponseDto,
-});
-
-export const zAiSettingsResponseDto = z.object({
-  configured: z.boolean(),
-  selectedModel: z.string().nullable(),
-  ready: z.boolean(),
-  provider: z.enum(['kimi']),
-  lastValidatedAt: z.iso.datetime().nullable(),
-});
-
-export const zSetAiApiKeyDto = z.object({
-  apiKey: z.string(),
-});
-
-export const zAiModelResponseDto = z.object({
-  contextLength: z.number().nullable(),
-  id: z.string(),
-  ownedBy: z.string(),
-  supportsReasoning: z.boolean(),
-});
-
-export const zAiModelsResponseDto = z.object({
-  items: z.array(zAiModelResponseDto),
-});
-
-export const zSetAiModelDto = z.object({
-  model: z.string(),
 });
 
 export const zLatestSyncSummaryResponseDto = z.object({
@@ -145,11 +115,7 @@ export const zBatchLinkPatchDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
   purpose: z.string().nullish(),
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional(),
   status: z.enum(['pending', 'organized']).optional(),
-  projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
   addTagIds: z.array(z.uuid()).optional(),
@@ -171,17 +137,8 @@ export const zBatchUpdateLinksResponseDto = z.object({
   skipped: z.array(zBatchSkippedLinkResponseDto),
 });
 
-export const zAiAnalysisResponseDto = z.object({
-  id: z.uuid(),
-  provider: z.enum(['kimi']),
-  model: z.string(),
-  confidence: z.number().gte(0).lte(1),
-  rationale: z.string(),
-  suggestedProjectName: z.string().nullable(),
-  suggestedCategoryName: z.string().nullable(),
-  suggestedTagNames: z.array(z.string()),
-  appliedAt: z.iso.datetime().nullable(),
-  createdAt: z.iso.datetime(),
+export const zBatchArchiveLinksDto = z.object({
+  ids: z.array(z.uuid()),
 });
 
 export const zAdminLinkResponseDto = z.object({
@@ -189,9 +146,7 @@ export const zAdminLinkResponseDto = z.object({
   title: z.string(),
   url: z.string(),
   domain: z.string(),
-  environment: z.enum(['production', 'test', 'development', 'unknown']),
   status: z.enum(['pending', 'organized']),
-  project: zTaxonomyReferenceResponseDto.nullable(),
   category: zTaxonomyReferenceResponseDto.nullable(),
   tags: z.array(zTaxonomyReferenceResponseDto),
   purpose: z.string().nullable(),
@@ -202,27 +157,15 @@ export const zAdminLinkResponseDto = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   archivedAt: z.iso.datetime().nullable(),
-  aiAnalysis: zAiAnalysisResponseDto.nullable(),
 });
 
 export const zUpdateLinkDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
   purpose: z.string().nullish(),
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional(),
   status: z.enum(['pending', 'organized']).optional(),
-  projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
-});
-
-export const zApplyAiSuggestionsDto = z.object({
-  analysisId: z.uuid(),
-  applyProject: z.boolean(),
-  applyCategory: z.boolean(),
-  tagNames: z.array(z.string()),
 });
 
 export const zCreateSyncJobDto = z.object({
@@ -230,7 +173,6 @@ export const zCreateSyncJobDto = z.object({
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
   rangeFrom: z.iso.datetime().optional(),
   rangeTo: z.iso.datetime().optional(),
-  defaultProjectId: z.uuid().optional(),
   defaultCategoryId: z.uuid().optional(),
   defaultTagIds: z.array(z.uuid()).optional(),
 });
@@ -239,16 +181,11 @@ export const zSyncJobChatResponseDto = z.object({
   id: z.uuid(),
   chatId: z.uuid(),
   chatTitle: z.string(),
-  aiProvider: z.enum(['kimi']).nullable(),
-  aiModel: z.string().nullable(),
   status: z.enum(['pending', 'running', 'succeeded', 'failed']),
   messageCount: z.number(),
   foundCount: z.number(),
   newCount: z.number(),
   duplicateCount: z.number(),
-  promptTokens: z.number(),
-  completionTokens: z.number(),
-  totalTokens: z.number(),
   maxProcessedMessageId: z.number().nullable(),
   error: z.string().nullable(),
   startedAt: z.iso.datetime().nullable(),
@@ -266,27 +203,14 @@ export const zSyncJobResponseDto = z.object({
     'interrupted',
   ]),
   stage: z
-    .enum([
-      'connecting',
-      'reading',
-      'extracting',
-      'classifying',
-      'deduplicating',
-      'saving',
-    ])
+    .enum(['connecting', 'reading', 'extracting', 'deduplicating', 'saving'])
     .nullable(),
   progress: z.number(),
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
   rangeFrom: z.iso.datetime().nullable(),
   rangeTo: z.iso.datetime().nullable(),
-  defaultProjectId: z.uuid().nullable(),
   defaultCategoryId: z.uuid().nullable(),
   defaultTagIds: z.array(z.uuid()),
-  aiProvider: z.enum(['kimi']).nullable(),
-  aiModel: z.string().nullable(),
-  promptTokens: z.number(),
-  completionTokens: z.number(),
-  totalTokens: z.number(),
   messageCount: z.number(),
   foundCount: z.number(),
   newCount: z.number(),
@@ -394,23 +318,6 @@ export const zVerifyPasswordDtoWritable = z.object({
   password: z.string(),
 });
 
-export const zAdminAiControllerSettingsResponse = zAiSettingsResponseDto;
-
-/**
- * Kimi API Key 已清除。
- */
-export const zAdminAiControllerClearKeyResponse = z.void();
-
-export const zAdminAiControllerSetKeyBody = zSetAiApiKeyDto;
-
-export const zAdminAiControllerSetKeyResponse = zAiSettingsResponseDto;
-
-export const zAdminAiControllerModelsResponse = zAiModelsResponseDto;
-
-export const zAdminAiControllerSetModelBody = zSetAiModelDto;
-
-export const zAdminAiControllerSetModelResponse = zAiSettingsResponseDto;
-
 export const zAdminLinksControllerOverviewResponse = zAdminOverviewResponseDto;
 
 export const zAdminLinksControllerListQuery = z.object({
@@ -418,11 +325,7 @@ export const zAdminLinksControllerListQuery = z.object({
   pageSize: z.number().gte(1).lte(100).optional().default(8),
   q: z.string().optional(),
   view: z.enum(['all', 'recent', 'pending']).optional(),
-  projectId: z.string().optional(),
   categoryId: z.uuid().optional(),
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional(),
   status: z.enum(['pending', 'organized']).optional(),
   sort: z.enum(['newest', 'oldest', 'title']).optional(),
   sourceChatId: z.uuid().optional(),
@@ -435,6 +338,11 @@ export const zAdminLinksControllerListResponse = zPaginatedLinksResponseDto;
 export const zAdminLinksControllerBatchBody = zBatchUpdateLinksDto;
 
 export const zAdminLinksControllerBatchResponse = zBatchUpdateLinksResponseDto;
+
+export const zAdminLinksControllerBatchArchiveBody = zBatchArchiveLinksDto;
+
+export const zAdminLinksControllerBatchArchiveResponse =
+  zBatchUpdateLinksResponseDto;
 
 export const zAdminLinksControllerArchivePath = z.object({
   id: z.string(),
@@ -465,16 +373,6 @@ export const zAdminLinksControllerRestorePath = z.object({
 
 export const zAdminLinksControllerRestoreResponse = zAdminLinkResponseDto;
 
-export const zAdminLinksControllerApplyAiSuggestionsBody =
-  zApplyAiSuggestionsDto;
-
-export const zAdminLinksControllerApplyAiSuggestionsPath = z.object({
-  id: z.string(),
-});
-
-export const zAdminLinksControllerApplyAiSuggestionsResponse =
-  zAdminLinkResponseDto;
-
 export const zAdminSyncControllerListQuery = z.object({
   page: z.number().gte(1).optional().default(1),
   pageSize: z.number().gte(1).lte(100).optional().default(8),
@@ -493,7 +391,7 @@ export const zAdminSyncControllerFindOnePath = z.object({
 export const zAdminSyncControllerFindOneResponse = zSyncJobResponseDto;
 
 export const zAdminTaxonomyControllerListPath = z.object({
-  kind: z.enum(['projects', 'categories', 'tags']),
+  kind: z.enum(['categories', 'tags']),
 });
 
 export const zAdminTaxonomyControllerListResponse = z.array(
@@ -503,13 +401,13 @@ export const zAdminTaxonomyControllerListResponse = z.array(
 export const zAdminTaxonomyControllerCreateBody = zTaxonomyNameDto;
 
 export const zAdminTaxonomyControllerCreatePath = z.object({
-  kind: z.enum(['projects', 'categories', 'tags']),
+  kind: z.enum(['categories', 'tags']),
 });
 
 export const zAdminTaxonomyControllerCreateResponse = zTaxonomyItemResponseDto;
 
 export const zAdminTaxonomyControllerRemovePath = z.object({
-  kind: z.enum(['projects', 'categories', 'tags']),
+  kind: z.enum(['categories', 'tags']),
   id: z.string(),
 });
 
@@ -521,7 +419,7 @@ export const zAdminTaxonomyControllerRemoveResponse = z.void();
 export const zAdminTaxonomyControllerRenameBody = zTaxonomyNameDto;
 
 export const zAdminTaxonomyControllerRenamePath = z.object({
-  kind: z.enum(['projects', 'categories', 'tags']),
+  kind: z.enum(['categories', 'tags']),
   id: z.string(),
 });
 

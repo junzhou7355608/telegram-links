@@ -3,9 +3,6 @@ import type { TaxonomyCollections } from '@/lib/admin-api';
 import { useQuery } from '@tanstack/react-query';
 
 export function useTaxonomy() {
-  const projects = useQuery(
-    adminTaxonomyControllerListOptions({ path: { kind: 'projects' } }),
-  );
   const categories = useQuery(
     adminTaxonomyControllerListOptions({ path: { kind: 'categories' } }),
   );
@@ -15,16 +12,14 @@ export function useTaxonomy() {
 
   const taxonomy: TaxonomyCollections = {
     categories: categories.data ?? [],
-    projects: projects.data ?? [],
     tags: tags.data ?? [],
   };
-  const error = projects.error ?? categories.error ?? tags.error;
+  const error = categories.error ?? tags.error;
 
   return {
     error,
-    isPending: projects.isPending || categories.isPending || tags.isPending,
-    refetch: () =>
-      Promise.all([projects.refetch(), categories.refetch(), tags.refetch()]),
+    isPending: categories.isPending || tags.isPending,
+    refetch: () => Promise.all([categories.refetch(), tags.refetch()]),
     taxonomy,
   };
 }

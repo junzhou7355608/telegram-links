@@ -47,7 +47,6 @@ import { useState } from 'react';
 
 interface ScanConfiguration {
   defaultCategoryId?: string;
-  defaultProjectId?: string;
   defaultTagIds: string[];
   rangeFrom?: string;
   rangeMode: CreateSyncJobDto['rangeMode'];
@@ -55,7 +54,6 @@ interface ScanConfiguration {
 }
 
 interface ScanDialogProps {
-  aiModel: string | null;
   authorized: boolean;
   isPending: boolean;
   open: boolean;
@@ -78,7 +76,6 @@ const rangeLabels: Record<CreateSyncJobDto['rangeMode'], string> = {
 };
 
 export function ScanDialog({
-  aiModel,
   authorized,
   isPending,
   open,
@@ -129,7 +126,6 @@ export function ScanDialog({
       await onSubmit({
         chatIds: selectedChatIds,
         defaultCategoryId: configuration.defaultCategoryId,
-        defaultProjectId: configuration.defaultProjectId,
         defaultTagIds: configuration.defaultTagIds,
         rangeFrom: configuration.rangeFrom
           ? new Date(configuration.rangeFrom).toISOString()
@@ -154,11 +150,7 @@ export function ScanDialog({
         <DialogHeader>
           <DialogTitle>开始扫描</DialogTitle>
           <DialogDescription>
-            选择 Telegram 聊天、时间范围和新链接的默认整理属性。链接将由{' '}
-            <span className="font-medium text-foreground">
-              {aiModel ?? '未选择模型'}
-            </span>{' '}
-            识别。
+            选择 Telegram 聊天、时间范围和新链接的默认分类与标签。
           </DialogDescription>
         </DialogHeader>
 
@@ -329,39 +321,6 @@ export function ScanDialog({
                 </FieldDescription>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field>
-                    <FieldLabel htmlFor="scan-project">项目</FieldLabel>
-                    <Select
-                      value={configuration.defaultProjectId ?? 'none'}
-                      onValueChange={(value) =>
-                        setConfiguration((current) => ({
-                          ...current,
-                          defaultProjectId:
-                            value === 'none' ? undefined : String(value),
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="scan-project" className="w-full">
-                        <SelectValue>
-                          {(value) =>
-                            value === 'none'
-                              ? '不预设'
-                              : (taxonomyQuery.taxonomy.projects.find(
-                                  (item) => item.id === value,
-                                )?.name ?? '未知项目')
-                          }
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">不预设</SelectItem>
-                        {taxonomyQuery.taxonomy.projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field>
                     <FieldLabel htmlFor="scan-category">分类</FieldLabel>
                     <Select
                       value={configuration.defaultCategoryId ?? 'none'}
@@ -394,21 +353,21 @@ export function ScanDialog({
                       </SelectContent>
                     </Select>
                   </Field>
+                  <Field>
+                    <FieldLabel htmlFor="scan-tags">标签</FieldLabel>
+                    <TagPicker
+                      id="scan-tags"
+                      options={taxonomyQuery.taxonomy.tags}
+                      value={configuration.defaultTagIds}
+                      onChange={(defaultTagIds) =>
+                        setConfiguration((current) => ({
+                          ...current,
+                          defaultTagIds,
+                        }))
+                      }
+                    />
+                  </Field>
                 </div>
-                <Field>
-                  <FieldLabel htmlFor="scan-tags">标签</FieldLabel>
-                  <TagPicker
-                    id="scan-tags"
-                    options={taxonomyQuery.taxonomy.tags}
-                    value={configuration.defaultTagIds}
-                    onChange={(defaultTagIds) =>
-                      setConfiguration((current) => ({
-                        ...current,
-                        defaultTagIds,
-                      }))
-                    }
-                  />
-                </Field>
               </FieldSet>
 
               {error ? <FieldError>{error}</FieldError> : null}
