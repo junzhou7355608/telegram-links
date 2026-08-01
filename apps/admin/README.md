@@ -3,9 +3,8 @@
 Telegram Links 的管理端，基于 React、Vite、TanStack Router、TanStack
 Query、Axios、Hey API、Jotai 和共享 shadcn/ui 构建。
 
-当前页面已对接 Server，支持链接整理、真实扫描、任务记录、基础资料维护、Telegram
-账号授权和聊天来源配置。业务 DTO 统一来自 Hey API 生成客户端，本地仅定义表单、
-临时授权步骤与路由状态。
+当前页面已对接 Server，支持 Kimi 设置、Telegram 授权、真实扫描、链接整理、任务
+记录和基础资料维护。业务 DTO 统一来自 Hey API 生成客户端。
 
 ## 路由
 
@@ -14,6 +13,7 @@ Query、Axios、Hey API、Jotai 和共享 shadcn/ui 构建。
 - `/sync-jobs`：同步任务
 - `/taxonomy`：项目、分类和标签
 - `/telegram`：Telegram 账号与聊天来源边界
+- `/ai-settings`：Kimi API Key、模型列表和扫描模型
 
 筛选、分页和详情 `linkId` 使用 TanStack Router search params 保存，刷新与前进后退
 可恢复。`/` 自动重定向到 `/links/pending`。
@@ -66,6 +66,7 @@ CORS。生产环境可通过 `VITE_API_BASE_URL` 指定地址；留空时使用�
 
 Admin 不提供演示数据回退。Server 不可用时显示错误状态，数据库为空时显示真实空态。
 Telegram 验证码和 2FA 密码不会写入 Jotai、localStorage 或日志。
+Kimi API Key 只提交给 Server 验证和加密保存，不会写入浏览器存储或接口响应。
 
 ## 常用命令
 

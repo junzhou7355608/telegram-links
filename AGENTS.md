@@ -13,7 +13,8 @@
 
 Web 当前提供本地演示原型，不要把其浏览器状态或假数据描述为真实服务端数据。
 Admin 使用 `/api/admin/v1` 真实接口，Server 负责 Telegram 检索和 PostgreSQL
-持久化；不要在 Admin 中重新加入演示数据回退或业务 DTO。
+持久化；Kimi 识别通过 Server 的 `AiGateway` 边界完成。不要在 Admin 中重新加入
+演示数据回退或业务 DTO。
 
 ## 工作方式
 
@@ -39,7 +40,8 @@ Admin 使用 `/api/admin/v1` 真实接口，Server 负责 Telegram 检索和 Pos
   更新。
 - Web OpenAPI 快照只允许包含 `/api/web/v1/**`，Admin 快照只允许包含
   `/api/admin/v1/**`，不得在两个客户端之间混用接口。
-- 不提交密钥、Telegram 凭据、数据库连接串或本地 `.env*` 文件。
+- 不提交 Kimi API Key、Telegram 凭据、数据库连接串或本地 `.env*` 文件。
+- 自动测试必须替换 Telegram 与 AI Gateway，不得连接真实 Telegram 或 Kimi。
 
 ## 验证
 
