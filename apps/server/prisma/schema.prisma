@@ -151,7 +151,6 @@ model Link {
   status            OrganizationStatus @default(PENDING)
   projectId         String?            @db.Uuid
   categoryId        String?            @db.Uuid
-  isFavorite        Boolean            @default(false)
   archivedAt        DateTime?
   firstDiscoveredAt DateTime           @default(now())
   createdAt         DateTime           @default(now())

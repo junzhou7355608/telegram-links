@@ -134,11 +134,6 @@ export class UpdateLinkDto {
   @ArrayUnique()
   @IsUUID('4', { each: true })
   tagIds?: string[];
-
-  @ApiPropertyOptional({ type: Boolean })
-  @IsOptional()
-  @IsBoolean()
-  isFavorite?: boolean;
 }
 
 export class BatchLinkPatchDto extends UpdateLinkDto {
@@ -235,9 +230,6 @@ export class LinkResponseDto {
   @ApiProperty({ nullable: true, type: String })
   purpose!: string | null;
 
-  @ApiProperty({ type: Boolean })
-  isFavorite!: boolean;
-
   @ApiProperty({ type: Number })
   sourceCount!: number;
 
@@ -330,9 +322,6 @@ export class OverviewCountResponseDto {
 }
 
 export class WebOverviewCountsResponseDto {
-  @ApiProperty({ type: Number })
-  favorites!: number;
-
   @ApiProperty({ type: Number })
   pending!: number;
 

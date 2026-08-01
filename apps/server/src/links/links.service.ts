@@ -55,7 +55,6 @@ export interface LinkListInput {
 export interface UpdateLinkInput {
   categoryId?: string | null;
   environment?: LinkEnvironmentValue;
-  isFavorite?: boolean;
   projectId?: string | null;
   purpose?: string | null;
   status?: OrganizationStatusValue;
@@ -116,13 +115,12 @@ export class LinksService {
   async webOverview() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const active = { archivedAt: null };
-    const [total, pending, favorites, recent, latestJob, projects, categories] =
+    const [total, pending, recent, latestJob, projects, categories] =
       await Promise.all([
         this.prisma.link.count({ where: active }),
         this.prisma.link.count({
           where: { ...active, status: OrganizationStatus.PENDING },
         }),
-        this.prisma.link.count({ where: { ...active, isFavorite: true } }),
         this.prisma.link.count({
           where: { ...active, createdAt: { gte: sevenDaysAgo } },
         }),
@@ -148,7 +146,7 @@ export class LinksService {
         }),
       ]);
     return {
-      counts: { favorites, pending, recent, total },
+      counts: { pending, recent, total },
       latestSync: latestJob
         ? {
             finishedAt: latestJob.finishedAt?.toISOString() ?? null,
@@ -257,7 +255,6 @@ export class LinksService {
         environment: input.environment
           ? toLinkEnvironment(input.environment)
           : undefined,
-        isFavorite: input.isFavorite,
         normalizedUrl: normalized?.normalizedUrl,
         projectId: next.projectId,
         purpose: next.purpose,
@@ -355,7 +352,6 @@ export class LinksService {
         : view === LinkViewValue.Pending
           ? { status: OrganizationStatus.PENDING }
           : {}),
-      ...(view === LinkViewValue.Favorites ? { isFavorite: true } : {}),
       ...(view === LinkViewValue.Recent
         ? { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
         : {}),
@@ -439,7 +435,6 @@ export class LinksService {
       environment: fromLinkEnvironment(link.environment),
       firstDiscoveredAt: link.firstDiscoveredAt.toISOString(),
       id: link.id,
-      isFavorite: link.isFavorite,
       latestSource: sources[0] ?? null,
       project: link.project
         ? { id: link.project.id, name: link.project.name }

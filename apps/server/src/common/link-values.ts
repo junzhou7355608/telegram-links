@@ -19,7 +19,6 @@ export enum OrganizationStatusValue {
 export enum LinkViewValue {
   All = 'all',
   Recent = 'recent',
-  Favorites = 'favorites',
   Pending = 'pending',
 }
 

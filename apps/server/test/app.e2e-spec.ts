@@ -220,6 +220,7 @@ describe('Server API (e2e)', () => {
       expect(document.paths).toHaveProperty('/api/web/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/telegram/auth/code');
+      expect(JSON.stringify(document)).not.toMatch(/isFavorite|favorites/u);
       for (const [path, pathItem] of Object.entries(document.paths)) {
         for (const [method, operation] of Object.entries(pathItem)) {
           if (!operation.responses) {
@@ -354,10 +355,30 @@ describe('Server API (e2e)', () => {
         .get(`/api/web/v1/links/${linkId}`)
         .expect(200);
       expect(responseBody<{ sourceCount: number }>(detail).sourceCount).toBe(2);
+      expect(detail.body).not.toHaveProperty('isFavorite');
+      const overview = await request(server)
+        .get('/api/web/v1/overview')
+        .expect(200);
+      const overviewBody = responseBody<{
+        counts: { pending: number; total: number };
+      }>(overview);
+      expect(overviewBody.counts).toEqual(
+        expect.objectContaining({ pending: 2, total: 2 }),
+      );
+      expect(overviewBody.counts).not.toHaveProperty('favorites');
       await request(server)
         .patch(`/api/web/v1/links/${linkId}`)
         .send({ title: 'Web 不应允许编辑' })
         .expect(404);
+      await request(server)
+        .patch(`/api/admin/v1/links/${linkId}`)
+        .send({ isFavorite: true })
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'VALIDATION_ERROR' }),
+          );
+        });
       await request(server)
         .patch(`/api/admin/v1/links/${linkId}`)
         .send({
