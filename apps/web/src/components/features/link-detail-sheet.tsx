@@ -1,7 +1,6 @@
 import type { LinkResponseDto } from '@/api/types.gen';
 import {
   CategoryBadge,
-  EnvironmentBadge,
   StatusBadge,
 } from '@/components/features/link-badges';
 import { formatCapturedAt } from '@/lib/link-display';
@@ -44,7 +43,6 @@ export function LinkDetailSheet({
           <>
             <SheetHeader className="border-b p-5 pr-14">
               <div className="mb-2 flex flex-wrap gap-1.5">
-                <EnvironmentBadge environment={link.environment} />
                 <StatusBadge status={link.status} />
                 <CategoryBadge category={link.category} />
               </div>
@@ -57,9 +55,9 @@ export function LinkDetailSheet({
             <ScrollArea className="min-h-0 flex-1">
               <div className="grid gap-6 p-5">
                 <dl className="grid grid-cols-[5rem_minmax(0,1fr)] gap-x-4 gap-y-4 text-sm">
-                  <dt className="text-muted-foreground">所属项目</dt>
+                  <dt className="text-muted-foreground">分类</dt>
                   <dd className="font-medium">
-                    {link.project?.name ?? '未分配项目'}
+                    {link.category?.name ?? '未分类'}
                   </dd>
 
                   <dt className="text-muted-foreground">用途</dt>
@@ -147,7 +145,7 @@ export function LinkDetailSheet({
                 )}
 
                 <p className="rounded-lg bg-muted p-3 text-xs leading-5 text-muted-foreground">
-                  当前页面使用本地演示数据。项目、用途、标签和分类需要在 Admin
+                  当前页面使用本地演示数据。用途、标签和分类需要在 Admin
                   中维护。
                 </p>
               </div>

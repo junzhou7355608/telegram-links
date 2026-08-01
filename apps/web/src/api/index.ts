@@ -7,8 +7,10 @@ export {
   webApiControllerOverview,
 } from './sdk.gen';
 export type {
+  AdminLinkResponseDto,
   AdminOverviewResponseDto,
   ApiErrorResponseDto,
+  BatchArchiveLinksDto,
   BatchLinkPatchDto,
   BatchSkippedLinkResponseDto,
   BatchUpdateLinksDto,
@@ -35,7 +37,8 @@ export type {
   TelegramAccountResponseDto,
   TelegramAuthResultResponseDto,
   TelegramChatResponseDto,
-  UpdateChatDto,
+  TelegramChatScanOptionResponseDto,
+  TelegramChatScanOptionsResponseDto,
   UpdateLinkDto,
   VerifyCodeDto,
   VerifyCodeDtoWritable,

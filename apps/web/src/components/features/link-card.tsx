@@ -1,7 +1,6 @@
 import type { LinkResponseDto } from '@/api/types.gen';
 import {
   CategoryBadge,
-  EnvironmentBadge,
   StatusBadge,
 } from '@/components/features/link-badges';
 import { displayLinkTitle, formatCapturedAt } from '@/lib/link-display';
@@ -48,14 +47,13 @@ export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
       <CardContent className="grid gap-3">
         <div>
           <p className="text-sm font-medium">
-            {link.project?.name ?? '未分配项目'}
+            {link.category?.name ?? '未分类'}
           </p>
           <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
             {link.purpose ?? '尚未补充用途'}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <EnvironmentBadge environment={link.environment} />
           <StatusBadge status={link.status} />
           <CategoryBadge category={link.category} />
         </div>

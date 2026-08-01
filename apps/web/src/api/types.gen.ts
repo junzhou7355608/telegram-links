@@ -40,7 +40,6 @@ export type WebOverviewResponseDto = {
   categories: Array<OverviewCountResponseDto>;
   counts: WebOverviewCountsResponseDto;
   latestSync: WebLatestSyncResponseDto | null;
-  projects: Array<OverviewCountResponseDto>;
 };
 
 export type TaxonomyReferenceResponseDto = {
@@ -66,9 +65,7 @@ export type LinkResponseDto = {
   title: string;
   url: string;
   domain: string;
-  environment: 'production' | 'test' | 'development' | 'unknown';
   status: 'pending' | 'organized';
-  project: TaxonomyReferenceResponseDto | null;
   category: TaxonomyReferenceResponseDto | null;
   tags: Array<TaxonomyReferenceResponseDto>;
   purpose: string | null;
@@ -118,9 +115,7 @@ export type BatchLinkPatchDto = {
   title?: string;
   url?: string;
   purpose?: string | null;
-  environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
   addTagIds?: Array<string>;
@@ -142,23 +137,42 @@ export type BatchUpdateLinksResponseDto = {
   skipped: Array<BatchSkippedLinkResponseDto>;
 };
 
+export type BatchArchiveLinksDto = {
+  ids: Array<string>;
+};
+
+export type AdminLinkResponseDto = {
+  id: string;
+  title: string;
+  url: string;
+  domain: string;
+  status: 'pending' | 'organized';
+  category: TaxonomyReferenceResponseDto | null;
+  tags: Array<TaxonomyReferenceResponseDto>;
+  purpose: string | null;
+  sourceCount: number;
+  latestSource: LinkSourceResponseDto | null;
+  sources?: Array<LinkSourceResponseDto>;
+  firstDiscoveredAt: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+};
+
 export type UpdateLinkDto = {
   title?: string;
   url?: string;
   purpose?: string | null;
-  environment?: 'production' | 'test' | 'development' | 'unknown';
   status?: 'pending' | 'organized';
-  projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
 };
 
 export type CreateSyncJobDto = {
-  chatIds?: Array<string>;
+  chatIds: Array<string>;
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom?: string;
   rangeTo?: string;
-  defaultProjectId?: string;
   defaultCategoryId?: string;
   defaultTagIds?: Array<string>;
 };
@@ -198,7 +212,6 @@ export type SyncJobResponseDto = {
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom: string | null;
   rangeTo: string | null;
-  defaultProjectId: string | null;
   defaultCategoryId: string | null;
   defaultTagIds: Array<string>;
   messageCount: number;
@@ -274,7 +287,6 @@ export type TelegramChatResponseDto = {
   type: 'saved' | 'private' | 'group' | 'channel';
   title: string;
   username: string | null;
-  isEnabled: boolean;
   isAvailable: boolean;
   lastSyncedMessageId: number | null;
   lastSyncedAt: string | null;
@@ -287,8 +299,16 @@ export type PaginatedTelegramChatsResponseDto = {
   pagination: PaginationMetaResponseDto;
 };
 
-export type UpdateChatDto = {
-  isEnabled: boolean;
+export type TelegramChatScanOptionResponseDto = {
+  id: string;
+  telegramPeerId: string;
+  type: 'saved' | 'private' | 'group' | 'channel';
+  title: string;
+  username: string | null;
+};
+
+export type TelegramChatScanOptionsResponseDto = {
+  items: Array<TelegramChatScanOptionResponseDto>;
 };
 
 export type VerifyCodeDtoWritable = {
@@ -333,12 +353,7 @@ export type WebApiControllerListData = {
     pageSize?: number;
     q?: string;
     view?: 'all' | 'recent' | 'pending';
-    /**
-     * UUID 或 unassigned
-     */
-    projectId?: string;
     categoryId?: string;
-    environment?: 'production' | 'test' | 'development' | 'unknown';
     status?: 'pending' | 'organized';
     sort?: 'newest' | 'oldest' | 'title';
     sourceChatId?: string;

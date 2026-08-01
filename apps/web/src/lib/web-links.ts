@@ -18,17 +18,7 @@ export function filterAndSortLinks(
       if (search.view === 'pending' && link.status !== 'pending') {
         return false;
       }
-      if (
-        search.projectId === 'unassigned'
-          ? link.project !== null
-          : search.projectId && link.project?.id !== search.projectId
-      ) {
-        return false;
-      }
       if (search.categoryId && link.category?.id !== search.categoryId) {
-        return false;
-      }
-      if (search.environment && link.environment !== search.environment) {
         return false;
       }
       if (search.status && link.status !== search.status) {
@@ -42,7 +32,6 @@ export function filterAndSortLinks(
         link.title,
         link.url,
         link.domain,
-        link.project?.name,
         link.category?.name,
         link.purpose,
         ...link.tags.map((tag) => tag.name),

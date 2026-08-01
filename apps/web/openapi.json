@@ -57,7 +57,9 @@
             }
           }
         },
-        "tags": ["Web - Links"]
+        "tags": [
+          "Web - Links"
+        ]
       }
     },
     "/api/web/v1/links": {
@@ -99,16 +101,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "recent", "pending"]
-            }
-          },
-          {
-            "name": "projectId",
-            "required": false,
-            "in": "query",
-            "description": "UUID 或 unassigned",
-            "schema": {
-              "type": "string"
+              "enum": [
+                "all",
+                "recent",
+                "pending"
+              ]
             }
           },
           {
@@ -121,21 +118,15 @@
             }
           },
           {
-            "name": "environment",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": ["production", "test", "development", "unknown"]
-            }
-          },
-          {
             "name": "status",
             "required": false,
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["pending", "organized"]
+              "enum": [
+                "pending",
+                "organized"
+              ]
             }
           },
           {
@@ -144,7 +135,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["newest", "oldest", "title"]
+              "enum": [
+                "newest",
+                "oldest",
+                "title"
+              ]
             }
           },
           {
@@ -230,7 +225,9 @@
             }
           }
         },
-        "tags": ["Web - Links"]
+        "tags": [
+          "Web - Links"
+        ]
       }
     },
     "/api/web/v1/links/{id}": {
@@ -298,7 +295,9 @@
             }
           }
         },
-        "tags": ["Web - Links"]
+        "tags": [
+          "Web - Links"
+        ]
       }
     }
   },
@@ -342,7 +341,13 @@
             "format": "date-time"
           }
         },
-        "required": ["statusCode", "code", "message", "path", "timestamp"]
+        "required": [
+          "statusCode",
+          "code",
+          "message",
+          "path",
+          "timestamp"
+        ]
       },
       "OverviewCountResponseDto": {
         "type": "object",
@@ -358,7 +363,11 @@
             "type": "string"
           }
         },
-        "required": ["count", "id", "name"]
+        "required": [
+          "count",
+          "id",
+          "name"
+        ]
       },
       "WebOverviewCountsResponseDto": {
         "type": "object",
@@ -373,7 +382,11 @@
             "type": "number"
           }
         },
-        "required": ["pending", "recent", "total"]
+        "required": [
+          "pending",
+          "recent",
+          "total"
+        ]
       },
       "WebLatestSyncResponseDto": {
         "type": "object",
@@ -395,7 +408,10 @@
             ]
           }
         },
-        "required": ["finishedAt", "status"]
+        "required": [
+          "finishedAt",
+          "status"
+        ]
       },
       "WebOverviewResponseDto": {
         "type": "object",
@@ -417,15 +433,13 @@
                 "$ref": "#/components/schemas/WebLatestSyncResponseDto"
               }
             ]
-          },
-          "projects": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OverviewCountResponseDto"
-            }
           }
         },
-        "required": ["categories", "counts", "latestSync", "projects"]
+        "required": [
+          "categories",
+          "counts",
+          "latestSync"
+        ]
       },
       "TaxonomyReferenceResponseDto": {
         "type": "object",
@@ -438,7 +452,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "id",
+          "name"
+        ]
       },
       "LinkSourceResponseDto": {
         "type": "object",
@@ -505,21 +522,11 @@
           "domain": {
             "type": "string"
           },
-          "environment": {
-            "type": "string",
-            "enum": ["production", "test", "development", "unknown"]
-          },
           "status": {
             "type": "string",
-            "enum": ["pending", "organized"]
-          },
-          "project": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
-              }
+            "enum": [
+              "pending",
+              "organized"
             ]
           },
           "category": {
@@ -582,9 +589,7 @@
           "title",
           "url",
           "domain",
-          "environment",
           "status",
-          "project",
           "category",
           "tags",
           "purpose",
@@ -612,7 +617,12 @@
             "type": "number"
           }
         },
-        "required": ["page", "pageSize", "total", "totalPages"]
+        "required": [
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ]
       },
       "PaginatedLinksResponseDto": {
         "type": "object",
@@ -627,7 +637,10 @@
             "$ref": "#/components/schemas/PaginationMetaResponseDto"
           }
         },
-        "required": ["items", "pagination"]
+        "required": [
+          "items",
+          "pagination"
+        ]
       },
       "LatestSyncSummaryResponseDto": {
         "type": "object",
@@ -657,7 +670,12 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "status", "finishedAt", "createdAt"]
+        "required": [
+          "id",
+          "status",
+          "finishedAt",
+          "createdAt"
+        ]
       },
       "AdminOverviewResponseDto": {
         "type": "object",
@@ -684,7 +702,13 @@
             "type": "number"
           }
         },
-        "required": ["archived", "latestSync", "pending", "todayAdded", "total"]
+        "required": [
+          "archived",
+          "latestSync",
+          "pending",
+          "todayAdded",
+          "total"
+        ]
       },
       "BatchLinkPatchDto": {
         "type": "object",
@@ -699,18 +723,12 @@
             "type": "string",
             "nullable": true
           },
-          "environment": {
-            "type": "string",
-            "enum": ["production", "test", "development", "unknown"]
-          },
           "status": {
             "type": "string",
-            "enum": ["pending", "organized"]
-          },
-          "projectId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
+            "enum": [
+              "pending",
+              "organized"
+            ]
           },
           "categoryId": {
             "type": "string",
@@ -747,7 +765,10 @@
             "$ref": "#/components/schemas/BatchLinkPatchDto"
           }
         },
-        "required": ["ids", "patch"]
+        "required": [
+          "ids",
+          "patch"
+        ]
       },
       "BatchSkippedLinkResponseDto": {
         "type": "object",
@@ -763,7 +784,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "code", "message"]
+        "required": [
+          "id",
+          "code",
+          "message"
+        ]
       },
       "BatchUpdateLinksResponseDto": {
         "type": "object",
@@ -782,7 +807,120 @@
             }
           }
         },
-        "required": ["updatedIds", "skipped"]
+        "required": [
+          "updatedIds",
+          "skipped"
+        ]
+      },
+      "BatchArchiveLinksDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
+      "AdminLinkResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "organized"
+            ]
+          },
+          "category": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+            }
+          },
+          "purpose": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceCount": {
+            "type": "number"
+          },
+          "latestSource": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LinkSourceResponseDto"
+              }
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkSourceResponseDto"
+            }
+          },
+          "firstDiscoveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "url",
+          "domain",
+          "status",
+          "category",
+          "tags",
+          "purpose",
+          "sourceCount",
+          "latestSource",
+          "firstDiscoveredAt",
+          "createdAt",
+          "updatedAt",
+          "archivedAt"
+        ]
       },
       "UpdateLinkDto": {
         "type": "object",
@@ -797,18 +935,12 @@
             "type": "string",
             "nullable": true
           },
-          "environment": {
-            "type": "string",
-            "enum": ["production", "test", "development", "unknown"]
-          },
           "status": {
             "type": "string",
-            "enum": ["pending", "organized"]
-          },
-          "projectId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
+            "enum": [
+              "pending",
+              "organized"
+            ]
           },
           "categoryId": {
             "type": "string",
@@ -828,6 +960,8 @@
         "type": "object",
         "properties": {
           "chatIds": {
+            "minItems": 1,
+            "uniqueItems": true,
             "type": "array",
             "items": {
               "type": "string",
@@ -836,7 +970,12 @@
           },
           "rangeMode": {
             "type": "string",
-            "enum": ["sinceLast", "last7Days", "custom", "allHistory"]
+            "enum": [
+              "sinceLast",
+              "last7Days",
+              "custom",
+              "allHistory"
+            ]
           },
           "rangeFrom": {
             "type": "string",
@@ -845,10 +984,6 @@
           "rangeTo": {
             "type": "string",
             "format": "date-time"
-          },
-          "defaultProjectId": {
-            "type": "string",
-            "format": "uuid"
           },
           "defaultCategoryId": {
             "type": "string",
@@ -862,7 +997,10 @@
             }
           }
         },
-        "required": ["rangeMode"]
+        "required": [
+          "chatIds",
+          "rangeMode"
+        ]
       },
       "SyncJobChatResponseDto": {
         "type": "object",
@@ -880,7 +1018,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "running", "succeeded", "failed"]
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed"
+            ]
           },
           "messageCount": {
             "type": "number"
@@ -963,7 +1106,12 @@
           },
           "rangeMode": {
             "type": "string",
-            "enum": ["sinceLast", "last7Days", "custom", "allHistory"]
+            "enum": [
+              "sinceLast",
+              "last7Days",
+              "custom",
+              "allHistory"
+            ]
           },
           "rangeFrom": {
             "type": "string",
@@ -973,11 +1121,6 @@
           "rangeTo": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "defaultProjectId": {
-            "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "defaultCategoryId": {
@@ -1041,7 +1184,6 @@
           "rangeMode",
           "rangeFrom",
           "rangeTo",
-          "defaultProjectId",
           "defaultCategoryId",
           "defaultTagIds",
           "messageCount",
@@ -1069,7 +1211,10 @@
             "$ref": "#/components/schemas/PaginationMetaResponseDto"
           }
         },
-        "required": ["items", "pagination"]
+        "required": [
+          "items",
+          "pagination"
+        ]
       },
       "TaxonomyItemResponseDto": {
         "type": "object",
@@ -1085,7 +1230,11 @@
             "type": "number"
           }
         },
-        "required": ["id", "name", "referenceCount"]
+        "required": [
+          "id",
+          "name",
+          "referenceCount"
+        ]
       },
       "TaxonomyNameDto": {
         "type": "object",
@@ -1094,7 +1243,9 @@
             "type": "string"
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "TelegramAccountProfileResponseDto": {
         "type": "object",
@@ -1116,7 +1267,12 @@
             "nullable": true
           }
         },
-        "required": ["displayName", "phoneNumber", "telegramUserId", "username"]
+        "required": [
+          "displayName",
+          "phoneNumber",
+          "telegramUserId",
+          "username"
+        ]
       },
       "TelegramAccountResponseDto": {
         "type": "object",
@@ -1126,7 +1282,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["authorized", "unauthorized"]
+            "enum": [
+              "authorized",
+              "unauthorized"
+            ]
           },
           "account": {
             "nullable": true,
@@ -1138,7 +1297,11 @@
             ]
           }
         },
-        "required": ["configured", "status", "account"]
+        "required": [
+          "configured",
+          "status",
+          "account"
+        ]
       },
       "SendCodeDto": {
         "type": "object",
@@ -1148,7 +1311,9 @@
             "example": "+8613800000000"
           }
         },
-        "required": ["phoneNumber"]
+        "required": [
+          "phoneNumber"
+        ]
       },
       "SendCodeResponseDto": {
         "type": "object",
@@ -1159,14 +1324,21 @@
           },
           "delivery": {
             "type": "string",
-            "enum": ["app", "sms"]
+            "enum": [
+              "app",
+              "sms"
+            ]
           },
           "expiresAt": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "required": ["challengeId", "delivery", "expiresAt"]
+        "required": [
+          "challengeId",
+          "delivery",
+          "expiresAt"
+        ]
       },
       "VerifyCodeDto": {
         "type": "object",
@@ -1180,17 +1352,25 @@
             "writeOnly": true
           }
         },
-        "required": ["challengeId", "code"]
+        "required": [
+          "challengeId",
+          "code"
+        ]
       },
       "TelegramAuthResultResponseDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["authorized", "passwordRequired"]
+            "enum": [
+              "authorized",
+              "passwordRequired"
+            ]
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "VerifyPasswordDto": {
         "type": "object",
@@ -1204,7 +1384,10 @@
             "writeOnly": true
           }
         },
-        "required": ["challengeId", "password"]
+        "required": [
+          "challengeId",
+          "password"
+        ]
       },
       "RefreshChatsResponseDto": {
         "type": "object",
@@ -1217,7 +1400,10 @@
             "format": "date-time"
           }
         },
-        "required": ["count", "refreshedAt"]
+        "required": [
+          "count",
+          "refreshedAt"
+        ]
       },
       "TelegramChatResponseDto": {
         "type": "object",
@@ -1231,7 +1417,12 @@
           },
           "type": {
             "type": "string",
-            "enum": ["saved", "private", "group", "channel"]
+            "enum": [
+              "saved",
+              "private",
+              "group",
+              "channel"
+            ]
           },
           "title": {
             "type": "string"
@@ -1239,9 +1430,6 @@
           "username": {
             "type": "string",
             "nullable": true
-          },
-          "isEnabled": {
-            "type": "boolean"
           },
           "isAvailable": {
             "type": "boolean"
@@ -1270,7 +1458,6 @@
           "type",
           "title",
           "username",
-          "isEnabled",
           "isAvailable",
           "lastSyncedMessageId",
           "lastSyncedAt",
@@ -1291,16 +1478,59 @@
             "$ref": "#/components/schemas/PaginationMetaResponseDto"
           }
         },
-        "required": ["items", "pagination"]
+        "required": [
+          "items",
+          "pagination"
+        ]
       },
-      "UpdateChatDto": {
+      "TelegramChatScanOptionResponseDto": {
         "type": "object",
         "properties": {
-          "isEnabled": {
-            "type": "boolean"
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "telegramPeerId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "saved",
+              "private",
+              "group",
+              "channel"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
           }
         },
-        "required": ["isEnabled"]
+        "required": [
+          "id",
+          "telegramPeerId",
+          "type",
+          "title",
+          "username"
+        ]
+      },
+      "TelegramChatScanOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelegramChatScanOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
       }
     }
   }

@@ -1,14 +1,6 @@
 import type { LinkResponseDto } from '@/api/types.gen';
 
-type LinkEnvironment = LinkResponseDto['environment'];
 type OrganizationStatus = LinkResponseDto['status'];
-
-export const environmentLabels: Record<LinkEnvironment, string> = {
-  production: '正式',
-  test: '测试',
-  development: '开发',
-  unknown: '未知',
-};
 
 export const statusLabels: Record<OrganizationStatus, string> = {
   pending: '待整理',

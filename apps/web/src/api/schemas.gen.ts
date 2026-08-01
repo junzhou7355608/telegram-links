@@ -110,14 +110,8 @@ export const WebOverviewResponseDtoSchema = {
         },
       ],
     },
-    projects: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/OverviewCountResponseDto',
-      },
-    },
   },
-  required: ['categories', 'counts', 'latestSync', 'projects'],
+  required: ['categories', 'counts', 'latestSync'],
 } as const;
 
 export const TaxonomyReferenceResponseDtoSchema = {
@@ -200,22 +194,9 @@ export const LinkResponseDtoSchema = {
     domain: {
       type: 'string',
     },
-    environment: {
-      type: 'string',
-      enum: ['production', 'test', 'development', 'unknown'],
-    },
     status: {
       type: 'string',
       enum: ['pending', 'organized'],
-    },
-    project: {
-      nullable: true,
-      type: 'object',
-      allOf: [
-        {
-          $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
-        },
-      ],
     },
     category: {
       nullable: true,
@@ -277,9 +258,7 @@ export const LinkResponseDtoSchema = {
     'title',
     'url',
     'domain',
-    'environment',
     'status',
-    'project',
     'category',
     'tags',
     'purpose',
@@ -399,18 +378,9 @@ export const BatchLinkPatchDtoSchema = {
       type: 'string',
       nullable: true,
     },
-    environment: {
-      type: 'string',
-      enum: ['production', 'test', 'development', 'unknown'],
-    },
     status: {
       type: 'string',
       enum: ['pending', 'organized'],
-    },
-    projectId: {
-      type: 'string',
-      format: 'uuid',
-      nullable: true,
     },
     categoryId: {
       type: 'string',
@@ -488,6 +458,113 @@ export const BatchUpdateLinksResponseDtoSchema = {
   required: ['updatedIds', 'skipped'],
 } as const;
 
+export const BatchArchiveLinksDtoSchema = {
+  type: 'object',
+  properties: {
+    ids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+  },
+  required: ['ids'],
+} as const;
+
+export const AdminLinkResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    url: {
+      type: 'string',
+    },
+    domain: {
+      type: 'string',
+    },
+    status: {
+      type: 'string',
+      enum: ['pending', 'organized'],
+    },
+    category: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+        },
+      ],
+    },
+    tags: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+      },
+    },
+    purpose: {
+      type: 'string',
+      nullable: true,
+    },
+    sourceCount: {
+      type: 'number',
+    },
+    latestSource: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/LinkSourceResponseDto',
+        },
+      ],
+    },
+    sources: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LinkSourceResponseDto',
+      },
+    },
+    firstDiscoveredAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    createdAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    updatedAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    archivedAt: {
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    },
+  },
+  required: [
+    'id',
+    'title',
+    'url',
+    'domain',
+    'status',
+    'category',
+    'tags',
+    'purpose',
+    'sourceCount',
+    'latestSource',
+    'firstDiscoveredAt',
+    'createdAt',
+    'updatedAt',
+    'archivedAt',
+  ],
+} as const;
+
 export const UpdateLinkDtoSchema = {
   type: 'object',
   properties: {
@@ -501,18 +578,9 @@ export const UpdateLinkDtoSchema = {
       type: 'string',
       nullable: true,
     },
-    environment: {
-      type: 'string',
-      enum: ['production', 'test', 'development', 'unknown'],
-    },
     status: {
       type: 'string',
       enum: ['pending', 'organized'],
-    },
-    projectId: {
-      type: 'string',
-      format: 'uuid',
-      nullable: true,
     },
     categoryId: {
       type: 'string',
@@ -533,6 +601,8 @@ export const CreateSyncJobDtoSchema = {
   type: 'object',
   properties: {
     chatIds: {
+      minItems: 1,
+      uniqueItems: true,
       type: 'array',
       items: {
         type: 'string',
@@ -551,10 +621,6 @@ export const CreateSyncJobDtoSchema = {
       type: 'string',
       format: 'date-time',
     },
-    defaultProjectId: {
-      type: 'string',
-      format: 'uuid',
-    },
     defaultCategoryId: {
       type: 'string',
       format: 'uuid',
@@ -567,7 +633,7 @@ export const CreateSyncJobDtoSchema = {
       },
     },
   },
-  required: ['rangeMode'],
+  required: ['chatIds', 'rangeMode'],
 } as const;
 
 export const SyncJobChatResponseDtoSchema = {
@@ -682,11 +748,6 @@ export const SyncJobResponseDtoSchema = {
       format: 'date-time',
       nullable: true,
     },
-    defaultProjectId: {
-      type: 'string',
-      format: 'uuid',
-      nullable: true,
-    },
     defaultCategoryId: {
       type: 'string',
       format: 'uuid',
@@ -748,7 +809,6 @@ export const SyncJobResponseDtoSchema = {
     'rangeMode',
     'rangeFrom',
     'rangeTo',
-    'defaultProjectId',
     'defaultCategoryId',
     'defaultTagIds',
     'messageCount',
@@ -951,9 +1011,6 @@ export const TelegramChatResponseDtoSchema = {
       type: 'string',
       nullable: true,
     },
-    isEnabled: {
-      type: 'boolean',
-    },
     isAvailable: {
       type: 'boolean',
     },
@@ -981,7 +1038,6 @@ export const TelegramChatResponseDtoSchema = {
     'type',
     'title',
     'username',
-    'isEnabled',
     'isAvailable',
     'lastSyncedMessageId',
     'lastSyncedAt',
@@ -1006,14 +1062,42 @@ export const PaginatedTelegramChatsResponseDtoSchema = {
   required: ['items', 'pagination'],
 } as const;
 
-export const UpdateChatDtoSchema = {
+export const TelegramChatScanOptionResponseDtoSchema = {
   type: 'object',
   properties: {
-    isEnabled: {
-      type: 'boolean',
+    id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    telegramPeerId: {
+      type: 'string',
+    },
+    type: {
+      type: 'string',
+      enum: ['saved', 'private', 'group', 'channel'],
+    },
+    title: {
+      type: 'string',
+    },
+    username: {
+      type: 'string',
+      nullable: true,
     },
   },
-  required: ['isEnabled'],
+  required: ['id', 'telegramPeerId', 'type', 'title', 'username'],
+} as const;
+
+export const TelegramChatScanOptionsResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TelegramChatScanOptionResponseDto',
+      },
+    },
+  },
+  required: ['items'],
 } as const;
 
 export const VerifyCodeDtoWritableSchema = {

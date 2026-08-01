@@ -12,9 +12,7 @@ const rawLinks = [
     title: 'Atlas Web 代码仓库',
     url: 'https://github.com/example-org/atlas-web',
     domain: 'github.com',
-    project: 'Atlas',
     purpose: 'Web 主站的 React 源码和发布工作流',
-    environment: 'development',
     status: 'organized',
     category: 'repository',
     tags: ['React', '前端', '主仓库'],
@@ -30,9 +28,7 @@ const rawLinks = [
     title: 'Atlas 正式站',
     url: 'https://atlas.example.com',
     domain: 'atlas.example.com',
-    project: 'Atlas',
     purpose: '客户正在使用的正式环境',
-    environment: 'production',
     status: 'organized',
     category: 'deployment',
     tags: ['线上', '客户可见'],
@@ -47,9 +43,7 @@ const rawLinks = [
     title: 'Atlas 登录改版预览',
     url: 'https://atlas-login-preview.example.com',
     domain: 'atlas-login-preview.example.com',
-    project: 'Atlas',
     purpose: '登录页改版验收地址，本周五前有效',
-    environment: 'test',
     status: 'organized',
     category: 'deployment',
     tags: ['预览', '登录页', '验收'],
@@ -65,9 +59,7 @@ const rawLinks = [
     title: 'Atlas Design System',
     url: 'https://www.figma.com/design/example-atlas-system',
     domain: 'figma.com',
-    project: 'Atlas',
     purpose: '组件规范、页面模板与交互说明',
-    environment: 'unknown',
     status: 'organized',
     category: 'design',
     tags: ['Figma', '组件库', '规范'],
@@ -82,9 +74,7 @@ const rawLinks = [
     title: 'Northstar API 文档',
     url: 'https://api-test.example.com/docs',
     domain: 'api-test.example.com',
-    project: 'Northstar',
     purpose: '测试环境 OpenAPI 文档',
-    environment: 'test',
     status: 'organized',
     category: 'documentation',
     tags: ['OpenAPI', '后端', '联调'],
@@ -100,9 +90,7 @@ const rawLinks = [
     title: 'Northstar Sentry',
     url: 'https://sentry.io/organizations/example-org/issues/',
     domain: 'sentry.io',
-    project: 'Northstar',
     purpose: '正式环境前后端错误追踪',
-    environment: 'production',
     status: 'organized',
     category: 'monitoring',
     tags: ['Sentry', '告警', '错误追踪'],
@@ -117,9 +105,7 @@ const rawLinks = [
     title: '登录回跳参数丢失',
     url: 'https://linear.app/example/issue/NOR-248',
     domain: 'linear.app',
-    project: 'Northstar',
     purpose: '记录 OAuth 登录后的 redirect 问题',
-    environment: 'production',
     status: 'organized',
     category: 'issue',
     tags: ['OAuth', '高优先级'],
@@ -134,9 +120,7 @@ const rawLinks = [
     title: 'Northstar 服务监控',
     url: 'https://grafana.example.com/d/northstar-overview',
     domain: 'grafana.example.com',
-    project: 'Northstar',
     purpose: 'API 延迟、错误率与队列积压看板',
-    environment: 'production',
     status: 'organized',
     category: 'monitoring',
     tags: ['Grafana', '性能', '服务端'],
@@ -151,9 +135,7 @@ const rawLinks = [
     title: 'Orbit Storybook',
     url: 'https://storybook-orbit.example.com',
     domain: 'storybook-orbit.example.com',
-    project: 'Orbit',
     purpose: '开发中的公共 UI 组件预览',
-    environment: 'development',
     status: 'organized',
     category: 'documentation',
     tags: ['Storybook', 'UI', '组件'],
@@ -168,9 +150,7 @@ const rawLinks = [
     title: 'Orbit UI Package',
     url: 'https://www.npmjs.com/package/@example/orbit-ui',
     domain: 'npmjs.com',
-    project: 'Orbit',
     purpose: '团队 UI 包的版本与安装说明',
-    environment: 'production',
     status: 'organized',
     category: 'documentation',
     tags: ['npm', 'UI', '包管理'],
@@ -185,9 +165,7 @@ const rawLinks = [
     title: 'Billing Webhook 说明',
     url: 'https://docs.example.com/billing/webhooks',
     domain: 'docs.example.com',
-    project: 'Billing',
     purpose: '支付回调事件和验签规则',
-    environment: 'production',
     status: 'organized',
     category: 'documentation',
     tags: ['支付', 'Webhook', '后端'],
@@ -202,9 +180,7 @@ const rawLinks = [
     title: 'Billing Postman Collection',
     url: 'https://www.postman.com/example/workspace/billing',
     domain: 'postman.com',
-    project: 'Billing',
     purpose: '支付接口的测试请求集合',
-    environment: 'test',
     status: 'organized',
     category: 'documentation',
     tags: ['Postman', '接口测试'],
@@ -219,9 +195,7 @@ const rawLinks = [
     title: '域名与缓存控制台',
     url: 'https://dash.cloudflare.com/example-account',
     domain: 'dash.cloudflare.com',
-    project: null,
     purpose: null,
-    environment: 'unknown',
     status: 'pending',
     category: 'other',
     tags: ['Cloudflare'],
@@ -236,9 +210,7 @@ const rawLinks = [
     title: '移动端发布检查清单',
     url: 'https://www.notion.so/example/mobile-release-checklist',
     domain: 'notion.so',
-    project: null,
     purpose: '发布前需要逐项确认的检查表',
-    environment: 'unknown',
     status: 'pending',
     category: 'documentation',
     tags: ['发布', 'Checklist'],
@@ -253,9 +225,7 @@ const rawLinks = [
     title: '数据库控制台',
     url: 'https://app.supabase.com/project/example',
     domain: 'app.supabase.com',
-    project: null,
     purpose: null,
-    environment: 'test',
     status: 'pending',
     category: 'monitoring',
     tags: ['数据库', 'Supabase'],
@@ -270,9 +240,7 @@ const rawLinks = [
     title: '',
     url: 'https://github.com/example-org/example/pull/42',
     domain: 'github.com',
-    project: null,
     purpose: null,
-    environment: 'development',
     status: 'pending',
     category: 'issue',
     tags: ['GitHub', 'Code Review'],
@@ -305,12 +273,6 @@ function taxonomyReference(
   return { id: demoUuid(id), name };
 }
 
-const projectReferences = [
-  taxonomyReference(101, 'Atlas'),
-  taxonomyReference(102, 'Northstar'),
-  taxonomyReference(103, 'Orbit'),
-  taxonomyReference(104, 'Billing'),
-];
 const categoryReferences = Object.entries(categoryNames).map(
   ([key, name], index) => ({ key, ...taxonomyReference(201 + index, name) }),
 );
@@ -356,11 +318,7 @@ const detailedLinks: LinkResponseDto[] = rawLinks.map((link, index) => {
     title: link.title,
     url: link.url,
     domain: link.domain,
-    environment: link.environment,
     status: link.status,
-    project: link.project
-      ? findReference(projectReferences, link.project)
-      : null,
     category: category ? { id: category.id, name: category.name } : null,
     tags: link.tags.map((tag) => findReference(tagReferences, tag)),
     purpose: link.purpose,
@@ -382,14 +340,10 @@ export const linkDetailFixtures = new Map(
   detailedLinks.map((link) => [link.id, link] as const),
 );
 
-function countByReference(
-  reference: 'project' | 'category',
-): Array<{ count: number; id: string; name: string }> {
-  const references =
-    reference === 'project' ? projectReferences : categoryReferences;
-  return references
+function categoryCounts(): Array<{ count: number; id: string; name: string }> {
+  return categoryReferences
     .map(({ id, name }) => ({
-      count: detailedLinks.filter((link) => link[reference]?.id === id).length,
+      count: detailedLinks.filter((link) => link.category?.id === id).length,
       id,
       name,
     }))
@@ -404,7 +358,7 @@ export const demoRecentSince = new Date(
 ).toISOString();
 
 export const webOverviewFixture: WebOverviewResponseDto = {
-  categories: countByReference('category'),
+  categories: categoryCounts(),
   counts: {
     pending: detailedLinks.filter((link) => link.status === 'pending').length,
     recent: detailedLinks.filter(
@@ -416,7 +370,6 @@ export const webOverviewFixture: WebOverviewResponseDto = {
     finishedAt: '2026-07-30T09:42:00+08:00',
     status: 'succeeded',
   },
-  projects: countByReference('project'),
 };
 
 export function createPaginatedLinksFixture(

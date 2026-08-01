@@ -13,7 +13,7 @@ export function WorkspaceHeader({ overview }: WorkspaceHeaderProps) {
       <div className="ml-1 min-w-0 flex-1">
         <p className="truncate text-sm font-medium">个人链接库</p>
         <p className="hidden truncate text-xs text-muted-foreground sm:block">
-          从 Telegram 聊天中收集的项目链接
+          从 Telegram 聊天中收集的常用链接
         </p>
       </div>
       <div className="hidden items-center gap-2 sm:flex">

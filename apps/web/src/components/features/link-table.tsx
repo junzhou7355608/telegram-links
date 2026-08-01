@@ -1,9 +1,5 @@
 import type { LinkResponseDto } from '@/api/types.gen';
-import {
-  CategoryBadge,
-  EnvironmentBadge,
-  StatusBadge,
-} from '@/components/features/link-badges';
+import { StatusBadge } from '@/components/features/link-badges';
 import { displayLinkTitle, formatCapturedAt } from '@/lib/link-display';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -34,9 +30,8 @@ export function LinkTable({ links, onSelect, onCopy }: LinkTableProps) {
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[38%] pl-4">链接</TableHead>
-            <TableHead>项目</TableHead>
-            <TableHead>环境</TableHead>
-            <TableHead className="hidden xl:table-cell">分类与标签</TableHead>
+            <TableHead>分类</TableHead>
+            <TableHead className="hidden xl:table-cell">标签</TableHead>
             <TableHead className="hidden 2xl:table-cell">来源</TableHead>
             <TableHead>状态</TableHead>
             <TableHead className="w-24 pr-4 text-right">操作</TableHead>
@@ -77,18 +72,14 @@ export function LinkTable({ links, onSelect, onCopy }: LinkTableProps) {
                 </TableCell>
                 <TableCell className="max-w-48 whitespace-normal">
                   <p className="truncate text-sm">
-                    {link.project?.name ?? '未分配项目'}
+                    {link.category?.name ?? '未分类'}
                   </p>
                   <p className="mt-0.5 hidden truncate text-xs text-muted-foreground xl:block">
                     {link.purpose ?? '尚未补充用途'}
                   </p>
                 </TableCell>
-                <TableCell>
-                  <EnvironmentBadge environment={link.environment} />
-                </TableCell>
                 <TableCell className="hidden max-w-52 whitespace-normal xl:table-cell">
                   <div className="flex flex-wrap gap-1">
-                    <CategoryBadge category={link.category} />
                     {link.tags.slice(0, 2).map((tag) => (
                       <span
                         key={tag.id}

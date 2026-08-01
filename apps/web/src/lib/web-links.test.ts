@@ -12,21 +12,18 @@ describe('filterAndSortLinks', () => {
     expect(result.map((link) => link.domain)).toContain('linear.app');
   });
 
-  it('filters pending links and unassigned projects', () => {
+  it('filters pending links', () => {
     const result = filterAndSortLinks(
       linkFixtures,
       {
         page: 1,
-        projectId: 'unassigned',
         sort: 'newest',
         view: 'pending',
       },
       demoRecentSince,
     );
     expect(result.length).toBeGreaterThan(0);
-    expect(
-      result.every((link) => !link.project && link.status === 'pending'),
-    ).toBe(true);
+    expect(result.every((link) => link.status === 'pending')).toBe(true);
   });
 
   it('sorts oldest links first', () => {

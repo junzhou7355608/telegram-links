@@ -45,6 +45,13 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
     : null;
 
   useEffect(() => {
+    const parameters = new URLSearchParams(window.location.search);
+    if (parameters.has('projectId') || parameters.has('environment')) {
+      onSearchChange((previous) => ({ ...previous }), { replace: true });
+    }
+  }, [onSearchChange]);
+
+  useEffect(() => {
     if (page.pagination.page !== search.page) {
       onSearchChange(
         (previous) => ({ ...previous, page: page.pagination.page }),
@@ -94,7 +101,7 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
                 链接
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                快速确认链接属于哪个项目、用于什么环境，以及它来自哪条消息。
+                快速确认链接的分类、用途、标签，以及它来自哪条消息。
               </p>
             </div>
             <Badge variant="outline" className="shrink-0">
@@ -164,7 +171,7 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
               </span>
               <h2 className="mt-4 font-medium">没有找到匹配的链接</h2>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                尝试修改搜索词，或者重置项目、环境和整理状态筛选。
+                尝试修改搜索词，或者重置分类和整理状态筛选。
               </p>
               <Button variant="outline" className="mt-4" onClick={resetFilters}>
                 重置筛选

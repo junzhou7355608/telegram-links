@@ -19,7 +19,6 @@ import {
 import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Clock3,
-  FolderClosed,
   Inbox,
   Layers3,
   LibraryBig,
@@ -36,11 +35,6 @@ export function AppSidebar({ overview }: AppSidebarProps) {
     select: (state) => state.location,
   });
   const search = webLinksSearchSchema.parse(location.search);
-  const unassignedCount = Math.max(
-    0,
-    overview.counts.total -
-      overview.projects.reduce((sum, project) => sum + project.count, 0),
-  );
   const viewItems = [
     {
       value: 'all' as const,
@@ -97,7 +91,6 @@ export function AppSidebar({ overview }: AppSidebarProps) {
                       isActive={
                         location.pathname === '/links' &&
                         search.view === item.value &&
-                        !search.projectId &&
                         !search.categoryId
                       }
                       render={
@@ -119,60 +112,6 @@ export function AppSidebar({ overview }: AppSidebarProps) {
                   </SidebarMenuItem>
                 );
               })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>项目</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {overview.projects.map((project) => (
-                <SidebarMenuItem key={project.id}>
-                  <SidebarMenuButton
-                    tooltip={project.name}
-                    isActive={search.projectId === project.id}
-                    render={
-                      <Link
-                        to="/links"
-                        search={{
-                          page: 1,
-                          projectId: project.id,
-                          sort: 'newest',
-                          view: 'all',
-                        }}
-                        onClick={closeMobile}
-                      />
-                    }
-                  >
-                    <FolderClosed />
-                    <span>{project.name}</span>
-                  </SidebarMenuButton>
-                  <SidebarMenuBadge>{project.count}</SidebarMenuBadge>
-                </SidebarMenuItem>
-              ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="未分配项目"
-                  isActive={search.projectId === 'unassigned'}
-                  render={
-                    <Link
-                      to="/links"
-                      search={{
-                        page: 1,
-                        projectId: 'unassigned',
-                        sort: 'newest',
-                        view: 'all',
-                      }}
-                      onClick={closeMobile}
-                    />
-                  }
-                >
-                  <Inbox />
-                  <span>未分配项目</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>{unassignedCount}</SidebarMenuBadge>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

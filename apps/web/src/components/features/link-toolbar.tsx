@@ -1,6 +1,6 @@
 import type { WebOverviewResponseDto } from '@/api/types.gen';
 import type { WebLinksSearch } from '@/lib/web-search';
-import { environmentLabels, statusLabels } from '@/lib/link-display';
+import { statusLabels } from '@/lib/link-display';
 import { Button } from '@repo/ui/components/button';
 import {
   InputGroup,
@@ -54,26 +54,11 @@ function FilterFields({
   onSearchChange,
   stacked = false,
 }: FilterFieldsProps) {
-  const projectItems = [
-    { label: '全部项目', value: 'all' },
-    ...overview.projects.map((project) => ({
-      label: project.name,
-      value: project.id,
-    })),
-    { label: '未分配项目', value: 'unassigned' },
-  ];
   const categoryItems = [
     { label: '全部分类', value: 'all' },
     ...overview.categories.map((category) => ({
       label: category.name,
       value: category.id,
-    })),
-  ];
-  const environmentItems = [
-    { label: '全部环境', value: 'all' },
-    ...Object.entries(environmentLabels).map(([value, label]) => ({
-      label,
-      value,
     })),
   ];
   const statusItems = [
@@ -111,37 +96,6 @@ function FilterFields({
       <label className={fieldClassName}>
         {stacked ? (
           <span className="text-xs font-medium text-muted-foreground">
-            项目
-          </span>
-        ) : null}
-        <Select
-          items={projectItems}
-          value={search.projectId ?? 'all'}
-          onValueChange={(value) =>
-            updateFilter(
-              'projectId',
-              value && value !== 'all' ? value : undefined,
-            )
-          }
-        >
-          <SelectTrigger aria-label="按项目筛选" className={triggerClassName}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="start">
-            <SelectGroup>
-              {projectItems.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </label>
-
-      <label className={fieldClassName}>
-        {stacked ? (
-          <span className="text-xs font-medium text-muted-foreground">
             分类
           </span>
         ) : null}
@@ -161,39 +115,6 @@ function FilterFields({
           <SelectContent align="start">
             <SelectGroup>
               {categoryItems.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </label>
-
-      <label className={fieldClassName}>
-        {stacked ? (
-          <span className="text-xs font-medium text-muted-foreground">
-            环境
-          </span>
-        ) : null}
-        <Select
-          items={environmentItems}
-          value={search.environment ?? 'all'}
-          onValueChange={(value) =>
-            updateFilter(
-              'environment',
-              value && value !== 'all'
-                ? (value as WebLinksSearch['environment'])
-                : undefined,
-            )
-          }
-        >
-          <SelectTrigger aria-label="按环境筛选" className={triggerClassName}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="start">
-            <SelectGroup>
-              {environmentItems.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
@@ -279,9 +200,7 @@ export function LinkToolbar({
 }: LinkToolbarProps) {
   const activeFilterCount = [
     search.view !== 'all',
-    search.projectId,
     search.categoryId,
-    search.environment,
     search.status,
     search.sort !== 'newest',
   ].filter(Boolean).length;
@@ -295,7 +214,7 @@ export function LinkToolbar({
           </InputGroupAddon>
           <InputGroupInput
             aria-label="搜索链接"
-            placeholder="搜索标题、URL、项目、用途、标签或来源"
+            placeholder="搜索标题、URL、用途、分类、标签或来源"
             value={search.q ?? ''}
             onChange={(event) => {
               const value = event.target.value;
@@ -345,7 +264,7 @@ export function LinkToolbar({
             <SheetHeader>
               <SheetTitle>筛选链接</SheetTitle>
               <SheetDescription>
-                按项目、分类、环境和整理状态缩小查找范围。
+                按分类和整理状态缩小查找范围。
               </SheetDescription>
             </SheetHeader>
             <div className="px-4">
@@ -392,7 +311,7 @@ export function LinkToolbar({
         <span>
           {activeFilterCount > 0
             ? `已启用 ${activeFilterCount} 个筛选条件`
-            : '全部项目与分类'}
+            : '全部分类'}
         </span>
         {activeFilterCount > 0 || search.q ? (
           <Button variant="ghost" size="xs" onClick={onReset}>

@@ -10,7 +10,6 @@ describe('Web links search schema', () => {
     expect(
       webLinksSearchSchema.parse({
         categoryId: 'invalid',
-        environment: 'staging',
         linkId: 'invalid',
         page: '-2',
         sort: 'invalid',
@@ -20,12 +19,12 @@ describe('Web links search schema', () => {
   });
 
   it('trims search text and accepts UUID filters', () => {
-    const projectId = '00000000-0000-4000-8000-000000000101';
+    const categoryId = '00000000-0000-4000-8000-000000000201';
     expect(
-      webLinksSearchSchema.parse({ page: '3', projectId, q: '  Atlas  ' }),
+      webLinksSearchSchema.parse({ categoryId, page: '3', q: '  Atlas  ' }),
     ).toEqual({
+      categoryId,
       page: 3,
-      projectId,
       q: 'Atlas',
       sort: 'newest',
       view: 'all',

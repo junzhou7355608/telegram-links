@@ -39,7 +39,6 @@ export const zWebOverviewResponseDto = z.object({
   categories: z.array(zOverviewCountResponseDto),
   counts: zWebOverviewCountsResponseDto,
   latestSync: zWebLatestSyncResponseDto.nullable(),
-  projects: z.array(zOverviewCountResponseDto),
 });
 
 export const zTaxonomyReferenceResponseDto = z.object({
@@ -65,9 +64,7 @@ export const zLinkResponseDto = z.object({
   title: z.string(),
   url: z.string(),
   domain: z.string(),
-  environment: z.enum(['production', 'test', 'development', 'unknown']),
   status: z.enum(['pending', 'organized']),
-  project: zTaxonomyReferenceResponseDto.nullable(),
   category: zTaxonomyReferenceResponseDto.nullable(),
   tags: z.array(zTaxonomyReferenceResponseDto),
   purpose: z.string().nullable(),
@@ -118,11 +115,7 @@ export const zBatchLinkPatchDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
   purpose: z.string().nullish(),
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional(),
   status: z.enum(['pending', 'organized']).optional(),
-  projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
   addTagIds: z.array(z.uuid()).optional(),
@@ -144,25 +137,42 @@ export const zBatchUpdateLinksResponseDto = z.object({
   skipped: z.array(zBatchSkippedLinkResponseDto),
 });
 
+export const zBatchArchiveLinksDto = z.object({
+  ids: z.array(z.uuid()),
+});
+
+export const zAdminLinkResponseDto = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  url: z.string(),
+  domain: z.string(),
+  status: z.enum(['pending', 'organized']),
+  category: zTaxonomyReferenceResponseDto.nullable(),
+  tags: z.array(zTaxonomyReferenceResponseDto),
+  purpose: z.string().nullable(),
+  sourceCount: z.number(),
+  latestSource: zLinkSourceResponseDto.nullable(),
+  sources: z.array(zLinkSourceResponseDto).optional(),
+  firstDiscoveredAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  archivedAt: z.iso.datetime().nullable(),
+});
+
 export const zUpdateLinkDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
   purpose: z.string().nullish(),
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional(),
   status: z.enum(['pending', 'organized']).optional(),
-  projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
 });
 
 export const zCreateSyncJobDto = z.object({
-  chatIds: z.array(z.uuid()).optional(),
+  chatIds: z.array(z.uuid()).min(1),
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
   rangeFrom: z.iso.datetime().optional(),
   rangeTo: z.iso.datetime().optional(),
-  defaultProjectId: z.uuid().optional(),
   defaultCategoryId: z.uuid().optional(),
   defaultTagIds: z.array(z.uuid()).optional(),
 });
@@ -199,7 +209,6 @@ export const zSyncJobResponseDto = z.object({
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
   rangeFrom: z.iso.datetime().nullable(),
   rangeTo: z.iso.datetime().nullable(),
-  defaultProjectId: z.uuid().nullable(),
   defaultCategoryId: z.uuid().nullable(),
   defaultTagIds: z.array(z.uuid()),
   messageCount: z.number(),
@@ -275,7 +284,6 @@ export const zTelegramChatResponseDto = z.object({
   type: z.enum(['saved', 'private', 'group', 'channel']),
   title: z.string(),
   username: z.string().nullable(),
-  isEnabled: z.boolean(),
   isAvailable: z.boolean(),
   lastSyncedMessageId: z.number().nullable(),
   lastSyncedAt: z.iso.datetime().nullable(),
@@ -288,8 +296,16 @@ export const zPaginatedTelegramChatsResponseDto = z.object({
   pagination: zPaginationMetaResponseDto,
 });
 
-export const zUpdateChatDto = z.object({
-  isEnabled: z.boolean(),
+export const zTelegramChatScanOptionResponseDto = z.object({
+  id: z.uuid(),
+  telegramPeerId: z.string(),
+  type: z.enum(['saved', 'private', 'group', 'channel']),
+  title: z.string(),
+  username: z.string().nullable(),
+});
+
+export const zTelegramChatScanOptionsResponseDto = z.object({
+  items: z.array(zTelegramChatScanOptionResponseDto),
 });
 
 export const zVerifyCodeDtoWritable = z.object({
@@ -309,11 +325,7 @@ export const zWebApiControllerListQuery = z.object({
   pageSize: z.number().gte(1).lte(100).optional().default(8),
   q: z.string().optional(),
   view: z.enum(['all', 'recent', 'pending']).optional(),
-  projectId: z.string().optional(),
   categoryId: z.uuid().optional(),
-  environment: z
-    .enum(['production', 'test', 'development', 'unknown'])
-    .optional(),
   status: z.enum(['pending', 'organized']).optional(),
   sort: z.enum(['newest', 'oldest', 'title']).optional(),
   sourceChatId: z.uuid().optional(),
