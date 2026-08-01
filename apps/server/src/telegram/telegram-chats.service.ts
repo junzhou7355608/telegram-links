@@ -98,10 +98,7 @@ export class TelegramChatsService {
       this.prisma.telegramChat.count({ where }),
     ]);
     return {
-      items: items.map((chat) => ({
-        ...chat,
-        type: chat.type.toLowerCase(),
-      })),
+      items: items.map((chat) => this.toResponse(chat)),
       pagination: paginationMeta(input.page, input.pageSize, total),
     };
   }
@@ -118,6 +115,34 @@ export class TelegramChatsService {
       data: { isEnabled },
       where: { id },
     });
-    return { ...chat, type: chat.type.toLowerCase() };
+    return this.toResponse(chat);
+  }
+
+  private toResponse(chat: {
+    createdAt: Date;
+    id: string;
+    isAvailable: boolean;
+    isEnabled: boolean;
+    lastSyncedAt: Date | null;
+    lastSyncedMessageId: number | null;
+    telegramPeerId: string;
+    title: string;
+    type: TelegramChatType;
+    updatedAt: Date;
+    username: string | null;
+  }) {
+    return {
+      createdAt: chat.createdAt.toISOString(),
+      id: chat.id,
+      isAvailable: chat.isAvailable,
+      isEnabled: chat.isEnabled,
+      lastSyncedAt: chat.lastSyncedAt?.toISOString() ?? null,
+      lastSyncedMessageId: chat.lastSyncedMessageId,
+      telegramPeerId: chat.telegramPeerId,
+      title: chat.title,
+      type: chat.type.toLowerCase(),
+      updatedAt: chat.updatedAt.toISOString(),
+      username: chat.username,
+    };
   }
 }

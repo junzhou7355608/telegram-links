@@ -9,6 +9,7 @@ import {
 import {
   LinkEnvironment,
   OrganizationStatus,
+  Prisma,
   SyncJobChatStatus,
   SyncJobStatus,
   SyncRangeMode,
@@ -24,6 +25,14 @@ import {
   type MessageRange,
   TelegramGateway,
 } from '../telegram/telegram.gateway';
+
+const syncJobInclude = {
+  chats: true,
+} satisfies Prisma.SyncJobInclude;
+
+type SyncJobRecord = Prisma.SyncJobGetPayload<{
+  include: typeof syncJobInclude;
+}>;
 
 export type SyncRangeValue =
   | 'sinceLast'
@@ -131,6 +140,7 @@ export class SyncJobsService implements OnModuleInit {
           rangeMode: toRangeMode(input.rangeMode),
           rangeTo: input.rangeTo,
         },
+        include: syncJobInclude,
       });
       queueMicrotask(() => void this.run(job.id));
       return this.toResponse(job);
@@ -142,7 +152,7 @@ export class SyncJobsService implements OnModuleInit {
   async list(page: number, pageSize: number) {
     const [items, total] = await Promise.all([
       this.prisma.syncJob.findMany({
-        include: { chats: true },
+        include: syncJobInclude,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -157,7 +167,7 @@ export class SyncJobsService implements OnModuleInit {
 
   async findOne(id: string) {
     const job = await this.prisma.syncJob.findUnique({
-      include: { chats: true },
+      include: syncJobInclude,
       where: { id },
     });
     if (!job) {
@@ -494,40 +504,41 @@ export class SyncJobsService implements OnModuleInit {
       : [];
   }
 
-  private toResponse(job: {
-    chats?: Array<Record<string, unknown>>;
-    createdAt: Date;
-    defaultCategoryId: string | null;
-    defaultProjectId: string | null;
-    defaultTagIds: unknown;
-    duplicateCount: number;
-    error: string | null;
-    finishedAt: Date | null;
-    foundCount: number;
-    id: string;
-    messageCount: number;
-    newCount: number;
-    progress: number;
-    rangeFrom: Date | null;
-    rangeMode: string;
-    rangeTo: Date | null;
-    stage: string | null;
-    startedAt: Date | null;
-    status: string;
-    updatedAt: Date;
-  }) {
+  private toResponse(job: SyncJobRecord) {
     return {
-      ...job,
-      rangeMode: enumValue(job.rangeMode),
-      stage: enumValue(job.stage),
-      status: enumValue(job.status),
-      chats: job.chats?.map((chat) => ({
-        ...chat,
-        status:
-          typeof chat['status'] === 'string'
-            ? enumValue(chat['status'])
-            : chat['status'],
+      chats: job.chats.map((chat) => ({
+        chatId: chat.chatId,
+        chatTitle: chat.chatTitle,
+        duplicateCount: chat.duplicateCount,
+        error: chat.error,
+        finishedAt: chat.finishedAt?.toISOString() ?? null,
+        foundCount: chat.foundCount,
+        id: chat.id,
+        maxProcessedMessageId: chat.maxProcessedMessageId,
+        messageCount: chat.messageCount,
+        newCount: chat.newCount,
+        startedAt: chat.startedAt?.toISOString() ?? null,
+        status: enumValue(chat.status),
       })),
+      createdAt: job.createdAt.toISOString(),
+      defaultCategoryId: job.defaultCategoryId,
+      defaultProjectId: job.defaultProjectId,
+      defaultTagIds: this.defaultTagIds(job.defaultTagIds),
+      duplicateCount: job.duplicateCount,
+      error: job.error,
+      finishedAt: job.finishedAt?.toISOString() ?? null,
+      foundCount: job.foundCount,
+      id: job.id,
+      messageCount: job.messageCount,
+      newCount: job.newCount,
+      progress: job.progress,
+      rangeFrom: job.rangeFrom?.toISOString() ?? null,
+      rangeMode: enumValue(job.rangeMode),
+      rangeTo: job.rangeTo?.toISOString() ?? null,
+      stage: enumValue(job.stage),
+      startedAt: job.startedAt?.toISOString() ?? null,
+      status: enumValue(job.status),
+      updatedAt: job.updatedAt.toISOString(),
     };
   }
 

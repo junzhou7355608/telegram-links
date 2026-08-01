@@ -55,12 +55,21 @@ export class TaxonomyService {
     const normalizedName = normalizeName(name);
     await this.ensureUnique(kind, normalizedName);
     if (kind === 'projects') {
-      return this.prisma.project.create({ data: { name, normalizedName } });
+      const item = await this.prisma.project.create({
+        data: { name, normalizedName },
+      });
+      return { id: item.id, name: item.name, referenceCount: 0 };
     }
     if (kind === 'categories') {
-      return this.prisma.category.create({ data: { name, normalizedName } });
+      const item = await this.prisma.category.create({
+        data: { name, normalizedName },
+      });
+      return { id: item.id, name: item.name, referenceCount: 0 };
     }
-    return this.prisma.tag.create({ data: { name, normalizedName } });
+    const item = await this.prisma.tag.create({
+      data: { name, normalizedName },
+    });
+    return { id: item.id, name: item.name, referenceCount: 0 };
   }
 
   async rename(kind: TaxonomyKind, id: string, value: string) {
@@ -69,21 +78,36 @@ export class TaxonomyService {
     const normalizedName = normalizeName(name);
     await this.ensureUnique(kind, normalizedName, id);
     if (kind === 'projects') {
-      return this.prisma.project.update({
+      const item = await this.prisma.project.update({
         data: { name, normalizedName },
         where: { id },
       });
+      return {
+        id: item.id,
+        name: item.name,
+        referenceCount: await this.referenceCount(kind, id),
+      };
     }
     if (kind === 'categories') {
-      return this.prisma.category.update({
+      const item = await this.prisma.category.update({
         data: { name, normalizedName },
         where: { id },
       });
+      return {
+        id: item.id,
+        name: item.name,
+        referenceCount: await this.referenceCount(kind, id),
+      };
     }
-    return this.prisma.tag.update({
+    const item = await this.prisma.tag.update({
       data: { name, normalizedName },
       where: { id },
     });
+    return {
+      id: item.id,
+      name: item.name,
+      referenceCount: await this.referenceCount(kind, id),
+    };
   }
 
   async remove(kind: TaxonomyKind, id: string): Promise<void> {
@@ -156,5 +180,15 @@ export class TaxonomyService {
         message: '未找到基础资料条目。',
       });
     }
+  }
+
+  private referenceCount(kind: TaxonomyKind, id: string): Promise<number> {
+    if (kind === 'projects') {
+      return this.prisma.link.count({ where: { projectId: id } });
+    }
+    if (kind === 'categories') {
+      return this.prisma.link.count({ where: { categoryId: id } });
+    }
+    return this.prisma.linkTag.count({ where: { tagId: id } });
   }
 }

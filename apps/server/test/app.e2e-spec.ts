@@ -198,8 +198,20 @@ describe('Server API (e2e)', () => {
         .get('/docs-json')
         .expect(200);
       const document = responseBody<{
+        components: { schemas: Record<string, unknown> };
         info: { title: string; version: string };
-        paths: Record<string, unknown>;
+        paths: Record<
+          string,
+          Record<
+            string,
+            {
+              responses?: Record<
+                string,
+                { content?: Record<string, { schema?: unknown }> }
+              >;
+            }
+          >
+        >;
       }>(response);
       expect(document.info).toMatchObject({
         title: 'Telegram Links API',
@@ -208,6 +220,26 @@ describe('Server API (e2e)', () => {
       expect(document.paths).toHaveProperty('/api/web/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/telegram/auth/code');
+      for (const [path, pathItem] of Object.entries(document.paths)) {
+        for (const [method, operation] of Object.entries(pathItem)) {
+          if (!operation.responses) {
+            continue;
+          }
+          for (const [status, documentedResponse] of Object.entries(
+            operation.responses,
+          )) {
+            if (!status.startsWith('2') || status === '204') {
+              continue;
+            }
+            expect(
+              documentedResponse.content?.['application/json']?.schema,
+            ).toBeDefined();
+          }
+          expect(method).not.toBe('trace');
+          expect(path).toMatch(/^\/api\/(?:web|admin)\/v1/u);
+        }
+      }
+      expect(document.components.schemas).toHaveProperty('ApiErrorResponseDto');
       await request(app.getHttpServer()).get('/docs').expect(200);
       await request(app.getHttpServer()).get('/').expect(404);
     } finally {
@@ -224,6 +256,7 @@ describe('Server API (e2e)', () => {
         .send({ phoneNumber: '+8613800000000' })
         .expect(202);
       const code = responseBody<{ challengeId: string }>(codeResponse);
+      expect(codeResponse.body).not.toHaveProperty('phoneCodeHash');
       await request(server)
         .post('/api/admin/v1/telegram/auth/code/verify')
         .send({ challengeId: code.challengeId, code: '12345' })
@@ -254,6 +287,10 @@ describe('Server API (e2e)', () => {
         .post('/api/admin/v1/taxonomy/projects')
         .send({ name: 'Atlas' })
         .expect(201);
+      expect(project.body).toEqual(
+        expect.objectContaining({ name: 'Atlas', referenceCount: 0 }),
+      );
+      expect(project.body).not.toHaveProperty('normalizedName');
       const category = await request(server)
         .post('/api/admin/v1/taxonomy/categories')
         .send({ name: '代码仓库' })
@@ -343,7 +380,16 @@ describe('Server API (e2e)', () => {
       await request(server)
         .patch(`/api/admin/v1/links/${otherLink.id}`)
         .send({ url: 'https://github.com/example/project/' })
-        .expect(409);
+        .expect(409)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({
+              code: 'LINK_URL_CONFLICT',
+              path: `/api/admin/v1/links/${otherLink.id}`,
+              statusCode: 409,
+            }),
+          );
+        });
 
       await request(server).delete(`/api/admin/v1/links/${linkId}`).expect(204);
       await request(server).get(`/api/web/v1/links/${linkId}`).expect(404);
@@ -364,10 +410,26 @@ describe('Server API (e2e)', () => {
       const server = app.getHttpServer();
       await request(server).get('/docs').expect(404);
       await request(server).get('/docs-json').expect(404);
-      await request(server)
+      const validationResponse = await request(server)
         .post('/api/admin/v1/telegram/auth/code')
         .send({ phoneNumber: '+8613800000000', unexpected: true })
         .expect(400);
+      const validationBody = responseBody<{
+        code: string;
+        details: unknown;
+        message: string;
+        path: string;
+        statusCode: number;
+        timestamp: unknown;
+      }>(validationResponse);
+      expect(validationBody).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: '请求参数校验失败。',
+        path: '/api/admin/v1/telegram/auth/code',
+        statusCode: 400,
+      });
+      expect(Array.isArray(validationBody.details)).toBe(true);
+      expect(typeof validationBody.timestamp).toBe('string');
       const prisma = app.get(PrismaService);
       const pendingJob = await prisma.syncJob.create({
         data: { defaultTagIds: [], rangeMode: SyncRangeMode.ALL_HISTORY },

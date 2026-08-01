@@ -5,15 +5,12 @@ import {
   ArrayUnique,
   IsArray,
   IsBoolean,
-  IsDate,
   IsEnum,
-  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
-  MinLength,
   ValidateNested,
 } from 'class-validator';
 import {
@@ -21,129 +18,13 @@ import {
   LinkSortValue,
   LinkViewValue,
   OrganizationStatusValue,
-} from '../common/link-values';
-import { PaginationQueryDto } from '../common/pagination.dto';
-import type { CreateSyncJobInput } from '../sync/sync-jobs.service';
-
-export enum ChatTypeValue {
-  Saved = 'saved',
-  Private = 'private',
-  Group = 'group',
-  Channel = 'channel',
-}
-
-export enum SyncRangeDtoValue {
-  SinceLast = 'sinceLast',
-  Last7Days = 'last7Days',
-  Custom = 'custom',
-  AllHistory = 'allHistory',
-}
-
-export class SendCodeDto {
-  @ApiProperty({ example: '+8613800000000' })
-  @IsString()
-  @Matches(/^\+[1-9]\d{5,14}$/u)
-  phoneNumber!: string;
-}
-
-export class VerifyCodeDto {
-  @ApiProperty({ format: 'uuid' })
-  @IsUUID()
-  challengeId!: string;
-
-  @ApiProperty({ writeOnly: true })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(32)
-  code!: string;
-}
-
-export class VerifyPasswordDto {
-  @ApiProperty({ format: 'uuid' })
-  @IsUUID()
-  challengeId!: string;
-
-  @ApiProperty({ writeOnly: true })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(256)
-  password!: string;
-}
-
-export class ChatQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  query?: string;
-
-  @ApiPropertyOptional({ enum: ChatTypeValue })
-  @IsOptional()
-  @IsEnum(ChatTypeValue)
-  type?: ChatTypeValue;
-}
-
-export class UpdateChatDto {
-  @ApiProperty()
-  @IsBoolean()
-  isEnabled!: boolean;
-}
-
-export class CreateSyncJobDto {
-  @ApiPropertyOptional({ format: 'uuid', isArray: true })
-  @IsOptional()
-  @IsArray()
-  @ArrayUnique()
-  @IsUUID('4', { each: true })
-  chatIds?: string[];
-
-  @ApiProperty({ enum: SyncRangeDtoValue })
-  @IsEnum(SyncRangeDtoValue)
-  rangeMode!: SyncRangeDtoValue;
-
-  @ApiPropertyOptional({ format: 'date-time' })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  rangeFrom?: Date;
-
-  @ApiPropertyOptional({ format: 'date-time' })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  rangeTo?: Date;
-
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
-  @IsUUID()
-  defaultProjectId?: string;
-
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
-  @IsUUID()
-  defaultCategoryId?: string;
-
-  @ApiPropertyOptional({ format: 'uuid', isArray: true })
-  @IsOptional()
-  @IsArray()
-  @ArrayUnique()
-  @IsUUID('4', { each: true })
-  defaultTagIds?: string[];
-
-  toInput(): CreateSyncJobInput {
-    return {
-      chatIds: this.chatIds,
-      defaultCategoryId: this.defaultCategoryId,
-      defaultProjectId: this.defaultProjectId,
-      defaultTagIds: this.defaultTagIds,
-      rangeFrom: this.rangeFrom,
-      rangeMode: this.rangeMode,
-      rangeTo: this.rangeTo,
-    };
-  }
-}
+} from '../../common/link-values';
+import { PaginationQueryDto } from '../../common/pagination.dto';
+import { SyncJobStatusDtoValue } from './sync.dto';
+import { PaginationMetaResponseDto } from './pagination.dto';
 
 export class LinkQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: String })
   @IsOptional()
   @IsString()
   q?: string;
@@ -153,7 +34,7 @@ export class LinkQueryDto extends PaginationQueryDto {
   @IsEnum(LinkViewValue)
   view?: LinkViewValue;
 
-  @ApiPropertyOptional({ description: 'UUID 或 unassigned' })
+  @ApiPropertyOptional({ description: 'UUID 或 unassigned', type: String })
   @IsOptional()
   @IsString()
   @Matches(
@@ -161,7 +42,7 @@ export class LinkQueryDto extends PaginationQueryDto {
   )
   projectId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid', type: String })
   @IsOptional()
   @IsUUID()
   categoryId?: string;
@@ -181,12 +62,12 @@ export class LinkQueryDto extends PaginationQueryDto {
   @IsEnum(LinkSortValue)
   sort?: LinkSortValue;
 
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid', type: String })
   @IsOptional()
   @IsUUID()
   sourceChatId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', isArray: true })
+  @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
   @IsOptional()
   @Transform(({ value }) => {
     const input: unknown = value;
@@ -201,7 +82,7 @@ export class LinkQueryDto extends PaginationQueryDto {
   @IsUUID('4', { each: true })
   tagIds?: string[];
 
-  @ApiPropertyOptional({ default: false })
+  @ApiPropertyOptional({ default: false, type: Boolean })
   @IsOptional()
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
@@ -209,19 +90,19 @@ export class LinkQueryDto extends PaginationQueryDto {
 }
 
 export class UpdateLinkDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: String })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   title?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: String })
   @IsOptional()
   @IsString()
   @MaxLength(4096)
   url?: string;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ nullable: true, type: String })
   @IsOptional()
   @IsString()
   @MaxLength(4000)
@@ -237,31 +118,31 @@ export class UpdateLinkDto {
   @IsEnum(OrganizationStatusValue)
   status?: OrganizationStatusValue;
 
-  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
   @IsOptional()
   @IsUUID()
   projectId?: string | null;
 
-  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
   @IsOptional()
   @IsUUID()
   categoryId?: string | null;
 
-  @ApiPropertyOptional({ format: 'uuid', isArray: true })
+  @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
   @IsUUID('4', { each: true })
   tagIds?: string[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: Boolean })
   @IsOptional()
   @IsBoolean()
   isFavorite?: boolean;
 }
 
 export class BatchLinkPatchDto extends UpdateLinkDto {
-  @ApiPropertyOptional({ format: 'uuid', isArray: true })
+  @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
@@ -270,7 +151,7 @@ export class BatchLinkPatchDto extends UpdateLinkDto {
 }
 
 export class BatchUpdateLinksDto {
-  @ApiProperty({ format: 'uuid', isArray: true })
+  @ApiProperty({ format: 'uuid', isArray: true, type: String })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayUnique()
@@ -283,79 +164,57 @@ export class BatchUpdateLinksDto {
   patch!: BatchLinkPatchDto;
 }
 
-export class TaxonomyNameDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name!: string;
-}
-
-export class PaginationMetaResponseDto {
-  @ApiProperty()
-  page!: number;
-
-  @ApiProperty()
-  pageSize!: number;
-
-  @ApiProperty()
-  total!: number;
-
-  @ApiProperty()
-  totalPages!: number;
-}
-
 export class TaxonomyReferenceResponseDto {
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ format: 'uuid', type: String })
   id!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   name!: string;
 }
 
 export class LinkSourceResponseDto {
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ format: 'uuid', type: String })
   id!: string;
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ format: 'uuid', type: String })
   chatId!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   chatName!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: Number })
   messageId!: number;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   messagePreview!: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: String })
   messageText?: string;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ nullable: true, type: String })
   messageUrl?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   rawUrl!: string;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ nullable: true, type: String })
   senderName?: string | null;
 
-  @ApiProperty({ format: 'date-time' })
+  @ApiProperty({ format: 'date-time', type: String })
   capturedAt!: string;
 }
 
 export class LinkResponseDto {
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({ format: 'uuid', type: String })
   id!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   title!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   url!: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   domain!: string;
 
   @ApiProperty({ enum: LinkEnvironmentValue })
@@ -373,13 +232,13 @@ export class LinkResponseDto {
   @ApiProperty({ isArray: true, type: TaxonomyReferenceResponseDto })
   tags!: TaxonomyReferenceResponseDto[];
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ nullable: true, type: String })
   purpose!: string | null;
 
-  @ApiProperty()
+  @ApiProperty({ type: Boolean })
   isFavorite!: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ type: Number })
   sourceCount!: number;
 
   @ApiProperty({ nullable: true, type: LinkSourceResponseDto })
@@ -388,16 +247,16 @@ export class LinkResponseDto {
   @ApiPropertyOptional({ isArray: true, type: LinkSourceResponseDto })
   sources?: LinkSourceResponseDto[];
 
-  @ApiProperty({ format: 'date-time' })
+  @ApiProperty({ format: 'date-time', type: String })
   firstDiscoveredAt!: string;
 
-  @ApiProperty({ format: 'date-time' })
+  @ApiProperty({ format: 'date-time', type: String })
   createdAt!: string;
 
-  @ApiProperty({ format: 'date-time' })
+  @ApiProperty({ format: 'date-time', type: String })
   updatedAt!: string;
 
-  @ApiProperty({ format: 'date-time', nullable: true })
+  @ApiProperty({ format: 'date-time', nullable: true, type: String })
   archivedAt!: string | null;
 }
 
@@ -407,4 +266,101 @@ export class PaginatedLinksResponseDto {
 
   @ApiProperty({ type: PaginationMetaResponseDto })
   pagination!: PaginationMetaResponseDto;
+}
+
+export class LatestSyncSummaryResponseDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  id!: string;
+
+  @ApiProperty({ enum: SyncJobStatusDtoValue })
+  status!: SyncJobStatusDtoValue;
+
+  @ApiProperty({ format: 'date-time', nullable: true, type: String })
+  finishedAt!: string | null;
+
+  @ApiProperty({ format: 'date-time', type: String })
+  createdAt!: string;
+}
+
+export class AdminOverviewResponseDto {
+  @ApiProperty({ type: Number })
+  archived!: number;
+
+  @ApiProperty({ nullable: true, type: LatestSyncSummaryResponseDto })
+  latestSync!: LatestSyncSummaryResponseDto | null;
+
+  @ApiProperty({ type: Number })
+  pending!: number;
+
+  @ApiProperty({ type: Number })
+  todayAdded!: number;
+
+  @ApiProperty({ type: Number })
+  total!: number;
+}
+
+export class BatchSkippedLinkResponseDto {
+  @ApiProperty({ format: 'uuid', type: String })
+  id!: string;
+
+  @ApiProperty({ type: String })
+  code!: string;
+
+  @ApiProperty({ type: String })
+  message!: string;
+}
+
+export class BatchUpdateLinksResponseDto {
+  @ApiProperty({ format: 'uuid', isArray: true, type: String })
+  updatedIds!: string[];
+
+  @ApiProperty({ isArray: true, type: BatchSkippedLinkResponseDto })
+  skipped!: BatchSkippedLinkResponseDto[];
+}
+
+export class OverviewCountResponseDto {
+  @ApiProperty({ type: Number })
+  count!: number;
+
+  @ApiProperty({ format: 'uuid', type: String })
+  id!: string;
+
+  @ApiProperty({ type: String })
+  name!: string;
+}
+
+export class WebOverviewCountsResponseDto {
+  @ApiProperty({ type: Number })
+  favorites!: number;
+
+  @ApiProperty({ type: Number })
+  pending!: number;
+
+  @ApiProperty({ type: Number })
+  recent!: number;
+
+  @ApiProperty({ type: Number })
+  total!: number;
+}
+
+export class WebLatestSyncResponseDto {
+  @ApiProperty({ format: 'date-time', nullable: true, type: String })
+  finishedAt!: string | null;
+
+  @ApiProperty({ enum: SyncJobStatusDtoValue })
+  status!: SyncJobStatusDtoValue;
+}
+
+export class WebOverviewResponseDto {
+  @ApiProperty({ isArray: true, type: OverviewCountResponseDto })
+  categories!: OverviewCountResponseDto[];
+
+  @ApiProperty({ type: WebOverviewCountsResponseDto })
+  counts!: WebOverviewCountsResponseDto;
+
+  @ApiProperty({ nullable: true, type: WebLatestSyncResponseDto })
+  latestSync!: WebLatestSyncResponseDto | null;
+
+  @ApiProperty({ isArray: true, type: OverviewCountResponseDto })
+  projects!: OverviewCountResponseDto[];
 }

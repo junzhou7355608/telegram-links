@@ -1,19 +1,22 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { LinksService } from '../links/links.service';
+import { ApiCommonErrorResponses } from './dto/error.dto';
 import {
   LinkQueryDto,
   LinkResponseDto,
   PaginatedLinksResponseDto,
-} from './api.dto';
+  WebOverviewResponseDto,
+} from './dto/link.dto';
 
 @ApiTags('Web - Links')
+@ApiCommonErrorResponses()
 @Controller('web/v1')
 export class WebApiController {
   constructor(private readonly links: LinksService) {}
 
   @Get('overview')
-  @ApiOkResponse({ description: 'Web 链接工作台概览。' })
+  @ApiOkResponse({ type: WebOverviewResponseDto })
   overview() {
     return this.links.webOverview();
   }

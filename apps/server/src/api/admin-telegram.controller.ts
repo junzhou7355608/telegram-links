@@ -18,15 +18,23 @@ import {
 } from '@nestjs/swagger';
 import { TelegramAuthService } from '../telegram/telegram-auth.service';
 import { TelegramChatsService } from '../telegram/telegram-chats.service';
+import { ApiTelegramErrorResponses } from './dto/error.dto';
 import {
   ChatQueryDto,
+  PaginatedTelegramChatsResponseDto,
+  RefreshChatsResponseDto,
   SendCodeDto,
+  SendCodeResponseDto,
+  TelegramAccountResponseDto,
+  TelegramAuthResultResponseDto,
+  TelegramChatResponseDto,
   UpdateChatDto,
   VerifyCodeDto,
   VerifyPasswordDto,
-} from './api.dto';
+} from './dto/telegram.dto';
 
 @ApiTags('Admin - Telegram')
+@ApiTelegramErrorResponses()
 @Controller('admin/v1/telegram')
 export class AdminTelegramController {
   constructor(
@@ -35,28 +43,28 @@ export class AdminTelegramController {
   ) {}
 
   @Get('account')
-  @ApiOkResponse({ description: 'Telegram 配置与授权状态。' })
+  @ApiOkResponse({ type: TelegramAccountResponseDto })
   account() {
     return this.auth.getAccountStatus();
   }
 
   @Post('auth/code')
   @HttpCode(202)
-  @ApiAcceptedResponse({ description: '验证码已请求。' })
+  @ApiAcceptedResponse({ type: SendCodeResponseDto })
   sendCode(@Body() body: SendCodeDto) {
     return this.auth.sendCode(body.phoneNumber);
   }
 
   @Post('auth/code/verify')
   @HttpCode(200)
-  @ApiOkResponse({ description: '验证码验证结果。' })
+  @ApiOkResponse({ type: TelegramAuthResultResponseDto })
   verifyCode(@Body() body: VerifyCodeDto) {
     return this.auth.verifyCode(body.challengeId, body.code);
   }
 
   @Post('auth/password/verify')
   @HttpCode(200)
-  @ApiOkResponse({ description: '2FA 验证结果。' })
+  @ApiOkResponse({ type: TelegramAuthResultResponseDto })
   verifyPassword(@Body() body: VerifyPasswordDto) {
     return this.auth.verifyPassword(body.challengeId, body.password);
   }
@@ -70,19 +78,19 @@ export class AdminTelegramController {
 
   @Post('chats/refresh')
   @HttpCode(200)
-  @ApiOkResponse({ description: 'Telegram 聊天列表已刷新。' })
+  @ApiOkResponse({ type: RefreshChatsResponseDto })
   refreshChats() {
     return this.chats.refresh();
   }
 
   @Get('chats')
-  @ApiOkResponse({ description: 'Telegram 聊天列表。' })
+  @ApiOkResponse({ type: PaginatedTelegramChatsResponseDto })
   listChats(@Query() query: ChatQueryDto) {
     return this.chats.list(query);
   }
 
   @Patch('chats/:id')
-  @ApiOkResponse({ description: '聊天同步开关已更新。' })
+  @ApiOkResponse({ type: TelegramChatResponseDto })
   updateChat(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() body: UpdateChatDto,

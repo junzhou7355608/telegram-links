@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -29,6 +30,12 @@ const linkInclude = {
 } satisfies Prisma.LinkInclude;
 
 type LinkRecord = Prisma.LinkGetPayload<{ include: typeof linkInclude }>;
+
+function enumValue(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/_([a-z])/gu, (_, letter: string) => letter.toUpperCase());
+}
 
 export interface LinkListInput {
   categoryId?: string;
@@ -144,8 +151,8 @@ export class LinksService {
       counts: { favorites, pending, recent, total },
       latestSync: latestJob
         ? {
-            finishedAt: latestJob.finishedAt,
-            status: latestJob.status.toLowerCase(),
+            finishedAt: latestJob.finishedAt?.toISOString() ?? null,
+            status: enumValue(latestJob.status),
           }
         : null,
       projects: projects.map((project) => ({
@@ -188,7 +195,12 @@ export class LinksService {
     return {
       archived,
       latestSync: latestJob
-        ? { ...latestJob, status: latestJob.status.toLowerCase() }
+        ? {
+            createdAt: latestJob.createdAt.toISOString(),
+            finishedAt: latestJob.finishedAt?.toISOString() ?? null,
+            id: latestJob.id,
+            status: enumValue(latestJob.status),
+          }
         : null,
       pending,
       todayAdded,
@@ -272,7 +284,7 @@ export class LinksService {
       });
     }
     const updatedIds: string[] = [];
-    const skipped: { id: string; reason: string }[] = [];
+    const skipped: { code: string; id: string; message: string }[] = [];
     for (const id of [...new Set(ids)]) {
       try {
         const { addTagIds, ...patch } = input;
@@ -291,10 +303,11 @@ export class LinksService {
         await this.update(id, patch);
         updatedIds.push(id);
       } catch (error) {
-        if (error instanceof BadRequestException) {
-          skipped.push({ id, reason: error.message });
-        } else if (error instanceof NotFoundException) {
-          skipped.push({ id, reason: '未找到链接。' });
+        if (
+          error instanceof BadRequestException ||
+          error instanceof NotFoundException
+        ) {
+          skipped.push({ id, ...this.exceptionDetails(error) });
         } else {
           throw error;
         }
@@ -405,7 +418,7 @@ export class LinksService {
           right.message.sentAt.getTime() - left.message.sentAt.getTime(),
       )
       .map((source) => ({
-        capturedAt: source.message.sentAt,
+        capturedAt: source.message.sentAt.toISOString(),
         chatId: source.message.chatId,
         chatName: source.message.chat.title,
         id: source.id,
@@ -417,14 +430,14 @@ export class LinksService {
         senderName: source.message.senderName,
       }));
     return {
-      archivedAt: link.archivedAt,
+      archivedAt: link.archivedAt?.toISOString() ?? null,
       category: link.category
         ? { id: link.category.id, name: link.category.name }
         : null,
-      createdAt: link.createdAt,
+      createdAt: link.createdAt.toISOString(),
       domain: link.domain,
       environment: fromLinkEnvironment(link.environment),
-      firstDiscoveredAt: link.firstDiscoveredAt,
+      firstDiscoveredAt: link.firstDiscoveredAt.toISOString(),
       id: link.id,
       isFavorite: link.isFavorite,
       latestSource: sources[0] ?? null,
@@ -441,7 +454,7 @@ export class LinksService {
           left.name.localeCompare(right.name, 'zh-CN'),
         ),
       title: link.title,
-      updatedAt: link.updatedAt,
+      updatedAt: link.updatedAt.toISOString(),
       url: link.url,
     };
   }
@@ -502,5 +515,22 @@ export class LinksService {
         message: '未找到链接。',
       });
     }
+  }
+
+  private exceptionDetails(error: HttpException): {
+    code: string;
+    message: string;
+  } {
+    const response: unknown = error.getResponse();
+    if (typeof response === 'object' && response !== null) {
+      const value = response as { code?: unknown; message?: unknown };
+      return {
+        code:
+          typeof value.code === 'string' ? value.code : 'LINK_UPDATE_FAILED',
+        message:
+          typeof value.message === 'string' ? value.message : error.message,
+      };
+    }
+    return { code: 'LINK_UPDATE_FAILED', message: error.message };
   }
 }

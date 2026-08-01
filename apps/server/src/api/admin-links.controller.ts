@@ -13,20 +13,24 @@ import {
 import { ApiNoContentResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { LinksService } from '../links/links.service';
 import {
+  AdminOverviewResponseDto,
+  BatchUpdateLinksResponseDto,
   BatchUpdateLinksDto,
   LinkQueryDto,
   LinkResponseDto,
   PaginatedLinksResponseDto,
   UpdateLinkDto,
-} from './api.dto';
+} from './dto/link.dto';
+import { ApiCommonErrorResponses } from './dto/error.dto';
 
 @ApiTags('Admin - Links')
+@ApiCommonErrorResponses()
 @Controller('admin/v1')
 export class AdminLinksController {
   constructor(private readonly links: LinksService) {}
 
   @Get('overview')
-  @ApiOkResponse({ description: 'Admin 工作台概览。' })
+  @ApiOkResponse({ type: AdminOverviewResponseDto })
   overview() {
     return this.links.adminOverview();
   }
@@ -51,7 +55,7 @@ export class AdminLinksController {
   }
 
   @Patch('links/batch')
-  @ApiOkResponse({ description: '批量整理结果。' })
+  @ApiOkResponse({ type: BatchUpdateLinksResponseDto })
   batch(@Body() body: BatchUpdateLinksDto) {
     return this.links.batchUpdate(body.ids, body.patch);
   }
