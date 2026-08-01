@@ -5,6 +5,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "dev": "pnpm run start:dev",
     "prebuild": "pnpm prisma:generate",
     "build": "nest build",
     "start": "nest start",
