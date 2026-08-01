@@ -1,12 +1,18 @@
-import { adminTelegramControllerListChatsOptions } from '@/api/@tanstack/react-query.gen';
-import type { CreateSyncJobDto } from '@/api/types.gen';
+import { adminTelegramControllerScanOptionsOptions } from '@/api/@tanstack/react-query.gen';
+import type {
+  CreateSyncJobDto,
+  TelegramChatScanOptionResponseDto,
+} from '@/api/types.gen';
 import { TagPicker } from '@/components/features/tag-picker';
 import { useApiErrorToast } from '@/hooks/use-api-error-toast';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTaxonomy } from '@/hooks/use-taxonomy';
 import { getAdminApiError } from '@/lib/api-error';
+import {
+  filterScanChats,
+  resolveScanChatIds,
+  toggleScanChat,
+} from '@/lib/scan-chat-selection';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
-import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import { Checkbox } from '@repo/ui/components/checkbox';
 import {
@@ -27,6 +33,7 @@ import {
   FieldSet,
 } from '@repo/ui/components/field';
 import { Input } from '@repo/ui/components/input';
+import { ScrollArea } from '@repo/ui/components/scroll-area';
 import {
   Select,
   SelectContent,
@@ -34,18 +41,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui/components/select';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import {
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  LoaderCircle,
-  Search,
-} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { AlertTriangle, LoaderCircle, Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface ScanConfiguration {
-  chatIds: string[];
   defaultCategoryId?: string;
   defaultProjectId?: string;
   defaultTagIds: string[];
@@ -64,10 +64,11 @@ interface ScanDialogProps {
 }
 
 const initialConfiguration: ScanConfiguration = {
-  chatIds: [],
   defaultTagIds: [],
   rangeMode: 'sinceLast',
 };
+
+const emptyChatOptions: TelegramChatScanOptionResponseDto[] = [];
 
 const rangeLabels: Record<CreateSyncJobDto['rangeMode'], string> = {
   allHistory: '全部历史消息',
@@ -86,37 +87,30 @@ export function ScanDialog({
 }: ScanDialogProps) {
   const [configuration, setConfiguration] =
     useState<ScanConfiguration>(initialConfiguration);
+  const [chatSelection, setChatSelection] = useState<string[] | null>(null);
   const [error, setError] = useState('');
-  const [chatPage, setChatPage] = useState(1);
   const [chatSearch, setChatSearch] = useState('');
-  const debouncedChatSearch = useDebouncedValue(chatSearch);
   const taxonomyQuery = useTaxonomy();
   const chatsQuery = useQuery({
-    ...adminTelegramControllerListChatsOptions({
-      query: {
-        page: chatPage,
-        pageSize: 8,
-        query: debouncedChatSearch.trim() || undefined,
-      },
-    }),
+    ...adminTelegramControllerScanOptionsOptions(),
     enabled: open && authorized,
-    placeholderData: keepPreviousData,
   });
   useApiErrorToast(chatsQuery.error);
   useApiErrorToast(taxonomyQuery.error);
+  const chats = chatsQuery.data?.items ?? emptyChatOptions;
+  const allChatIds = chats.map((chat) => chat.id);
+  const selectedChatIds = resolveScanChatIds(chats, chatSelection);
+  const selectedChatIdSet = new Set(selectedChatIds);
+  const visibleChats = filterScanChats(chats, chatSearch);
 
   function toggleChat(chatId: string) {
-    setConfiguration((current) => ({
-      ...current,
-      chatIds: current.chatIds.includes(chatId)
-        ? current.chatIds.filter((id) => id !== chatId)
-        : [...current.chatIds, chatId],
-    }));
+    setChatSelection((current) => toggleScanChat(allChatIds, current, chatId));
+    setError('');
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (configuration.chatIds.length === 0) {
+    if (selectedChatIds.length === 0) {
       setError('请至少选择一个可用的来源聊天。');
       return;
     }
@@ -133,7 +127,7 @@ export function ScanDialog({
     setError('');
     try {
       await onSubmit({
-        chatIds: configuration.chatIds,
+        chatIds: selectedChatIds,
         defaultCategoryId: configuration.defaultCategoryId,
         defaultProjectId: configuration.defaultProjectId,
         defaultTagIds: configuration.defaultTagIds,
@@ -146,7 +140,7 @@ export function ScanDialog({
           : undefined,
       });
       setConfiguration(initialConfiguration);
-      setChatPage(1);
+      setChatSelection(null);
       setChatSearch('');
       onOpenChange(false);
     } catch (caught) {
@@ -181,95 +175,87 @@ export function ScanDialog({
             <FieldGroup>
               <FieldSet>
                 <FieldLegend>来源聊天</FieldLegend>
-                <FieldDescription>
-                  已选择 {configuration.chatIds.length} 个聊天，选择会跨页保留。
-                </FieldDescription>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <FieldDescription>
+                    已选择 {selectedChatIds.length} / 共 {chats.length} 个聊天
+                  </FieldDescription>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isPending || chats.length === 0}
+                      onClick={() => {
+                        setChatSelection(null);
+                        setError('');
+                      }}
+                    >
+                      全选
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={isPending || chats.length === 0}
+                      onClick={() => {
+                        setChatSelection([]);
+                        setError('请至少选择一个可用的来源聊天。');
+                      }}
+                    >
+                      清空
+                    </Button>
+                  </div>
+                </div>
                 <div className="relative">
                   <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
                   <Input
                     value={chatSearch}
-                    onChange={(event) => {
-                      setChatSearch(event.target.value);
-                      setChatPage(1);
-                    }}
+                    onChange={(event) => setChatSearch(event.target.value)}
                     className="pl-9"
                     placeholder="搜索聊天名称或用户名"
                     aria-label="搜索扫描来源聊天"
                   />
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {chatsQuery.isPending ? (
-                    <p className="col-span-full py-6 text-center text-sm text-muted-foreground">
-                      正在读取聊天…
-                    </p>
-                  ) : null}
-                  {chatsQuery.data?.items.map((chat) => (
-                    <FieldLabel
-                      key={chat.id}
-                      className={
-                        chat.isAvailable
-                          ? 'cursor-pointer'
-                          : 'cursor-not-allowed opacity-60'
-                      }
-                      htmlFor={`scan-chat-${chat.id}`}
-                    >
-                      <Field orientation="horizontal">
-                        <Checkbox
-                          id={`scan-chat-${chat.id}`}
-                          checked={configuration.chatIds.includes(chat.id)}
-                          disabled={!chat.isAvailable || isPending}
-                          onCheckedChange={() => toggleChat(chat.id)}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{chat.title}</p>
-                          <p className="truncate text-xs font-normal text-muted-foreground">
-                            {chat.username
-                              ? `@${chat.username}`
-                              : chat.telegramPeerId}
-                          </p>
-                        </div>
-                        {!chat.isAvailable ? (
-                          <Badge variant="outline">不可用</Badge>
-                        ) : null}
-                      </Field>
-                    </FieldLabel>
-                  ))}
-                </div>
-                {chatsQuery.data?.items.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    没有匹配的聊天，请先在 Telegram 页面刷新聊天列表。
-                  </p>
-                ) : null}
-                {chatsQuery.data &&
-                chatsQuery.data.pagination.totalPages > 1 ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      disabled={chatPage <= 1}
-                      onClick={() => setChatPage((current) => current - 1)}
-                      aria-label="上一页聊天"
-                    >
-                      <ChevronLeft />
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {chatPage} / {chatsQuery.data.pagination.totalPages}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      disabled={
-                        chatPage >= chatsQuery.data.pagination.totalPages
-                      }
-                      onClick={() => setChatPage((current) => current + 1)}
-                      aria-label="下一页聊天"
-                    >
-                      <ChevronRight />
-                    </Button>
+                <ScrollArea className="h-64 rounded-lg border">
+                  <div className="grid gap-2 p-2 sm:grid-cols-2">
+                    {chatsQuery.isPending ? (
+                      <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                        正在读取聊天…
+                      </p>
+                    ) : null}
+                    {visibleChats.map((chat) => (
+                      <FieldLabel
+                        key={chat.id}
+                        className="cursor-pointer"
+                        htmlFor={`scan-chat-${chat.id}`}
+                      >
+                        <Field orientation="horizontal">
+                          <Checkbox
+                            id={`scan-chat-${chat.id}`}
+                            checked={selectedChatIdSet.has(chat.id)}
+                            disabled={isPending}
+                            onCheckedChange={() => toggleChat(chat.id)}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium">{chat.title}</p>
+                            <p className="truncate text-xs font-normal text-muted-foreground">
+                              {chat.username
+                                ? `@${chat.username}`
+                                : chat.telegramPeerId}
+                            </p>
+                          </div>
+                        </Field>
+                      </FieldLabel>
+                    ))}
+                    {!chatsQuery.isPending && visibleChats.length === 0 ? (
+                      <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                        {chats.length === 0
+                          ? '没有可扫描的聊天，请先在 Telegram 页面刷新聊天列表。'
+                          : '没有匹配的聊天。'}
+                      </p>
+                    ) : null}
                   </div>
-                ) : null}
+                </ScrollArea>
               </FieldSet>
 
               <Field>
@@ -436,7 +422,14 @@ export function ScanDialog({
               >
                 取消
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button
+                type="submit"
+                disabled={
+                  isPending ||
+                  chatsQuery.isPending ||
+                  selectedChatIds.length === 0
+                }
+              >
                 {isPending ? <LoaderCircle className="animate-spin" /> : null}
                 开始扫描
               </Button>

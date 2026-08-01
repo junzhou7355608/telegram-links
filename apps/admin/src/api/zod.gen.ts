@@ -226,7 +226,7 @@ export const zApplyAiSuggestionsDto = z.object({
 });
 
 export const zCreateSyncJobDto = z.object({
-  chatIds: z.array(z.uuid()).optional(),
+  chatIds: z.array(z.uuid()).min(1),
   rangeMode: z.enum(['sinceLast', 'last7Days', 'custom', 'allHistory']),
   rangeFrom: z.iso.datetime().optional(),
   rangeTo: z.iso.datetime().optional(),
@@ -360,7 +360,6 @@ export const zTelegramChatResponseDto = z.object({
   type: z.enum(['saved', 'private', 'group', 'channel']),
   title: z.string(),
   username: z.string().nullable(),
-  isEnabled: z.boolean(),
   isAvailable: z.boolean(),
   lastSyncedMessageId: z.number().nullable(),
   lastSyncedAt: z.iso.datetime().nullable(),
@@ -373,8 +372,16 @@ export const zPaginatedTelegramChatsResponseDto = z.object({
   pagination: zPaginationMetaResponseDto,
 });
 
-export const zUpdateChatDto = z.object({
-  isEnabled: z.boolean(),
+export const zTelegramChatScanOptionResponseDto = z.object({
+  id: z.uuid(),
+  telegramPeerId: z.string(),
+  type: z.enum(['saved', 'private', 'group', 'channel']),
+  title: z.string(),
+  username: z.string().nullable(),
+});
+
+export const zTelegramChatScanOptionsResponseDto = z.object({
+  items: z.array(zTelegramChatScanOptionResponseDto),
 });
 
 export const zVerifyCodeDtoWritable = z.object({
@@ -556,11 +563,5 @@ export const zAdminTelegramControllerListChatsQuery = z.object({
 export const zAdminTelegramControllerListChatsResponse =
   zPaginatedTelegramChatsResponseDto;
 
-export const zAdminTelegramControllerUpdateChatBody = zUpdateChatDto;
-
-export const zAdminTelegramControllerUpdateChatPath = z.object({
-  id: z.string(),
-});
-
-export const zAdminTelegramControllerUpdateChatResponse =
-  zTelegramChatResponseDto;
+export const zAdminTelegramControllerScanOptionsResponse =
+  zTelegramChatScanOptionsResponseDto;

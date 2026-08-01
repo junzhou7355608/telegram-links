@@ -6,6 +6,7 @@ import {
   adminTaxonomyControllerListQueryKey,
   adminTelegramControllerAccountQueryKey,
   adminTelegramControllerListChatsQueryKey,
+  adminTelegramControllerScanOptionsQueryKey,
 } from '@/api/@tanstack/react-query.gen';
 import type {
   AdminLinksControllerListData,
@@ -98,6 +99,9 @@ export async function invalidateTelegram(queryClient: QueryClient) {
     }),
     queryClient.invalidateQueries({
       queryKey: adminTelegramControllerListChatsQueryKey(),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: adminTelegramControllerScanOptionsQueryKey(),
     }),
   ]);
 }

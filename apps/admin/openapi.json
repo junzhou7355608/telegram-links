@@ -2322,36 +2322,17 @@
         "tags": ["Admin - Telegram"]
       }
     },
-    "/api/admin/v1/telegram/chats/{id}": {
-      "patch": {
-        "operationId": "AdminTelegramController_updateChat",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateChatDto"
-              }
-            }
-          }
-        },
+    "/api/admin/v1/telegram/chats/scan-options": {
+      "get": {
+        "operationId": "AdminTelegramController_scanOptions",
+        "parameters": [],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TelegramChatResponseDto"
+                  "$ref": "#/components/schemas/TelegramChatScanOptionsResponseDto"
                 }
               }
             }
@@ -3236,6 +3217,8 @@
         "type": "object",
         "properties": {
           "chatIds": {
+            "minItems": 1,
+            "uniqueItems": true,
             "type": "array",
             "items": {
               "type": "string",
@@ -3270,7 +3253,7 @@
             }
           }
         },
-        "required": ["rangeMode"]
+        "required": ["chatIds", "rangeMode"]
       },
       "SyncJobChatResponseDto": {
         "type": "object",
@@ -3695,9 +3678,6 @@
             "type": "string",
             "nullable": true
           },
-          "isEnabled": {
-            "type": "boolean"
-          },
           "isAvailable": {
             "type": "boolean"
           },
@@ -3725,7 +3705,6 @@
           "type",
           "title",
           "username",
-          "isEnabled",
           "isAvailable",
           "lastSyncedMessageId",
           "lastSyncedAt",
@@ -3748,14 +3727,41 @@
         },
         "required": ["items", "pagination"]
       },
-      "UpdateChatDto": {
+      "TelegramChatScanOptionResponseDto": {
         "type": "object",
         "properties": {
-          "isEnabled": {
-            "type": "boolean"
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "telegramPeerId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["saved", "private", "group", "channel"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
           }
         },
-        "required": ["isEnabled"]
+        "required": ["id", "telegramPeerId", "type", "title", "username"]
+      },
+      "TelegramChatScanOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelegramChatScanOptionResponseDto"
+            }
+          }
+        },
+        "required": ["items"]
       }
     }
   }

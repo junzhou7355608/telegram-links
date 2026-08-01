@@ -34,8 +34,8 @@ import {
   adminTelegramControllerListChats,
   adminTelegramControllerLogOut,
   adminTelegramControllerRefreshChats,
+  adminTelegramControllerScanOptions,
   adminTelegramControllerSendCode,
-  adminTelegramControllerUpdateChat,
   adminTelegramControllerVerifyCode,
   adminTelegramControllerVerifyPassword,
   type Options,
@@ -113,12 +113,12 @@ import type {
   AdminTelegramControllerRefreshChatsData,
   AdminTelegramControllerRefreshChatsError,
   AdminTelegramControllerRefreshChatsResponse,
+  AdminTelegramControllerScanOptionsData,
+  AdminTelegramControllerScanOptionsError,
+  AdminTelegramControllerScanOptionsResponse,
   AdminTelegramControllerSendCodeData,
   AdminTelegramControllerSendCodeError,
   AdminTelegramControllerSendCodeResponse,
-  AdminTelegramControllerUpdateChatData,
-  AdminTelegramControllerUpdateChatError,
-  AdminTelegramControllerUpdateChatResponse,
   AdminTelegramControllerVerifyCodeData,
   AdminTelegramControllerVerifyCodeError,
   AdminTelegramControllerVerifyCodeResponse,
@@ -1000,26 +1000,27 @@ export const adminTelegramControllerListChatsInfiniteOptions = (
     },
   );
 
-export const adminTelegramControllerUpdateChatMutation = (
-  options?: Partial<Options<AdminTelegramControllerUpdateChatData>>,
-): UseMutationOptions<
-  AdminTelegramControllerUpdateChatResponse,
-  AxiosError<AdminTelegramControllerUpdateChatError>,
-  Options<AdminTelegramControllerUpdateChatData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AdminTelegramControllerUpdateChatResponse,
-    AxiosError<AdminTelegramControllerUpdateChatError>,
-    Options<AdminTelegramControllerUpdateChatData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await adminTelegramControllerUpdateChat({
+export const adminTelegramControllerScanOptionsQueryKey = (
+  options?: Options<AdminTelegramControllerScanOptionsData>,
+) => createQueryKey('adminTelegramControllerScanOptions', options);
+
+export const adminTelegramControllerScanOptionsOptions = (
+  options?: Options<AdminTelegramControllerScanOptionsData>,
+) =>
+  queryOptions<
+    AdminTelegramControllerScanOptionsResponse,
+    AxiosError<AdminTelegramControllerScanOptionsError>,
+    AdminTelegramControllerScanOptionsResponse,
+    ReturnType<typeof adminTelegramControllerScanOptionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await adminTelegramControllerScanOptions({
         ...options,
-        ...fnOptions,
+        ...queryKey[0],
+        signal,
         throwOnError: true,
       });
       return data;
     },
-  };
-  return mutationOptions;
-};
+    queryKey: adminTelegramControllerScanOptionsQueryKey(options),
+  });

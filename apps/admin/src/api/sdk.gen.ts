@@ -81,12 +81,12 @@ import type {
   AdminTelegramControllerRefreshChatsData,
   AdminTelegramControllerRefreshChatsErrors,
   AdminTelegramControllerRefreshChatsResponses,
+  AdminTelegramControllerScanOptionsData,
+  AdminTelegramControllerScanOptionsErrors,
+  AdminTelegramControllerScanOptionsResponses,
   AdminTelegramControllerSendCodeData,
   AdminTelegramControllerSendCodeErrors,
   AdminTelegramControllerSendCodeResponses,
-  AdminTelegramControllerUpdateChatData,
-  AdminTelegramControllerUpdateChatErrors,
-  AdminTelegramControllerUpdateChatResponses,
   AdminTelegramControllerVerifyCodeData,
   AdminTelegramControllerVerifyCodeErrors,
   AdminTelegramControllerVerifyCodeResponses,
@@ -119,8 +119,8 @@ import {
   zAdminTelegramControllerListChatsResponse,
   zAdminTelegramControllerLogOutResponse,
   zAdminTelegramControllerRefreshChatsResponse,
+  zAdminTelegramControllerScanOptionsResponse,
   zAdminTelegramControllerSendCodeResponse,
-  zAdminTelegramControllerUpdateChatResponse,
   zAdminTelegramControllerVerifyCodeResponse,
   zAdminTelegramControllerVerifyPasswordResponse,
 } from './zod.gen';
@@ -732,27 +732,23 @@ export const adminTelegramControllerListChats = <
     ...options,
   });
 
-export const adminTelegramControllerUpdateChat = <
+export const adminTelegramControllerScanOptions = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<AdminTelegramControllerUpdateChatData, ThrowOnError>,
+  options?: Options<AdminTelegramControllerScanOptionsData, ThrowOnError>,
 ): RequestResult<
-  AdminTelegramControllerUpdateChatResponses,
-  AdminTelegramControllerUpdateChatErrors,
+  AdminTelegramControllerScanOptionsResponses,
+  AdminTelegramControllerScanOptionsErrors,
   ThrowOnError
 > =>
-  (options.client ?? client).patch<
-    AdminTelegramControllerUpdateChatResponses,
-    AdminTelegramControllerUpdateChatErrors,
+  (options?.client ?? client).get<
+    AdminTelegramControllerScanOptionsResponses,
+    AdminTelegramControllerScanOptionsErrors,
     ThrowOnError
   >({
     responseType: 'json',
     responseValidator: async (data) =>
-      await zAdminTelegramControllerUpdateChatResponse.parseAsync(data),
-    url: '/api/admin/v1/telegram/chats/{id}',
+      await zAdminTelegramControllerScanOptionsResponse.parseAsync(data),
+    url: '/api/admin/v1/telegram/chats/scan-options',
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });

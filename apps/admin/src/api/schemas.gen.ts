@@ -820,6 +820,8 @@ export const CreateSyncJobDtoSchema = {
   type: 'object',
   properties: {
     chatIds: {
+      minItems: 1,
+      uniqueItems: true,
       type: 'array',
       items: {
         type: 'string',
@@ -854,7 +856,7 @@ export const CreateSyncJobDtoSchema = {
       },
     },
   },
-  required: ['rangeMode'],
+  required: ['chatIds', 'rangeMode'],
 } as const;
 
 export const SyncJobChatResponseDtoSchema = {
@@ -1285,9 +1287,6 @@ export const TelegramChatResponseDtoSchema = {
       type: 'string',
       nullable: true,
     },
-    isEnabled: {
-      type: 'boolean',
-    },
     isAvailable: {
       type: 'boolean',
     },
@@ -1315,7 +1314,6 @@ export const TelegramChatResponseDtoSchema = {
     'type',
     'title',
     'username',
-    'isEnabled',
     'isAvailable',
     'lastSyncedMessageId',
     'lastSyncedAt',
@@ -1340,14 +1338,42 @@ export const PaginatedTelegramChatsResponseDtoSchema = {
   required: ['items', 'pagination'],
 } as const;
 
-export const UpdateChatDtoSchema = {
+export const TelegramChatScanOptionResponseDtoSchema = {
   type: 'object',
   properties: {
-    isEnabled: {
-      type: 'boolean',
+    id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    telegramPeerId: {
+      type: 'string',
+    },
+    type: {
+      type: 'string',
+      enum: ['saved', 'private', 'group', 'channel'],
+    },
+    title: {
+      type: 'string',
+    },
+    username: {
+      type: 'string',
+      nullable: true,
     },
   },
-  required: ['isEnabled'],
+  required: ['id', 'telegramPeerId', 'type', 'title', 'username'],
+} as const;
+
+export const TelegramChatScanOptionsResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TelegramChatScanOptionResponseDto',
+      },
+    },
+  },
+  required: ['items'],
 } as const;
 
 export const VerifyCodeDtoWritableSchema = {

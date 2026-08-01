@@ -1,11 +1,9 @@
 import {
   adminTelegramControllerAccountOptions,
-  adminTelegramControllerListChatsQueryKey,
   adminTelegramControllerListChatsOptions,
   adminTelegramControllerLogOutMutation,
   adminTelegramControllerRefreshChatsMutation,
   adminTelegramControllerSendCodeMutation,
-  adminTelegramControllerUpdateChatMutation,
   adminTelegramControllerVerifyCodeMutation,
   adminTelegramControllerVerifyPasswordMutation,
 } from '@/api/@tanstack/react-query.gen';
@@ -41,7 +39,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@repo/ui/components/card';
-import { Checkbox } from '@repo/ui/components/checkbox';
 import { Field, FieldError, FieldLabel } from '@repo/ui/components/field';
 import {
   InputGroup,
@@ -108,7 +105,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [updatingChatId, setUpdatingChatId] = useState<string | null>(null);
   const [searchDraft, setSearchDraft] = useState({
     source: search.query,
     value: search.query ?? '',
@@ -143,9 +139,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
   const logoutMutation = useMutation(adminTelegramControllerLogOutMutation());
   const refreshMutation = useMutation(
     adminTelegramControllerRefreshChatsMutation(),
-  );
-  const updateChatMutation = useMutation(
-    adminTelegramControllerUpdateChatMutation(),
   );
   useApiErrorToast(accountQuery.error);
   useApiErrorToast(chatsQuery.error);
@@ -274,24 +267,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
     }
   }
 
-  async function updateChat(id: string, isEnabled: boolean) {
-    setUpdatingChatId(id);
-    try {
-      await updateChatMutation.mutateAsync({
-        body: { isEnabled },
-        path: { id },
-      });
-      await queryClient.invalidateQueries({
-        queryKey: adminTelegramControllerListChatsQueryKey(),
-      });
-      toast.success(isEnabled ? '已启用扫描来源' : '已停用扫描来源');
-    } catch (error) {
-      toast.error(getAdminApiError(error).message);
-    } finally {
-      setUpdatingChatId(null);
-    }
-  }
-
   return (
     <section aria-labelledby="telegram-heading" className="grid gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -303,7 +278,7 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
             Telegram
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            授权个人账号，并选择允许扫描的聊天来源。
+            授权个人账号并刷新聊天列表；扫描来源在开始扫描时选择。
           </p>
         </div>
         {account?.status === 'authorized' ? (
@@ -530,7 +505,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
               <TableRow>
                 <TableHead>聊天</TableHead>
                 <TableHead className="hidden sm:table-cell">类型</TableHead>
-                <TableHead>扫描</TableHead>
                 <TableHead className="hidden md:table-cell">最近同步</TableHead>
               </TableRow>
             </TableHeader>
@@ -553,26 +527,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
                   <TableCell className="hidden sm:table-cell">
                     {typeLabels[chat.type]}
                   </TableCell>
-                  <TableCell>
-                    <label className="inline-flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={chat.isEnabled}
-                        disabled={
-                          updatingChatId === chat.id ||
-                          (!chat.isAvailable && !chat.isEnabled)
-                        }
-                        onCheckedChange={(checked) =>
-                          void updateChat(chat.id, checked === true)
-                        }
-                        aria-label={`${chat.isEnabled ? '停用' : '启用'} ${chat.title}`}
-                      />
-                      {updatingChatId === chat.id
-                        ? '更新中'
-                        : chat.isEnabled
-                          ? '已启用'
-                          : '未启用'}
-                    </label>
-                  </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {formatDateTime(chat.lastSyncedAt)}
                   </TableCell>
@@ -581,7 +535,7 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
               {chatsQuery.data?.items.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={3}
                     className="h-32 text-center text-muted-foreground"
                   >
                     没有聊天记录。授权后点击“刷新聊天”从 Telegram 获取列表。

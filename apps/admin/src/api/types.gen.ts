@@ -222,7 +222,7 @@ export type ApplyAiSuggestionsDto = {
 };
 
 export type CreateSyncJobDto = {
-  chatIds?: Array<string>;
+  chatIds: Array<string>;
   rangeMode: 'sinceLast' | 'last7Days' | 'custom' | 'allHistory';
   rangeFrom?: string;
   rangeTo?: string;
@@ -353,7 +353,6 @@ export type TelegramChatResponseDto = {
   type: 'saved' | 'private' | 'group' | 'channel';
   title: string;
   username: string | null;
-  isEnabled: boolean;
   isAvailable: boolean;
   lastSyncedMessageId: number | null;
   lastSyncedAt: string | null;
@@ -366,8 +365,16 @@ export type PaginatedTelegramChatsResponseDto = {
   pagination: PaginationMetaResponseDto;
 };
 
-export type UpdateChatDto = {
-  isEnabled: boolean;
+export type TelegramChatScanOptionResponseDto = {
+  id: string;
+  telegramPeerId: string;
+  type: 'saved' | 'private' | 'group' | 'channel';
+  title: string;
+  username: string | null;
+};
+
+export type TelegramChatScanOptionsResponseDto = {
+  items: Array<TelegramChatScanOptionResponseDto>;
 };
 
 export type VerifyCodeDtoWritable = {
@@ -1123,16 +1130,14 @@ export type AdminTelegramControllerListChatsResponses = {
 export type AdminTelegramControllerListChatsResponse =
   AdminTelegramControllerListChatsResponses[keyof AdminTelegramControllerListChatsResponses];
 
-export type AdminTelegramControllerUpdateChatData = {
-  body: UpdateChatDto;
-  path: {
-    id: string;
-  };
+export type AdminTelegramControllerScanOptionsData = {
+  body?: never;
+  path?: never;
   query?: never;
-  url: '/api/admin/v1/telegram/chats/{id}';
+  url: '/api/admin/v1/telegram/chats/scan-options';
 };
 
-export type AdminTelegramControllerUpdateChatErrors = {
+export type AdminTelegramControllerScanOptionsErrors = {
   400: ApiErrorResponseDto;
   401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
@@ -1142,12 +1147,12 @@ export type AdminTelegramControllerUpdateChatErrors = {
   503: ApiErrorResponseDto;
 };
 
-export type AdminTelegramControllerUpdateChatError =
-  AdminTelegramControllerUpdateChatErrors[keyof AdminTelegramControllerUpdateChatErrors];
+export type AdminTelegramControllerScanOptionsError =
+  AdminTelegramControllerScanOptionsErrors[keyof AdminTelegramControllerScanOptionsErrors];
 
-export type AdminTelegramControllerUpdateChatResponses = {
-  200: TelegramChatResponseDto;
+export type AdminTelegramControllerScanOptionsResponses = {
+  200: TelegramChatScanOptionsResponseDto;
 };
 
-export type AdminTelegramControllerUpdateChatResponse =
-  AdminTelegramControllerUpdateChatResponses[keyof AdminTelegramControllerUpdateChatResponses];
+export type AdminTelegramControllerScanOptionsResponse =
+  AdminTelegramControllerScanOptionsResponses[keyof AdminTelegramControllerScanOptionsResponses];
