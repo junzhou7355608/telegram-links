@@ -1,12 +1,6 @@
+import type { LinkResponseDto } from '@/api/types.gen';
+import { environmentLabels, statusLabels } from '@/lib/link-display';
 import { Badge } from '@repo/ui/components/badge';
-import {
-  categoryLabels,
-  environmentLabels,
-  statusLabels,
-  type LinkCategory,
-  type LinkEnvironment,
-  type OrganizationStatus,
-} from '@/data/links';
 
 const environmentVariants = {
   production: 'default',
@@ -15,11 +9,11 @@ const environmentVariants = {
   unknown: 'ghost',
 } as const;
 
-interface EnvironmentBadgeProps {
-  environment: LinkEnvironment;
-}
-
-export function EnvironmentBadge({ environment }: EnvironmentBadgeProps) {
+export function EnvironmentBadge({
+  environment,
+}: {
+  environment: LinkResponseDto['environment'];
+}) {
   return (
     <Badge variant={environmentVariants[environment]}>
       {environmentLabels[environment]}
@@ -27,11 +21,7 @@ export function EnvironmentBadge({ environment }: EnvironmentBadgeProps) {
   );
 }
 
-interface StatusBadgeProps {
-  status: OrganizationStatus;
-}
-
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status }: { status: LinkResponseDto['status'] }) {
   return (
     <Badge variant={status === 'pending' ? 'outline' : 'secondary'}>
       {statusLabels[status]}
@@ -39,10 +29,10 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   );
 }
 
-interface CategoryBadgeProps {
-  category: LinkCategory;
-}
-
-export function CategoryBadge({ category }: CategoryBadgeProps) {
-  return <Badge variant="outline">{categoryLabels[category]}</Badge>;
+export function CategoryBadge({
+  category,
+}: {
+  category: LinkResponseDto['category'];
+}) {
+  return <Badge variant="outline">{category?.name ?? '未分类'}</Badge>;
 }

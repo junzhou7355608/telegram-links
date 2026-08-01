@@ -1,65 +1,12 @@
-export type LinkEnvironment = 'production' | 'test' | 'development' | 'unknown';
+import type {
+  LinkResponseDto,
+  LinkSourceResponseDto,
+  PaginatedLinksResponseDto,
+  TaxonomyReferenceResponseDto,
+  WebOverviewResponseDto,
+} from '@/api/types.gen';
 
-export type OrganizationStatus = 'pending' | 'organized';
-
-export type LinkCategory =
-  | 'repository'
-  | 'deployment'
-  | 'documentation'
-  | 'design'
-  | 'monitoring'
-  | 'issue'
-  | 'other';
-
-export interface TelegramSourceMock {
-  chatName: string;
-  messagePreview: string;
-  capturedAt: string;
-  messageUrl?: string;
-}
-
-export interface TelegramLinkMock {
-  id: string;
-  title: string;
-  url: string;
-  domain: string;
-  project: string | null;
-  purpose: string | null;
-  environment: LinkEnvironment;
-  status: OrganizationStatus;
-  category: LinkCategory;
-  tags: readonly string[];
-  source: TelegramSourceMock;
-  isFavorite: boolean;
-}
-
-export const environmentLabels: Record<LinkEnvironment, string> = {
-  production: '正式',
-  test: '测试',
-  development: '开发',
-  unknown: '未知',
-};
-
-export const statusLabels: Record<OrganizationStatus, string> = {
-  pending: '待整理',
-  organized: '已整理',
-};
-
-export const categoryLabels: Record<LinkCategory, string> = {
-  repository: '代码仓库',
-  deployment: '部署地址',
-  documentation: '文档',
-  design: '设计稿',
-  monitoring: '监控',
-  issue: '工单',
-  other: '其他',
-};
-
-export const linkCategories = Object.keys(
-  categoryLabels,
-) as readonly LinkCategory[];
-
-export const telegramLinks: readonly TelegramLinkMock[] = [
+const rawLinks = [
   {
     id: 'atlas-web-repository',
     title: 'Atlas Web 代码仓库',
@@ -77,7 +24,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       capturedAt: '2026-07-30T09:32:00+08:00',
       messageUrl: 'https://t.me/c/1000000000/114',
     },
-    isFavorite: true,
   },
   {
     id: 'atlas-production',
@@ -95,7 +41,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '正式环境已经切到新域名，后续都用这个地址。',
       capturedAt: '2026-07-30T08:54:00+08:00',
     },
-    isFavorite: true,
   },
   {
     id: 'atlas-preview',
@@ -114,7 +59,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       capturedAt: '2026-07-29T18:16:00+08:00',
       messageUrl: 'https://t.me/c/1000000001/285',
     },
-    isFavorite: false,
   },
   {
     id: 'atlas-figma',
@@ -132,7 +76,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '最新的 design system 在这个文件，旧文件不用了。',
       capturedAt: '2026-07-28T15:40:00+08:00',
     },
-    isFavorite: true,
   },
   {
     id: 'northstar-api-docs',
@@ -151,7 +94,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       capturedAt: '2026-07-28T11:24:00+08:00',
       messageUrl: 'https://t.me/c/1000000002/331',
     },
-    isFavorite: true,
   },
   {
     id: 'northstar-sentry',
@@ -169,7 +111,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '线上报错先来这个项目看，已经按服务拆好了。',
       capturedAt: '2026-07-27T22:08:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'northstar-login-issue',
@@ -187,7 +128,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '这个线上问题先记一下，复现步骤写在 Linear 里。',
       capturedAt: '2026-07-26T16:46:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'northstar-grafana',
@@ -205,7 +145,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '新的 overview dashboard，常用指标都放到第一页了。',
       capturedAt: '2026-07-25T10:12:00+08:00',
     },
-    isFavorite: true,
   },
   {
     id: 'orbit-storybook',
@@ -223,7 +162,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: 'Orbit 的 Storybook 链接，组件状态基本都补齐了。',
       capturedAt: '2026-07-24T19:20:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'orbit-package',
@@ -241,7 +179,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '2.4.0 已经发了，升级说明看 npm 页面。',
       capturedAt: '2026-07-22T14:05:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'billing-webhook-docs',
@@ -259,7 +196,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '回调事件列表在这里，注意重试和幂等那两节。',
       capturedAt: '2026-07-20T09:18:00+08:00',
     },
-    isFavorite: true,
   },
   {
     id: 'billing-postman',
@@ -277,7 +213,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '我把沙箱环境变量也放进 collection 了。',
       capturedAt: '2026-07-18T17:34:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'cloudflare-dashboard',
@@ -295,7 +230,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '这个链接后面整理一下，好像是域名设置。',
       capturedAt: '2026-07-17T21:02:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'mobile-release-checklist',
@@ -313,7 +247,6 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '别人分享的发布 checklist，有空归到对应项目。',
       capturedAt: '2026-07-15T12:30:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'database-console',
@@ -331,11 +264,10 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '测试数据库的入口，具体属于哪个项目忘了。',
       capturedAt: '2026-07-12T20:44:00+08:00',
     },
-    isFavorite: false,
   },
   {
     id: 'unknown-github-pr',
-    title: '需要复查的 Pull Request',
+    title: '',
     url: 'https://github.com/example-org/example/pull/42',
     domain: 'github.com',
     project: null,
@@ -349,26 +281,158 @@ export const telegramLinks: readonly TelegramLinkMock[] = [
       messagePreview: '先存一下这个 PR，晚点确认是哪边的改动。',
       capturedAt: '2026-07-10T16:22:00+08:00',
     },
-    isFavorite: false,
   },
-];
+] as const;
 
-const newestCapturedAt = Math.max(
-  ...telegramLinks.map((link) => Date.parse(link.source.capturedAt)),
-);
-const recentWindow = 7 * 24 * 60 * 60 * 1000;
+const categoryNames = {
+  repository: '代码仓库',
+  deployment: '部署地址',
+  documentation: '文档',
+  design: '设计稿',
+  monitoring: '监控',
+  issue: '工单',
+  other: '其他',
+} as const;
 
-export function isRecentLink(link: TelegramLinkMock) {
-  return newestCapturedAt - Date.parse(link.source.capturedAt) <= recentWindow;
+function demoUuid(sequence: number): string {
+  return `00000000-0000-4000-8000-${String(sequence).padStart(12, '0')}`;
 }
 
-const capturedAtFormatter = new Intl.DateTimeFormat('zh-CN', {
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
+function taxonomyReference(
+  id: number,
+  name: string,
+): TaxonomyReferenceResponseDto {
+  return { id: demoUuid(id), name };
+}
+
+const projectReferences = [
+  taxonomyReference(101, 'Atlas'),
+  taxonomyReference(102, 'Northstar'),
+  taxonomyReference(103, 'Orbit'),
+  taxonomyReference(104, 'Billing'),
+];
+const categoryReferences = Object.entries(categoryNames).map(
+  ([key, name], index) => ({ key, ...taxonomyReference(201 + index, name) }),
+);
+const tagNames = [...new Set(rawLinks.flatMap((link) => link.tags))];
+const tagReferences = tagNames.map((name, index) =>
+  taxonomyReference(301 + index, name),
+);
+const chatNames = [...new Set(rawLinks.map((link) => link.source.chatName))];
+
+function findReference(
+  references: readonly TaxonomyReferenceResponseDto[],
+  name: string,
+): TaxonomyReferenceResponseDto {
+  const reference = references.find((item) => item.name === name);
+  if (!reference) {
+    throw new Error(`Missing demo taxonomy reference: ${name}`);
+  }
+  return reference;
+}
+
+const detailedLinks: LinkResponseDto[] = rawLinks.map((link, index) => {
+  const withoutSource = link.id === 'unknown-github-pr';
+  const source: LinkSourceResponseDto = {
+    id: demoUuid(701 + index),
+    chatId: demoUuid(501 + chatNames.indexOf(link.source.chatName)),
+    chatName: link.source.chatName,
+    messageId: 1000 + index,
+    messagePreview: link.source.messagePreview,
+    messageText: link.source.messagePreview,
+    messageUrl: 'messageUrl' in link.source ? link.source.messageUrl : null,
+    rawUrl: link.url,
+    senderName: index % 3 === 0 ? 'Jun' : null,
+    capturedAt: link.source.capturedAt,
+  };
+  const category =
+    link.id === 'cloudflare-dashboard'
+      ? null
+      : (categoryReferences.find((item) => item.key === link.category) ?? null);
+  const capturedAt = link.source.capturedAt;
+
+  return {
+    id: demoUuid(601 + index),
+    title: link.title,
+    url: link.url,
+    domain: link.domain,
+    environment: link.environment,
+    status: link.status,
+    project: link.project
+      ? findReference(projectReferences, link.project)
+      : null,
+    category: category ? { id: category.id, name: category.name } : null,
+    tags: link.tags.map((tag) => findReference(tagReferences, tag)),
+    purpose: link.purpose,
+    sourceCount: withoutSource ? 0 : 1,
+    latestSource: withoutSource ? null : source,
+    sources: withoutSource ? [] : [source],
+    firstDiscoveredAt: capturedAt,
+    createdAt: capturedAt,
+    updatedAt: capturedAt,
+    archivedAt: null,
+  };
 });
 
-export function formatCapturedAt(capturedAt: string) {
-  return capturedAtFormatter.format(new Date(capturedAt));
+export const linkFixtures: readonly LinkResponseDto[] = detailedLinks.map(
+  (link) => ({ ...link, sources: undefined }),
+);
+
+export const linkDetailFixtures = new Map(
+  detailedLinks.map((link) => [link.id, link] as const),
+);
+
+function countByReference(
+  reference: 'project' | 'category',
+): Array<{ count: number; id: string; name: string }> {
+  const references =
+    reference === 'project' ? projectReferences : categoryReferences;
+  return references
+    .map(({ id, name }) => ({
+      count: detailedLinks.filter((link) => link[reference]?.id === id).length,
+      id,
+      name,
+    }))
+    .filter((item) => item.count > 0);
+}
+
+const newestCreatedAt = Math.max(
+  ...detailedLinks.map((link) => Date.parse(link.createdAt)),
+);
+export const demoRecentSince = new Date(
+  newestCreatedAt - 7 * 24 * 60 * 60 * 1000,
+).toISOString();
+
+export const webOverviewFixture: WebOverviewResponseDto = {
+  categories: countByReference('category'),
+  counts: {
+    pending: detailedLinks.filter((link) => link.status === 'pending').length,
+    recent: detailedLinks.filter(
+      (link) => Date.parse(link.createdAt) >= Date.parse(demoRecentSince),
+    ).length,
+    total: detailedLinks.length,
+  },
+  latestSync: {
+    finishedAt: '2026-07-30T09:42:00+08:00',
+    status: 'succeeded',
+  },
+  projects: countByReference('project'),
+};
+
+export function createPaginatedLinksFixture(
+  items: readonly LinkResponseDto[],
+  page: number,
+  pageSize: number,
+): PaginatedLinksResponseDto {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  return {
+    items: items.slice((safePage - 1) * pageSize, safePage * pageSize),
+    pagination: {
+      page: safePage,
+      pageSize,
+      total: items.length,
+      totalPages,
+    },
+  };
 }

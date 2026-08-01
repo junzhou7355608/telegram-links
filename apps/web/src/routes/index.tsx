@@ -1,7 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
-
-import { LinkWorkspace } from '@/components/features/link-workspace';
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { defaultWebLinksSearch } from '@/lib/web-search';
 
 export const Route = createFileRoute('/')({
-  component: LinkWorkspace,
+  beforeLoad: () => {
+    throw redirect({ to: '/links', search: defaultWebLinksSearch });
+  },
 });

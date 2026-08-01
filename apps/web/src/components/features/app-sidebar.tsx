@@ -1,3 +1,5 @@
+import type { WebOverviewResponseDto } from '@/api/types.gen';
+import { webLinksSearchSchema } from '@/lib/web-search';
 import { Badge } from '@repo/ui/components/badge';
 import {
   Sidebar,
@@ -14,6 +16,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@repo/ui/components/sidebar';
+import { Link, useRouterState } from '@tanstack/react-router';
 import {
   Clock3,
   FolderClosed,
@@ -21,84 +24,48 @@ import {
   Layers3,
   LibraryBig,
   Link2,
-  Star,
 } from 'lucide-react';
-import {
-  categoryLabels,
-  isRecentLink,
-  linkCategories,
-  type LinkCategory,
-  type TelegramLinkMock,
-} from '@/data/links';
-
-export type LinkView = 'all' | 'recent' | 'favorites' | 'pending';
 
 interface AppSidebarProps {
-  links: readonly TelegramLinkMock[];
-  favoriteIds: ReadonlySet<string>;
-  selectedView: LinkView;
-  selectedProject: string;
-  selectedCategory: LinkCategory | 'all';
-  onSelectView: (view: LinkView) => void;
-  onSelectProject: (project: string) => void;
-  onSelectCategory: (category: LinkCategory) => void;
+  overview: WebOverviewResponseDto;
 }
 
-export function AppSidebar({
-  links,
-  favoriteIds,
-  selectedView,
-  selectedProject,
-  selectedCategory,
-  onSelectView,
-  onSelectProject,
-  onSelectCategory,
-}: AppSidebarProps) {
+export function AppSidebar({ overview }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
-  const projects = Array.from(
-    new Set(
-      links
-        .map((link) => link.project)
-        .filter((project): project is string => Boolean(project)),
-    ),
-  ).sort((left, right) => left.localeCompare(right, 'zh-CN'));
-  const pendingCount = links.filter((link) => link.status === 'pending').length;
-  const unassignedCount = links.filter((link) => link.project === null).length;
-  const recentCount = links.filter(isRecentLink).length;
-
+  const location = useRouterState({
+    select: (state) => state.location,
+  });
+  const search = webLinksSearchSchema.parse(location.search);
+  const unassignedCount = Math.max(
+    0,
+    overview.counts.total -
+      overview.projects.reduce((sum, project) => sum + project.count, 0),
+  );
   const viewItems = [
     {
       value: 'all' as const,
       label: '全部链接',
       icon: LibraryBig,
-      count: links.length,
+      count: overview.counts.total,
     },
     {
       value: 'recent' as const,
       label: '最近添加',
       icon: Clock3,
-      count: recentCount,
-    },
-    {
-      value: 'favorites' as const,
-      label: '我的收藏',
-      icon: Star,
-      count: favoriteIds.size,
+      count: overview.counts.recent,
     },
     {
       value: 'pending' as const,
       label: '待整理',
       icon: Inbox,
-      count: pendingCount,
+      count: overview.counts.pending,
     },
   ];
-
-  function finishSelection(action: () => void) {
-    action();
+  const closeMobile = () => {
     if (isMobile) {
       setOpenMobile(false);
     }
-  }
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -123,18 +90,26 @@ export function AppSidebar({
             <SidebarMenu>
               {viewItems.map((item) => {
                 const Icon = item.icon;
-
                 return (
                   <SidebarMenuItem key={item.value}>
                     <SidebarMenuButton
                       tooltip={item.label}
                       isActive={
-                        selectedView === item.value &&
-                        selectedProject === 'all' &&
-                        selectedCategory === 'all'
+                        location.pathname === '/links' &&
+                        search.view === item.value &&
+                        !search.projectId &&
+                        !search.categoryId
                       }
-                      onClick={() =>
-                        finishSelection(() => onSelectView(item.value))
+                      render={
+                        <Link
+                          to="/links"
+                          search={{
+                            page: 1,
+                            sort: 'newest',
+                            view: item.value,
+                          }}
+                          onClick={closeMobile}
+                        />
                       }
                     >
                       <Icon />
@@ -152,33 +127,45 @@ export function AppSidebar({
           <SidebarGroupLabel>项目</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {projects.map((project) => {
-                const count = links.filter(
-                  (link) => link.project === project,
-                ).length;
-
-                return (
-                  <SidebarMenuItem key={project}>
-                    <SidebarMenuButton
-                      tooltip={project}
-                      isActive={selectedProject === project}
-                      onClick={() =>
-                        finishSelection(() => onSelectProject(project))
-                      }
-                    >
-                      <FolderClosed />
-                      <span>{project}</span>
-                    </SidebarMenuButton>
-                    <SidebarMenuBadge>{count}</SidebarMenuBadge>
-                  </SidebarMenuItem>
-                );
-              })}
+              {overview.projects.map((project) => (
+                <SidebarMenuItem key={project.id}>
+                  <SidebarMenuButton
+                    tooltip={project.name}
+                    isActive={search.projectId === project.id}
+                    render={
+                      <Link
+                        to="/links"
+                        search={{
+                          page: 1,
+                          projectId: project.id,
+                          sort: 'newest',
+                          view: 'all',
+                        }}
+                        onClick={closeMobile}
+                      />
+                    }
+                  >
+                    <FolderClosed />
+                    <span>{project.name}</span>
+                  </SidebarMenuButton>
+                  <SidebarMenuBadge>{project.count}</SidebarMenuBadge>
+                </SidebarMenuItem>
+              ))}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip="未分配项目"
-                  isActive={selectedProject === 'unassigned'}
-                  onClick={() =>
-                    finishSelection(() => onSelectProject('unassigned'))
+                  isActive={search.projectId === 'unassigned'}
+                  render={
+                    <Link
+                      to="/links"
+                      search={{
+                        page: 1,
+                        projectId: 'unassigned',
+                        sort: 'newest',
+                        view: 'all',
+                      }}
+                      onClick={closeMobile}
+                    />
                   }
                 >
                   <Inbox />
@@ -194,27 +181,30 @@ export function AppSidebar({
           <SidebarGroupLabel>分类</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {linkCategories.map((category) => {
-                const count = links.filter(
-                  (link) => link.category === category,
-                ).length;
-
-                return (
-                  <SidebarMenuItem key={category}>
-                    <SidebarMenuButton
-                      tooltip={categoryLabels[category]}
-                      isActive={selectedCategory === category}
-                      onClick={() =>
-                        finishSelection(() => onSelectCategory(category))
-                      }
-                    >
-                      <Layers3 />
-                      <span>{categoryLabels[category]}</span>
-                    </SidebarMenuButton>
-                    <SidebarMenuBadge>{count}</SidebarMenuBadge>
-                  </SidebarMenuItem>
-                );
-              })}
+              {overview.categories.map((category) => (
+                <SidebarMenuItem key={category.id}>
+                  <SidebarMenuButton
+                    tooltip={category.name}
+                    isActive={search.categoryId === category.id}
+                    render={
+                      <Link
+                        to="/links"
+                        search={{
+                          categoryId: category.id,
+                          page: 1,
+                          sort: 'newest',
+                          view: 'all',
+                        }}
+                        onClick={closeMobile}
+                      />
+                    }
+                  >
+                    <Layers3 />
+                    <span>{category.name}</span>
+                  </SidebarMenuButton>
+                  <SidebarMenuBadge>{category.count}</SidebarMenuBadge>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -226,9 +216,9 @@ export function AppSidebar({
             <Inbox className="size-3.5" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-xs font-medium">演示数据</p>
+            <p className="truncate text-xs font-medium">本地演示</p>
             <p className="truncate text-[11px] text-muted-foreground">
-              最近同步于今天 09:42
+              当前未连接 Server
             </p>
           </div>
           <Badge

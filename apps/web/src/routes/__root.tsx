@@ -1,6 +1,6 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { createRootRoute } from '@tanstack/react-router';
 
-import { AppLayout } from '@/components/layouts/app-layout';
+import { WebShell } from '@/components/layouts/web-shell';
 import { AppProviders } from '@/components/providers/app-providers';
 
 export const Route = createRootRoute({
@@ -11,9 +11,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <AppProviders>
-      <AppLayout>
-        <Outlet />
-      </AppLayout>
+      <WebShell />
     </AppProviders>
   );
 }

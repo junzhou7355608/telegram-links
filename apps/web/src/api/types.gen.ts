@@ -20,7 +20,6 @@ export type OverviewCountResponseDto = {
 };
 
 export type WebOverviewCountsResponseDto = {
-  favorites: number;
   pending: number;
   recent: number;
   total: number;
@@ -73,7 +72,6 @@ export type LinkResponseDto = {
   category: TaxonomyReferenceResponseDto | null;
   tags: Array<TaxonomyReferenceResponseDto>;
   purpose: string | null;
-  isFavorite: boolean;
   sourceCount: number;
   latestSource: LinkSourceResponseDto | null;
   sources?: Array<LinkSourceResponseDto>;
@@ -125,7 +123,6 @@ export type BatchLinkPatchDto = {
   projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
-  isFavorite?: boolean;
   addTagIds?: Array<string>;
 };
 
@@ -154,7 +151,6 @@ export type UpdateLinkDto = {
   projectId?: string | null;
   categoryId?: string | null;
   tagIds?: Array<string>;
-  isFavorite?: boolean;
 };
 
 export type CreateSyncJobDto = {
@@ -336,7 +332,7 @@ export type WebApiControllerListData = {
     page?: number;
     pageSize?: number;
     q?: string;
-    view?: 'all' | 'recent' | 'favorites' | 'pending';
+    view?: 'all' | 'recent' | 'pending';
     /**
      * UUID 或 unassigned
      */

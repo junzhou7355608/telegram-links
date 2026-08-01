@@ -18,7 +18,6 @@ export const zOverviewCountResponseDto = z.object({
 });
 
 export const zWebOverviewCountsResponseDto = z.object({
-  favorites: z.number(),
   pending: z.number(),
   recent: z.number(),
   total: z.number(),
@@ -72,7 +71,6 @@ export const zLinkResponseDto = z.object({
   category: zTaxonomyReferenceResponseDto.nullable(),
   tags: z.array(zTaxonomyReferenceResponseDto),
   purpose: z.string().nullable(),
-  isFavorite: z.boolean(),
   sourceCount: z.number(),
   latestSource: zLinkSourceResponseDto.nullable(),
   sources: z.array(zLinkSourceResponseDto).optional(),
@@ -127,7 +125,6 @@ export const zBatchLinkPatchDto = z.object({
   projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
-  isFavorite: z.boolean().optional(),
   addTagIds: z.array(z.uuid()).optional(),
 });
 
@@ -158,7 +155,6 @@ export const zUpdateLinkDto = z.object({
   projectId: z.uuid().nullish(),
   categoryId: z.uuid().nullish(),
   tagIds: z.array(z.uuid()).optional(),
-  isFavorite: z.boolean().optional(),
 });
 
 export const zCreateSyncJobDto = z.object({
@@ -312,7 +308,7 @@ export const zWebApiControllerListQuery = z.object({
   page: z.number().gte(1).optional().default(1),
   pageSize: z.number().gte(1).lte(100).optional().default(8),
   q: z.string().optional(),
-  view: z.enum(['all', 'recent', 'favorites', 'pending']).optional(),
+  view: z.enum(['all', 'recent', 'pending']).optional(),
   projectId: z.string().optional(),
   categoryId: z.uuid().optional(),
   environment: z

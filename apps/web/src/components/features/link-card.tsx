@@ -1,34 +1,29 @@
-import { Badge } from '@repo/ui/components/badge';
-import { Button } from '@repo/ui/components/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@repo/ui/components/card';
-import { Copy, ExternalLink, Star } from 'lucide-react';
+import type { LinkResponseDto } from '@/api/types.gen';
 import {
   CategoryBadge,
   EnvironmentBadge,
   StatusBadge,
 } from '@/components/features/link-badges';
-import { formatCapturedAt, type TelegramLinkMock } from '@/data/links';
+import { displayLinkTitle, formatCapturedAt } from '@/lib/link-display';
+import { Badge } from '@repo/ui/components/badge';
+import { Button } from '@repo/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@repo/ui/components/card';
+import { Copy, ExternalLink } from 'lucide-react';
 
 interface LinkCardProps {
-  link: TelegramLinkMock;
-  onSelect: (link: TelegramLinkMock) => void;
-  onCopy: (link: TelegramLinkMock) => void;
-  onToggleFavorite: (link: TelegramLinkMock) => void;
+  link: LinkResponseDto;
+  onSelect: (link: LinkResponseDto) => void;
+  onCopy: (link: LinkResponseDto) => void;
 }
 
-export function LinkCard({
-  link,
-  onSelect,
-  onCopy,
-  onToggleFavorite,
-}: LinkCardProps) {
+export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
+  const title = displayLinkTitle(link);
   return (
     <Card size="sm" className="cursor-pointer" onClick={() => onSelect(link)}>
       <CardHeader>
@@ -42,30 +37,19 @@ export function LinkCard({
                 onSelect(link);
               }}
             >
-              {link.title}
+              {title}
             </button>
           </CardTitle>
           <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
             {link.domain}
           </p>
         </div>
-        <CardAction>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={link.isFavorite ? '取消收藏' : '添加到收藏'}
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleFavorite(link);
-            }}
-          >
-            <Star className={link.isFavorite ? 'fill-current' : undefined} />
-          </Button>
-        </CardAction>
       </CardHeader>
       <CardContent className="grid gap-3">
         <div>
-          <p className="text-sm font-medium">{link.project ?? '未分配项目'}</p>
+          <p className="text-sm font-medium">
+            {link.project?.name ?? '未分配项目'}
+          </p>
           <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
             {link.purpose ?? '尚未补充用途'}
           </p>
@@ -77,14 +61,20 @@ export function LinkCard({
         </div>
         <div className="flex flex-wrap gap-1">
           {link.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="ghost">
-              #{tag}
+            <Badge key={tag.id} variant="ghost">
+              #{tag.name}
             </Badge>
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          来自 {link.source.chatName} ·{' '}
-          {formatCapturedAt(link.source.capturedAt)}
+          {link.latestSource ? (
+            <>
+              来自 {link.latestSource.chatName} ·{' '}
+              {formatCapturedAt(link.latestSource.capturedAt)}
+            </>
+          ) : (
+            '暂无来源信息'
+          )}
         </p>
       </CardContent>
       <CardFooter className="justify-end gap-2">

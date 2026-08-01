@@ -1,3 +1,6 @@
+import type { WebOverviewResponseDto } from '@/api/types.gen';
+import type { WebLinksSearch } from '@/lib/web-search';
+import { environmentLabels, statusLabels } from '@/lib/link-display';
 import { Button } from '@repo/ui/components/button';
 import {
   InputGroup,
@@ -24,95 +27,78 @@ import {
   SheetTrigger,
 } from '@repo/ui/components/sheet';
 import { RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
-import type { LinkView } from '@/components/features/app-sidebar';
-import {
-  categoryLabels,
-  environmentLabels,
-  linkCategories,
-  statusLabels,
-  type LinkCategory,
-  type LinkEnvironment,
-  type OrganizationStatus,
-} from '@/data/links';
 
-export type LinkSort = 'newest' | 'oldest' | 'title';
-
-export interface LinkFilters {
-  query: string;
-  view: LinkView;
-  project: string;
-  category: LinkCategory | 'all';
-  environment: LinkEnvironment | 'all';
-  status: OrganizationStatus | 'all';
-  sort: LinkSort;
-}
+type SearchUpdater = (previous: WebLinksSearch) => WebLinksSearch;
 
 interface LinkToolbarProps {
-  filters: LinkFilters;
-  projects: readonly string[];
+  search: WebLinksSearch;
+  overview: WebOverviewResponseDto;
   resultCount: number;
-  onFiltersChange: (filters: LinkFilters) => void;
+  onSearchChange: (
+    updater: SearchUpdater,
+    options?: { replace?: boolean },
+  ) => void;
   onReset: () => void;
 }
 
 interface FilterFieldsProps {
-  filters: LinkFilters;
-  projects: readonly string[];
-  onFiltersChange: (filters: LinkFilters) => void;
+  search: WebLinksSearch;
+  overview: WebOverviewResponseDto;
+  onSearchChange: (updater: SearchUpdater) => void;
   stacked?: boolean;
 }
 
 function FilterFields({
-  filters,
-  projects,
-  onFiltersChange,
+  search,
+  overview,
+  onSearchChange,
   stacked = false,
 }: FilterFieldsProps) {
   const projectItems = [
     { label: '全部项目', value: 'all' },
-    ...projects.map((project) => ({ label: project, value: project })),
+    ...overview.projects.map((project) => ({
+      label: project.name,
+      value: project.id,
+    })),
     { label: '未分配项目', value: 'unassigned' },
   ];
   const categoryItems = [
     { label: '全部分类', value: 'all' },
-    ...linkCategories.map((category) => ({
-      label: categoryLabels[category],
-      value: category,
+    ...overview.categories.map((category) => ({
+      label: category.name,
+      value: category.id,
     })),
   ];
   const environmentItems = [
     { label: '全部环境', value: 'all' },
-    ...(Object.keys(environmentLabels) as readonly LinkEnvironment[]).map(
-      (environment) => ({
-        label: environmentLabels[environment],
-        value: environment,
-      }),
-    ),
+    ...Object.entries(environmentLabels).map(([value, label]) => ({
+      label,
+      value,
+    })),
   ];
   const statusItems = [
     { label: '全部状态', value: 'all' },
-    ...(Object.keys(statusLabels) as readonly OrganizationStatus[]).map(
-      (status) => ({
-        label: statusLabels[status],
-        value: status,
-      }),
-    ),
+    ...Object.entries(statusLabels).map(([value, label]) => ({ label, value })),
   ];
   const sortItems = [
     { label: '最近添加', value: 'newest' },
     { label: '最早添加', value: 'oldest' },
     { label: '标题排序', value: 'title' },
   ];
-
-  function updateFilter<Key extends keyof LinkFilters>(
-    key: Key,
-    value: LinkFilters[Key],
-  ) {
-    onFiltersChange({ ...filters, [key]: value });
-  }
-
   const fieldClassName = stacked ? 'grid gap-2' : 'contents';
   const triggerClassName = stacked ? 'w-full' : 'min-w-28';
+
+  function updateFilter<Key extends keyof WebLinksSearch>(
+    key: Key,
+    value: WebLinksSearch[Key],
+  ) {
+    onSearchChange((previous) => ({
+      ...previous,
+      [key]: value,
+      linkId: undefined,
+      page: 1,
+    }));
+  }
 
   return (
     <div
@@ -130,8 +116,13 @@ function FilterFields({
         ) : null}
         <Select
           items={projectItems}
-          value={filters.project}
-          onValueChange={(value) => updateFilter('project', value ?? 'all')}
+          value={search.projectId ?? 'all'}
+          onValueChange={(value) =>
+            updateFilter(
+              'projectId',
+              value && value !== 'all' ? value : undefined,
+            )
+          }
         >
           <SelectTrigger aria-label="按项目筛选" className={triggerClassName}>
             <SelectValue />
@@ -156,9 +147,12 @@ function FilterFields({
         ) : null}
         <Select
           items={categoryItems}
-          value={filters.category}
+          value={search.categoryId ?? 'all'}
           onValueChange={(value) =>
-            updateFilter('category', (value ?? 'all') as LinkCategory | 'all')
+            updateFilter(
+              'categoryId',
+              value && value !== 'all' ? value : undefined,
+            )
           }
         >
           <SelectTrigger aria-label="按分类筛选" className={triggerClassName}>
@@ -184,11 +178,13 @@ function FilterFields({
         ) : null}
         <Select
           items={environmentItems}
-          value={filters.environment}
+          value={search.environment ?? 'all'}
           onValueChange={(value) =>
             updateFilter(
               'environment',
-              (value ?? 'all') as LinkEnvironment | 'all',
+              value && value !== 'all'
+                ? (value as WebLinksSearch['environment'])
+                : undefined,
             )
           }
         >
@@ -215,11 +211,13 @@ function FilterFields({
         ) : null}
         <Select
           items={statusItems}
-          value={filters.status}
+          value={search.status ?? 'all'}
           onValueChange={(value) =>
             updateFilter(
               'status',
-              (value ?? 'all') as OrganizationStatus | 'all',
+              value && value !== 'all'
+                ? (value as WebLinksSearch['status'])
+                : undefined,
             )
           }
         >
@@ -249,9 +247,9 @@ function FilterFields({
         ) : null}
         <Select
           items={sortItems}
-          value={filters.sort}
+          value={search.sort}
           onValueChange={(value) =>
-            updateFilter('sort', (value ?? 'newest') as LinkSort)
+            updateFilter('sort', (value ?? 'newest') as WebLinksSearch['sort'])
           }
         >
           <SelectTrigger aria-label="选择排序方式" className={triggerClassName}>
@@ -273,19 +271,19 @@ function FilterFields({
 }
 
 export function LinkToolbar({
-  filters,
-  projects,
+  search,
+  overview,
   resultCount,
-  onFiltersChange,
+  onSearchChange,
   onReset,
 }: LinkToolbarProps) {
   const activeFilterCount = [
-    filters.view !== 'all',
-    filters.project !== 'all',
-    filters.category !== 'all',
-    filters.environment !== 'all',
-    filters.status !== 'all',
-    filters.sort !== 'newest',
+    search.view !== 'all',
+    search.projectId,
+    search.categoryId,
+    search.environment,
+    search.status,
+    search.sort !== 'newest',
   ].filter(Boolean).length;
 
   return (
@@ -297,18 +295,32 @@ export function LinkToolbar({
           </InputGroupAddon>
           <InputGroupInput
             aria-label="搜索链接"
-            placeholder="搜索标题、URL、项目、用途或标签"
-            value={filters.query}
-            onChange={(event) =>
-              onFiltersChange({ ...filters, query: event.target.value })
-            }
+            placeholder="搜索标题、URL、项目、用途、标签或来源"
+            value={search.q ?? ''}
+            onChange={(event) => {
+              const value = event.target.value;
+              onSearchChange(
+                (previous) => ({
+                  ...previous,
+                  linkId: undefined,
+                  page: 1,
+                  q: value || undefined,
+                }),
+                { replace: true },
+              );
+            }}
           />
-          {filters.query ? (
+          {search.q ? (
             <InputGroupAddon align="inline-end">
               <InputGroupButton
                 size="icon-xs"
                 aria-label="清空搜索"
-                onClick={() => onFiltersChange({ ...filters, query: '' })}
+                onClick={() =>
+                  onSearchChange(
+                    (previous) => ({ ...previous, page: 1, q: undefined }),
+                    { replace: true },
+                  )
+                }
               >
                 <X />
               </InputGroupButton>
@@ -333,14 +345,14 @@ export function LinkToolbar({
             <SheetHeader>
               <SheetTitle>筛选链接</SheetTitle>
               <SheetDescription>
-                按项目、用途和整理状态缩小查找范围。
+                按项目、分类、环境和整理状态缩小查找范围。
               </SheetDescription>
             </SheetHeader>
             <div className="px-4">
               <FilterFields
-                filters={filters}
-                projects={projects}
-                onFiltersChange={onFiltersChange}
+                search={search}
+                overview={overview}
+                onSearchChange={onSearchChange}
                 stacked
               />
             </div>
@@ -359,11 +371,11 @@ export function LinkToolbar({
 
       <div className="hidden items-center justify-between gap-3 md:flex">
         <FilterFields
-          filters={filters}
-          projects={projects}
-          onFiltersChange={onFiltersChange}
+          search={search}
+          overview={overview}
+          onSearchChange={onSearchChange}
         />
-        {activeFilterCount > 0 || filters.query ? (
+        {activeFilterCount > 0 || search.q ? (
           <Button
             variant="ghost"
             size="sm"
@@ -382,7 +394,7 @@ export function LinkToolbar({
             ? `已启用 ${activeFilterCount} 个筛选条件`
             : '全部项目与分类'}
         </span>
-        {activeFilterCount > 0 || filters.query ? (
+        {activeFilterCount > 0 || search.q ? (
           <Button variant="ghost" size="xs" onClick={onReset}>
             重置
           </Button>

@@ -53,9 +53,6 @@ export const OverviewCountResponseDtoSchema = {
 export const WebOverviewCountsResponseDtoSchema = {
   type: 'object',
   properties: {
-    favorites: {
-      type: 'number',
-    },
     pending: {
       type: 'number',
     },
@@ -66,7 +63,7 @@ export const WebOverviewCountsResponseDtoSchema = {
       type: 'number',
     },
   },
-  required: ['favorites', 'pending', 'recent', 'total'],
+  required: ['pending', 'recent', 'total'],
 } as const;
 
 export const WebLatestSyncResponseDtoSchema = {
@@ -239,9 +236,6 @@ export const LinkResponseDtoSchema = {
       type: 'string',
       nullable: true,
     },
-    isFavorite: {
-      type: 'boolean',
-    },
     sourceCount: {
       type: 'number',
     },
@@ -289,7 +283,6 @@ export const LinkResponseDtoSchema = {
     'category',
     'tags',
     'purpose',
-    'isFavorite',
     'sourceCount',
     'latestSource',
     'firstDiscoveredAt',
@@ -431,9 +424,6 @@ export const BatchLinkPatchDtoSchema = {
         format: 'uuid',
       },
     },
-    isFavorite: {
-      type: 'boolean',
-    },
     addTagIds: {
       type: 'array',
       items: {
@@ -535,9 +525,6 @@ export const UpdateLinkDtoSchema = {
         type: 'string',
         format: 'uuid',
       },
-    },
-    isFavorite: {
-      type: 'boolean',
     },
   },
 } as const;

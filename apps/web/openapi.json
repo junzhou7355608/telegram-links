@@ -99,7 +99,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["all", "recent", "favorites", "pending"]
+              "enum": ["all", "recent", "pending"]
             }
           },
           {
@@ -363,9 +363,6 @@
       "WebOverviewCountsResponseDto": {
         "type": "object",
         "properties": {
-          "favorites": {
-            "type": "number"
-          },
           "pending": {
             "type": "number"
           },
@@ -376,7 +373,7 @@
             "type": "number"
           }
         },
-        "required": ["favorites", "pending", "recent", "total"]
+        "required": ["pending", "recent", "total"]
       },
       "WebLatestSyncResponseDto": {
         "type": "object",
@@ -544,9 +541,6 @@
             "type": "string",
             "nullable": true
           },
-          "isFavorite": {
-            "type": "boolean"
-          },
           "sourceCount": {
             "type": "number"
           },
@@ -594,7 +588,6 @@
           "category",
           "tags",
           "purpose",
-          "isFavorite",
           "sourceCount",
           "latestSource",
           "firstDiscoveredAt",
@@ -731,9 +724,6 @@
               "format": "uuid"
             }
           },
-          "isFavorite": {
-            "type": "boolean"
-          },
           "addTagIds": {
             "type": "array",
             "items": {
@@ -831,9 +821,6 @@
               "type": "string",
               "format": "uuid"
             }
-          },
-          "isFavorite": {
-            "type": "boolean"
           }
         }
       },
