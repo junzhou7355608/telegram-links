@@ -1,7 +1,7 @@
 # Telegram Links
 
 一个用于从个人 Telegram 聊天中收集、整理和检索网页链接的
-monorepo。它帮助用户快速确认链接属于哪个项目、用于什么场景，以及对应正式、测试还是开发环境。
+monorepo。它帮助用户按分类和标签整理链接，并保留完整的 Telegram 来源上下文。
 
 项目由三个应用协作完成：
 
@@ -11,8 +11,8 @@ monorepo。它帮助用户快速确认链接属于哪个项目、用于什么场
 | `admin`  | 触发消息检索、识别网页链接，并维护标签和分类       |
 | `server` | 提供后端接口，并将检索结果和整理信息持久化到数据库 |
 
-Web 当前仍使用本地演示数据。Admin 已对接 Server，可配置 Kimi、授权 Telegram
-个人账号、选择聊天来源、触发 AI 识别并整理链接；数据持久化到 PostgreSQL。
+Web 当前仍使用本地演示数据。Admin 已对接 Server，可授权 Telegram
+个人账号、选择聊天来源、扫描链接并使用分类和标签整理；数据持久化到 PostgreSQL。
 
 ## 目录
 
@@ -59,9 +59,6 @@ pnpm dev
 
 接口按 `/api/web/v1` 和 `/api/admin/v1` 分区。更多环境变量、授权和同步说明见
 [Server README](./apps/server/README.md)。
-
-Kimi API Key 不写入环境文件。在 Admin 的“AI 设置”页面保存后，Server 会先验证
-模型列表，再以 AES-256-GCM 密文存入 PostgreSQL。
 
 ## 常用命令
 
