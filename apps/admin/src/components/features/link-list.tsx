@@ -134,7 +134,7 @@ export function LinkList({
                       target="_blank"
                       rel="noreferrer"
                       title={link.url}
-                      className="block truncate underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="block truncate no-underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={(event) => event.stopPropagation()}
                     >
                       {link.domain}
@@ -249,8 +249,8 @@ export function LinkList({
                   />
                 </TableCell>
                 <TableCell className="min-w-0 py-3 whitespace-normal">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50">
                       <Link2 className="size-3.5" aria-hidden="true" />
                     </span>
                     <div className="flex min-w-0 items-center gap-1">
@@ -259,7 +259,7 @@ export function LinkList({
                         target="_blank"
                         rel="noreferrer"
                         title={link.url}
-                        className="min-w-0 truncate rounded-sm font-mono font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="min-w-0 truncate rounded-sm font-mono font-medium no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={(event) => event.stopPropagation()}
                       >
                         {link.domain}
