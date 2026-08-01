@@ -32,7 +32,7 @@ pnpm --filter server start:dev
 
 ## 接口分区
 
-- `/api/web/v1`：只读链接列表、详情和概览。
+- `/api/web/v1`：只读展示未归档且已整理的链接列表、详情和概览。
 - `/api/admin/v1`：Telegram 授权、聊天刷新、同步任务和链接整理。
 
 首次授权依次调用：
@@ -46,7 +46,7 @@ pnpm --filter server start:dev
 聊天创建 `/api/admin/v1/sync-jobs`。任务在进程内后台运行，通过详情接口轮询。
 
 创建扫描任务时可以选择默认分类和标签。新链接以域名作为标题并进入待整理队列，
-后续在 Admin 中补充标题、用途、分类和标签。
+后续在 Admin 中补充标题和分类，也可按需添加用途和标签。
 
 ## Prisma
 

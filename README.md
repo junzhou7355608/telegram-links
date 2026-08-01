@@ -11,8 +11,9 @@ monorepo。它帮助用户按分类和标签整理链接，并保留完整的 Te
 | `admin`  | 触发消息检索、识别网页链接，并维护标签和分类       |
 | `server` | 提供后端接口，并将检索结果和整理信息持久化到数据库 |
 
-Web 当前仍使用本地演示数据。Admin 已对接 Server，可授权 Telegram
-个人账号、选择聊天来源、扫描链接并使用分类和标签整理；数据持久化到 PostgreSQL。
+Web 和 Admin 均已对接 Server。Admin 可授权 Telegram 个人账号、选择聊天来源、
+扫描链接并使用分类和标签整理；Web 只读展示已整理链接及其完整来源。数据持久化到
+PostgreSQL。
 
 ## 目录
 
