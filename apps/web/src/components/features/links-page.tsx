@@ -7,10 +7,10 @@ import type { LinkResponseDto } from '@/api/types.gen';
 import { LinkCard } from '@/components/features/link-card';
 import { LinkDetailSheet } from '@/components/features/link-detail-sheet';
 import { LinkPagination } from '@/components/features/link-pagination';
-import { LinkTable } from '@/components/features/link-table';
 import { LinkToolbar } from '@/components/features/link-toolbar';
 import {
   ApiErrorState,
+  LinkCardGridSkeleton,
   PageSkeleton,
 } from '@/components/layouts/api-state';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
@@ -188,10 +188,10 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
               onRetry={() => void linksQuery.refetch()}
             />
           ) : linksQuery.isPending ? (
-            <PageSkeleton rows={8} />
+            <LinkCardGridSkeleton />
           ) : links.length > 0 ? (
             <>
-              <div className="grid gap-3 md:hidden">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {links.map((link) => (
                   <LinkCard
                     key={link.id}
@@ -200,14 +200,6 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
                     onCopy={(item) => void copyUrl(item.url)}
                   />
                 ))}
-              </div>
-
-              <div className="hidden md:block">
-                <LinkTable
-                  links={links}
-                  onSelect={selectLink}
-                  onCopy={(item) => void copyUrl(item.url)}
-                />
               </div>
 
               <LinkPagination

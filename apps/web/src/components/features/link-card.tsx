@@ -21,13 +21,17 @@ interface LinkCardProps {
 export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
   const title = displayLinkTitle(link);
   return (
-    <Card size="sm" className="cursor-pointer" onClick={() => onSelect(link)}>
+    <Card
+      size="sm"
+      className="h-full cursor-pointer transition-colors hover:bg-muted/20 focus-within:ring-2 focus-within:ring-ring/30"
+      onClick={() => onSelect(link)}
+    >
       <CardHeader>
         <div className="min-w-0">
           <CardTitle className="truncate">
             <button
               type="button"
-              className="max-w-full truncate rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="block w-full truncate rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               onClick={(event) => {
                 event.stopPropagation();
                 onSelect(link);
@@ -41,7 +45,7 @@ export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
           </p>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className="grid flex-1 content-start gap-3">
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {link.purpose ?? '尚未补充用途'}
         </p>
@@ -55,7 +59,7 @@ export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
             </Badge>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="truncate text-xs text-muted-foreground">
           {link.latestSource ? (
             <>
               来自 {link.latestSource.chatName} ·{' '}
@@ -66,7 +70,7 @@ export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
           )}
         </p>
       </CardContent>
-      <CardFooter className="justify-end gap-2">
+      <CardFooter className="mt-auto justify-end gap-2">
         <Button
           variant="ghost"
           size="sm"

@@ -14,6 +14,38 @@ export function PageSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
+export function LinkCardGridSkeleton({ cards = 8 }: { cards?: number }) {
+  return (
+    <div
+      aria-label="正在加载链接"
+      className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+      role="status"
+    >
+      {Array.from({ length: cards }, (_, index) => (
+        <div
+          key={index}
+          className="flex h-64 flex-col gap-4 rounded-xl p-4 ring-1 ring-foreground/10"
+        >
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-3/4" />
+          <div className="mt-auto flex justify-end gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ApiErrorState({
   error,
   onRetry,
