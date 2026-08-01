@@ -13,6 +13,7 @@ export interface AiTaxonomyItem {
 }
 
 export interface AiContextMessage {
+  relation: 'current' | 'next' | 'previous' | 'reply';
   sentAt: string;
   senderName: string | null;
   text: string;

@@ -35,6 +35,11 @@ describe('buildAiContext', () => {
 
     expect(context.chat).toEqual({ name: '研发群', type: 'group' });
     expect(context.current.text).toHaveLength(4096);
+    expect(context.neighbors.map(({ relation }) => relation)).toEqual([
+      'previous',
+      'previous',
+      'next',
+    ]);
     expect(context.neighbors.map(({ text }) => text.slice(0, 2))).toEqual([
       '前一',
       '前二',

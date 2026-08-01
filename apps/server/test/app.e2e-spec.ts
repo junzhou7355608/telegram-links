@@ -466,17 +466,19 @@ describe('Server API (e2e)', () => {
           rangeMode: 'allHistory',
         })
         .expect(202);
-      await expect(
-        waitForJob(server, responseBody<{ id: string }>(partialJob).id),
-      ).resolves.toMatchObject({
-        chats: expect.arrayContaining([
+      const partialResult = await waitForJob<{
+        chats: Array<{ chatTitle: string; status: string }>;
+        status: string;
+      }>(server, responseBody<{ id: string }>(partialJob).id);
+      expect(partialResult.status).toBe('partiallySucceeded');
+      expect(partialResult.chats).toEqual(
+        expect.arrayContaining([
           expect.objectContaining({
             chatTitle: 'AI 失败测试群',
             status: 'failed',
           }),
         ]),
-        status: 'partiallySucceeded',
-      });
+      );
       const aiFailureChat = await app
         .get(PrismaService)
         .telegramChat.findFirst({
@@ -650,14 +652,16 @@ describe('Server API (e2e)', () => {
   });
 });
 
-async function waitForJob(server: App, id: string) {
+async function waitForJob<
+  Result extends { status: string } = Record<string, unknown> & {
+    status: string;
+  },
+>(server: App, id: string): Promise<Result> {
   for (let attempt = 0; attempt < 50; attempt += 1) {
     const response = await request(server)
       .get(`/api/admin/v1/sync-jobs/${id}`)
       .expect(200);
-    const job = responseBody<Record<string, unknown> & { status: string }>(
-      response,
-    );
+    const job = responseBody<Result>(response);
     if (!['queued', 'running'].includes(job.status)) {
       return job;
     }
