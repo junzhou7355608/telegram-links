@@ -32,7 +32,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@repo/ui/components/alert-dialog';
-import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/alert';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -72,7 +71,6 @@ import {
 } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import {
-  AlertTriangle,
   CheckCircle2,
   LoaderCircle,
   LogOut,
@@ -157,6 +155,15 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
     verifyPasswordMutation.isPending;
   const account = accountQuery.data;
   const pagination = chatsQuery.data?.pagination;
+
+  useEffect(() => {
+    if (account?.configured === false) {
+      toast.error(
+        '请在 Server 环境文件中配置 TELEGRAM_API_ID、TELEGRAM_API_HASH 和会话加密密钥。',
+        { id: 'telegram-not-configured' },
+      );
+    }
+  }, [account?.configured]);
 
   useEffect(() => {
     const query = debouncedSearch.trim() || undefined;
@@ -317,17 +324,6 @@ export function TelegramPage({ search, onSearchChange }: TelegramPageProps) {
       </div>
 
       {accountQuery.isPending ? <PageSkeleton rows={2} /> : null}
-
-      {account && !account.configured ? (
-        <Alert variant="destructive">
-          <AlertTriangle />
-          <AlertTitle>Server 尚未配置 Telegram</AlertTitle>
-          <AlertDescription>
-            请在 Server 环境文件中配置 TELEGRAM_API_ID、TELEGRAM_API_HASH
-            和会话加密密钥。
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       {account?.configured && account.status === 'unauthorized' ? (
         <Card size="sm">
