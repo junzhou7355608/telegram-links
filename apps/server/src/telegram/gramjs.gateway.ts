@@ -25,7 +25,7 @@ function entityValue(entity: unknown, key: string): unknown {
 
 export function extractMessageUrls(message: Api.Message): string[] {
   const urls = new Set(extractPlainHttpUrls(message.message ?? ''));
-  const entities = message.getEntitiesText() as [unknown, string][];
+  const entities = (message.getEntitiesText() ?? []) as [unknown, string][];
 
   for (const [entity, text] of entities) {
     if (entity instanceof Api.MessageEntityTextUrl) {

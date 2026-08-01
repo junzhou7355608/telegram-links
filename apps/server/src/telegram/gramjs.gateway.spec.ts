@@ -2,6 +2,17 @@ import { Api } from 'telegram';
 import { extractMessageUrls } from './gramjs.gateway';
 
 describe('extractMessageUrls', () => {
+  it('handles messages without Telegram entities', () => {
+    const message = new Api.Message({
+      date: 1,
+      id: 1,
+      message: '普通消息，没有链接',
+      peerId: new Api.PeerUser({ userId: 1n as never }),
+    });
+
+    expect(extractMessageUrls(message)).toEqual([]);
+  });
+
   it('extracts Telegram entities with UTF-16 emoji offsets', () => {
     const text = '🚀 https://example.com/docs';
     const message = new Api.Message({
