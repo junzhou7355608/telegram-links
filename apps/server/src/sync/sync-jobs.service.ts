@@ -292,10 +292,14 @@ export class SyncJobsService implements OnModuleInit {
         });
       });
     } catch (error) {
+      const errorMessage = this.errorMessage(error);
+      this.logger.error(
+        `同步聊天 ${jobChat.chat.telegramPeerId} 失败：${errorMessage}`,
+      );
       await this.prisma.syncJobChat.update({
         data: {
           ...counters,
-          error: this.errorMessage(error),
+          error: errorMessage,
           finishedAt: new Date(),
           status: SyncJobChatStatus.FAILED,
         },
@@ -325,9 +329,10 @@ export class SyncJobsService implements OnModuleInit {
     >();
     for (const rawUrl of message.urls) {
       const sanitizedRawUrl = sanitizeTelegramHttpUrlCandidate(rawUrl);
-      const normalized = sanitizedRawUrl
-        ? normalizeHttpUrl(sanitizedRawUrl)
-        : null;
+      if (!sanitizedRawUrl) {
+        continue;
+      }
+      const normalized = normalizeHttpUrl(sanitizedRawUrl);
       if (!normalized) {
         continue;
       }
@@ -405,20 +410,17 @@ export class SyncJobsService implements OnModuleInit {
             link.status === OrganizationStatus.PENDING &&
             (job.defaultCategoryId || defaultTagIds.length > 0)
           ) {
-            const tagIds = [
-              ...new Set([
-                ...link.tags.map(({ tagId }) => tagId),
-                ...defaultTagIds,
-              ]),
-            ];
+            const existingTagIds = new Set(link.tags.map(({ tagId }) => tagId));
+            const missingTagIds = defaultTagIds.filter(
+              (tagId) => !existingTagIds.has(tagId),
+            );
             link = await transaction.link.update({
               include: { tags: true },
               data: {
                 categoryId: link.categoryId ?? job.defaultCategoryId,
-                tags: defaultTagIds.length
+                tags: missingTagIds.length
                   ? {
-                      create: tagIds.map((tagId) => ({ tagId })),
-                      deleteMany: {},
+                      create: missingTagIds.map((tagId) => ({ tagId })),
                     }
                   : undefined,
               },
