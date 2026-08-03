@@ -39,6 +39,9 @@ export interface NormalizedUrl {
   url: string;
 }
 
+const firstHanCharacter = /\p{Script=Han}/u;
+const trailingUrlPunctuation = /[),.;!?，。；！？）】》]+$/u;
+
 export function normalizeHttpUrl(value: string): NormalizedUrl | null {
   try {
     const url = new URL(value.trim());
@@ -73,10 +76,34 @@ export function requireHttpUrl(value: string): NormalizedUrl {
   return normalized;
 }
 
+export function sanitizeTelegramHttpUrlCandidate(
+  value: string,
+): string | null {
+  const trimmed = value.trim();
+  const firstHanMatch = firstHanCharacter.exec(trimmed);
+  const beforeHan =
+    firstHanMatch?.index === undefined
+      ? trimmed
+      : trimmed.slice(0, firstHanMatch.index);
+  const sanitized = beforeHan.replace(trailingUrlPunctuation, '');
+  const normalized = normalizeHttpUrl(sanitized);
+
+  if (
+    firstHanMatch &&
+    normalized &&
+    !normalized.domain.includes('.') &&
+    !normalized.domain.includes(':')
+  ) {
+    return null;
+  }
+
+  return normalized ? sanitized : null;
+}
+
 export function extractPlainHttpUrls(text: string): string[] {
   const matches: readonly string[] =
     text.match(/https?:\/\/[^\s<>"'，。；！？）】》]+/giu) ?? [];
   return matches
-    .map((match) => match.replace(/[),.;!?，。；！？）】》]+$/u, ''))
-    .filter((value) => normalizeHttpUrl(value) !== null);
+    .map(sanitizeTelegramHttpUrlCandidate)
+    .filter((value): value is string => value !== null);
 }

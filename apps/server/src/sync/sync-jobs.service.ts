@@ -14,7 +14,10 @@ import {
   SyncRangeMode,
   SyncStage,
 } from '../generated/prisma/client';
-import { normalizeHttpUrl } from '../common/link-values';
+import {
+  normalizeHttpUrl,
+  sanitizeTelegramHttpUrlCandidate,
+} from '../common/link-values';
 import { paginationMeta } from '../common/pagination.dto';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { TelegramAuthService } from '../telegram/telegram-auth.service';
@@ -321,11 +324,14 @@ export class SyncJobsService implements OnModuleInit {
       { primary: UrlValue; variants: Map<string, UrlValue> }
     >();
     for (const rawUrl of message.urls) {
-      const normalized = normalizeHttpUrl(rawUrl);
+      const sanitizedRawUrl = sanitizeTelegramHttpUrlCandidate(rawUrl);
+      const normalized = sanitizedRawUrl
+        ? normalizeHttpUrl(sanitizedRawUrl)
+        : null;
       if (!normalized) {
         continue;
       }
-      const value = { ...normalized, rawUrl };
+      const value = { ...normalized, rawUrl: sanitizedRawUrl };
       const current = domains.get(normalized.domain);
       if (current) {
         current.primary = value;

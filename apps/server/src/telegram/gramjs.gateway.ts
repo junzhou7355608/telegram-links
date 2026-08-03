@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Api, TelegramClient, utils } from 'telegram';
 import { StringSession } from 'telegram/sessions';
-import { extractPlainHttpUrls } from '../common/link-values';
+import {
+  extractPlainHttpUrls,
+  sanitizeTelegramHttpUrlCandidate,
+} from '../common/link-values';
 import type {
   GatewayChat,
   GatewayChatType,
@@ -26,19 +29,25 @@ function entityValue(entity: unknown, key: string): unknown {
 export function extractMessageUrls(message: Api.Message): string[] {
   const urls = new Set(extractPlainHttpUrls(message.message ?? ''));
   const entities = (message.getEntitiesText() ?? []) as [unknown, string][];
+  const addUrl = (value: string) => {
+    const sanitized = sanitizeTelegramHttpUrlCandidate(value);
+    if (sanitized) {
+      urls.add(sanitized);
+    }
+  };
 
   for (const [entity, text] of entities) {
     if (entity instanceof Api.MessageEntityTextUrl) {
-      urls.add(entity.url);
+      addUrl(entity.url);
     } else if (entity instanceof Api.MessageEntityUrl) {
-      urls.add(text);
+      addUrl(text);
     }
   }
 
   for (const row of message.buttons ?? []) {
     for (const button of row) {
       if (button.url) {
-        urls.add(button.url);
+        addUrl(button.url);
       }
     }
   }
