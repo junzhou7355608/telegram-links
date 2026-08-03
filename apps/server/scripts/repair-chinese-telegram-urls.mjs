@@ -1,5 +1,8 @@
 import 'dotenv/config';
+import console from 'node:console';
 import { randomUUID } from 'node:crypto';
+import process from 'node:process';
+import { URL } from 'node:url';
 import pg from 'pg';
 
 const { Client } = pg;
@@ -321,7 +324,8 @@ async function run() {
   }
 
   const connectionUrl = new URL(databaseUrl);
-  const schemaName = connectionUrl.searchParams.get('schema')?.trim() || 'public';
+  const schemaName =
+    connectionUrl.searchParams.get('schema')?.trim() || 'public';
   connectionUrl.searchParams.delete('schema');
   const client = new Client({ connectionString: connectionUrl.toString() });
   await client.connect();
@@ -369,9 +373,7 @@ async function run() {
     const affectedSources = sourceResult.rows.filter(({ rawUrl }) =>
       firstHanCharacter.test(rawUrl),
     );
-    const affectedLinkIds = new Set(
-      affectedSources.map((source) => source.id),
-    );
+    const affectedLinkIds = new Set(affectedSources.map((source) => source.id));
     const touchedLinkIds = new Set(affectedLinkIds);
     const mergedPairs = new Set();
     const counters = {

@@ -119,9 +119,7 @@ function FilterFields({
         </Select>
       </label>
 
-      <label
-        className={stacked ? 'grid gap-2 sm:col-span-2' : 'contents'}
-      >
+      <label className={stacked ? 'grid gap-2 sm:col-span-2' : 'contents'}>
         {stacked ? (
           <span className="text-xs font-medium text-muted-foreground">
             标签（匹配任意所选标签）

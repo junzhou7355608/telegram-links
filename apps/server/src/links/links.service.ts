@@ -116,33 +116,32 @@ export class LinksService {
       archivedAt: null,
       status: OrganizationStatus.ORGANIZED,
     };
-    const [total, recent, latestJob, categories, tags] =
-      await Promise.all([
-        this.prisma.link.count({ where: active }),
-        this.prisma.link.count({
-          where: { ...active, createdAt: { gte: sevenDaysAgo } },
-        }),
-        this.prisma.syncJob.findFirst({
-          orderBy: { createdAt: 'desc' },
-          select: { finishedAt: true, status: true },
-        }),
-        this.prisma.category.findMany({
-          include: {
-            _count: {
-              select: { links: { where: active } },
-            },
+    const [total, recent, latestJob, categories, tags] = await Promise.all([
+      this.prisma.link.count({ where: active }),
+      this.prisma.link.count({
+        where: { ...active, createdAt: { gte: sevenDaysAgo } },
+      }),
+      this.prisma.syncJob.findFirst({
+        orderBy: { createdAt: 'desc' },
+        select: { finishedAt: true, status: true },
+      }),
+      this.prisma.category.findMany({
+        include: {
+          _count: {
+            select: { links: { where: active } },
           },
-          orderBy: { name: 'asc' },
-        }),
-        this.prisma.tag.findMany({
-          include: {
-            _count: {
-              select: { links: { where: { link: active } } },
-            },
+        },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.tag.findMany({
+        include: {
+          _count: {
+            select: { links: { where: { link: active } } },
           },
-          orderBy: { name: 'asc' },
-        }),
-      ]);
+        },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
     return {
       counts: { recent, total },
       latestSync: latestJob
@@ -477,11 +476,7 @@ export class LinksService {
     title: string;
     url: string;
   }): void {
-    if (
-      !input.title ||
-      !input.categoryId ||
-      !requireHttpUrl(input.url)
-    ) {
+    if (!input.title || !input.categoryId || !requireHttpUrl(input.url)) {
       throw new BadRequestException({
         code: 'LINK_INCOMPLETE',
         message: '完成整理需要标题、URL 和分类。',

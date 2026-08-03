@@ -93,13 +93,9 @@ export function AdminShell() {
   const overview = overviewQuery.data;
   const authorized = accountQuery.data?.status === 'authorized';
   const serverState =
-    overviewQuery.error ||
-    accountQuery.error ||
-    latestJobQuery.error
+    overviewQuery.error || accountQuery.error || latestJobQuery.error
       ? ('offline' as const)
-      : overviewQuery.data &&
-          accountQuery.data &&
-          latestJobQuery.data
+      : overviewQuery.data && accountQuery.data && latestJobQuery.data
         ? ('online' as const)
         : ('connecting' as const);
 

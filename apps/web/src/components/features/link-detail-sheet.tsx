@@ -1,13 +1,7 @@
 import type { LinkResponseDto } from '@/api/types.gen';
 import { CategoryBadge } from '@/components/features/link-badges';
-import {
-  ApiErrorState,
-  PageSkeleton,
-} from '@/components/layouts/api-state';
-import {
-  displayLinkTitle,
-  formatCapturedAt,
-} from '@/lib/link-display';
+import { ApiErrorState, PageSkeleton } from '@/components/layouts/api-state';
+import { displayLinkTitle, formatCapturedAt } from '@/lib/link-display';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
 import {
@@ -25,12 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@repo/ui/components/sheet';
-import {
-  Copy,
-  ExternalLink,
-  Link2,
-  MessageSquareText,
-} from 'lucide-react';
+import { Copy, ExternalLink, Link2, MessageSquareText } from 'lucide-react';
 
 interface LinkDetailSheetProps {
   error: unknown;
@@ -58,7 +47,9 @@ export function LinkDetailSheet({
           <>
             <SheetHeader className="sr-only">
               <SheetTitle>正在加载链接详情</SheetTitle>
-              <SheetDescription>正在从 Server 读取链接及来源。</SheetDescription>
+              <SheetDescription>
+                正在从 Server 读取链接及来源。
+              </SheetDescription>
             </SheetHeader>
             <div className="p-5">
               <PageSkeleton rows={6} />
@@ -100,9 +91,7 @@ export function LinkDetailSheet({
                   <dd>{link.purpose ?? '尚未补充用途'}</dd>
 
                   <dt className="text-muted-foreground">域名</dt>
-                  <dd className="break-all font-mono text-xs">
-                    {link.domain}
-                  </dd>
+                  <dd className="break-all font-mono text-xs">{link.domain}</dd>
 
                   <dt className="text-muted-foreground">首次采集</dt>
                   <dd>{formatCapturedAt(link.firstDiscoveredAt)}</dd>
@@ -125,7 +114,10 @@ export function LinkDetailSheet({
                   )}
                 </div>
 
-                <section aria-labelledby="source-heading" className="grid gap-3">
+                <section
+                  aria-labelledby="source-heading"
+                  className="grid gap-3"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <h3 id="source-heading" className="text-sm font-medium">
                       Telegram 来源

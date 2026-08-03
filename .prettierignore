@@ -7,7 +7,13 @@ node_modules
 .vercel
 
 dist
+apps/admin/openapi.json
+apps/admin/src/api
+apps/admin/src/routeTree.gen.ts
 apps/server/src/generated/prisma
+apps/web/openapi.json
+apps/web/src/api
+apps/web/src/routeTree.gen.ts
 build
 out
 coverage

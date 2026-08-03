@@ -16,12 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@repo/ui/components/popover';
-import {
-  Check,
-  ChevronsUpDown,
-  LoaderCircle,
-  Plus,
-} from 'lucide-react';
+import { Check, ChevronsUpDown, LoaderCircle, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -185,9 +180,7 @@ export function CreatableTaxonomyPicker({
                   }}
                 >
                   <Check
-                    className={
-                      value.length === 0 ? 'opacity-100' : 'opacity-0'
-                    }
+                    className={value.length === 0 ? 'opacity-100' : 'opacity-0'}
                   />
                   未设置
                 </CommandItem>
@@ -218,9 +211,7 @@ export function CreatableTaxonomyPicker({
                     disabled={disabled || isCreating}
                     onSelect={() => selectOption(option.id)}
                   >
-                    <Check
-                      className={selected ? 'opacity-100' : 'opacity-0'}
-                    />
+                    <Check className={selected ? 'opacity-100' : 'opacity-0'} />
                     <span className="min-w-0 flex-1 truncate">
                       {option.name}
                     </span>

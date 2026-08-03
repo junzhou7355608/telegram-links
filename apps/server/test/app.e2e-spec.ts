@@ -156,9 +156,7 @@ class FakeTelegramGateway extends TelegramGateway {
       throw new Error('Fake Telegram chat failure');
     }
     const messages =
-      telegramPeerId === '-1007777777777'
-        ? [this.extraMessage]
-        : this.messages;
+      telegramPeerId === '-1007777777777' ? [this.extraMessage] : this.messages;
     for (const message of messages) {
       if (range.minId && message.messageId <= range.minId) {
         continue;
@@ -452,11 +450,9 @@ describe('Server API (e2e)', () => {
           }),
         ]),
       );
-      const extraChat = await app
-        .get(PrismaService)
-        .telegramChat.findFirst({
-          where: { title: '链接扫描测试群' },
-        });
+      const extraChat = await app.get(PrismaService).telegramChat.findFirst({
+        where: { title: '链接扫描测试群' },
+      });
       expect(extraChat?.lastSyncedMessageId).toBe(201);
       await expect(
         app.get(PrismaService).link.findUnique({
@@ -471,10 +467,12 @@ describe('Server API (e2e)', () => {
         where: { domain: 'github.com' },
       });
       const linkId = githubLink.id;
-      await request(server).get('/api/web/v1/links?q=github').expect(200, {
-        items: [],
-        pagination: { page: 1, pageSize: 8, total: 0, totalPages: 1 },
-      });
+      await request(server)
+        .get('/api/web/v1/links?q=github')
+        .expect(200, {
+          items: [],
+          pagination: { page: 1, pageSize: 8, total: 0, totalPages: 1 },
+        });
       await request(server).get(`/api/web/v1/links/${linkId}`).expect(404);
       await request(server)
         .get('/api/web/v1/links?status=pending')
@@ -503,9 +501,7 @@ describe('Server API (e2e)', () => {
       expect(linksBody.pagination.total).toBe(1);
       expect(linksBody.items[0].id).toBe(linkId);
       const taggedLinks = await request(server)
-        .get(
-          `/api/web/v1/links?tagIds=${tagBody.id},${unusedTagBody.id}`,
-        )
+        .get(`/api/web/v1/links?tagIds=${tagBody.id},${unusedTagBody.id}`)
         .expect(200);
       expect(
         responseBody<{ pagination: { total: number } }>(taggedLinks).pagination

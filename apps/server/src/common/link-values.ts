@@ -76,9 +76,7 @@ export function requireHttpUrl(value: string): NormalizedUrl {
   return normalized;
 }
 
-export function sanitizeTelegramHttpUrlCandidate(
-  value: string,
-): string | null {
+export function sanitizeTelegramHttpUrlCandidate(value: string): string | null {
   const trimmed = value.trim();
   const firstHanMatch = firstHanCharacter.exec(trimmed);
   const beforeHan =

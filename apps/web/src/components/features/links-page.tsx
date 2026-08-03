@@ -19,10 +19,7 @@ import { createWebLinksQuery } from '@/lib/web-api';
 import { defaultWebLinksSearch, type WebLinksSearch } from '@/lib/web-search';
 import { Badge } from '@repo/ui/components/badge';
 import { Button } from '@repo/ui/components/button';
-import {
-  keepPreviousData,
-  useQuery,
-} from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { SearchX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -173,7 +170,8 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
             aria-live="polite"
           >
             <p>
-              找到 <span className="font-medium">{pagination?.total ?? '—'}</span>{' '}
+              找到{' '}
+              <span className="font-medium">{pagination?.total ?? '—'}</span>{' '}
               条链接
             </p>
             <p className="text-xs text-muted-foreground">
@@ -240,10 +238,13 @@ export function LinksPage({ search, onSearchChange }: LinksPageProps) {
         onRetry={() => void detailQuery.refetch()}
         onOpenChange={(open) => {
           if (!open) {
-            updateSearch((previous) => ({
-              ...previous,
-              linkId: undefined,
-            }), { replace: true });
+            updateSearch(
+              (previous) => ({
+                ...previous,
+                linkId: undefined,
+              }),
+              { replace: true },
+            );
           }
         }}
       />

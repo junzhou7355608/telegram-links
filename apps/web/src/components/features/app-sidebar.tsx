@@ -17,12 +17,7 @@ import {
   useSidebar,
 } from '@repo/ui/components/sidebar';
 import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  Clock3,
-  Layers3,
-  LibraryBig,
-  Link2,
-} from 'lucide-react';
+import { Clock3, Layers3, LibraryBig, Link2 } from 'lucide-react';
 
 interface AppSidebarProps {
   overview?: WebOverviewResponseDto;

@@ -25,7 +25,9 @@ export function WorkspaceHeader({
         {overview ? (
           <Badge variant="secondary">{overview.counts.total} 条链接</Badge>
         ) : (
-          <Badge variant={serverState === 'offline' ? 'destructive' : 'outline'}>
+          <Badge
+            variant={serverState === 'offline' ? 'destructive' : 'outline'}
+          >
             {serverState === 'offline' ? 'Server 离线' : '正在连接'}
           </Badge>
         )}

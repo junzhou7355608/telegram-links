@@ -179,7 +179,9 @@ export function LinkList({
                 <dt className="text-muted-foreground">分类</dt>
                 <dd>{link.category?.name ?? '未设置'}</dd>
                 <dt className="text-muted-foreground">标签</dt>
-                <dd>{link.tags.map((tag) => tag.name).join('、') || '未设置'}</dd>
+                <dd>
+                  {link.tags.map((tag) => tag.name).join('、') || '未设置'}
+                </dd>
                 <dt className="text-muted-foreground">来源</dt>
                 <dd className="truncate">
                   {link.latestSource?.chatName ?? '—'}

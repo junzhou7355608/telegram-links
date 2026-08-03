@@ -68,9 +68,7 @@ export function TagFilter({ options, value, onChange }: TagFilterProps) {
                     value={option.name}
                     onSelect={() => toggle(option.id)}
                   >
-                    <Check
-                      className={selected ? 'opacity-100' : 'opacity-0'}
-                    />
+                    <Check className={selected ? 'opacity-100' : 'opacity-0'} />
                     <span className="min-w-0 flex-1 truncate">
                       {option.name}
                     </span>
