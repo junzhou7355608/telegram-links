@@ -61,6 +61,12 @@ pnpm dev
 接口按 `/api/web/v1` 和 `/api/admin/v1` 分区。更多环境变量、授权和同步说明见
 [Server README](./apps/server/README.md)。
 
+## 免费部署
+
+生产部署使用单个 Koyeb Web Service 承载 Caddy、Web、Admin 和 Server，数据库使用
+Neon PostgreSQL。完整的账号准备、环境变量、数据迁移和验收步骤见
+[Koyeb + Neon 部署指南](./docs/deployment-koyeb-neon.md)。
+
 ## 常用命令
 
 ```bash

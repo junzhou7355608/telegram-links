@@ -1,0 +1,13 @@
+.git
+.github
+.turbo
+**/.env
+**/.env.*
+**/coverage
+**/dist
+**/node_modules
+apps/server/src/generated/prisma
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
