@@ -460,7 +460,7 @@ export const zAdminTaxonomyControllerRemovePath = z.object({
 });
 
 /**
- * 删除未被引用的基础资料。
+ * 删除基础资料，并归档或解除关联的链接。
  */
 export const zAdminTaxonomyControllerRemoveResponse = z.void();
 
