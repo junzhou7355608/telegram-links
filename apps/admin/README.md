@@ -8,6 +8,7 @@ Query、Axios、Hey API、Jotai 和共享 shadcn/ui 构建。
 
 ## 路由
 
+- `/login`：Admin 用户名和密码登录
 - `/links/pending`：待整理队列
 - `/links`：全部链接
 - `/sync-jobs`：同步任务
@@ -15,7 +16,7 @@ Query、Axios、Hey API、Jotai 和共享 shadcn/ui 构建。
 - `/telegram`：Telegram 账号与聊天来源边界
 
 筛选、分页和详情 `linkId` 使用 TanStack Router search params 保存，刷新与前进后退
-可恢复。`/` 自动重定向到 `/links/pending`。
+可恢复。`/` 自动进入受保护的工作台，未登录访问业务路由时跳转到 `/login`。
 
 ## 项目结构
 
@@ -65,6 +66,8 @@ CORS。生产环境可通过 `VITE_API_BASE_URL` 指定地址；留空时使用�
 
 Admin 不提供演示数据回退。Server 不可用时显示错误状态，数据库为空时显示真实空态。
 Telegram 验证码和 2FA 密码不会写入 Jotai、localStorage 或日志。
+Admin 登录状态使用 Server 签发的 HttpOnly Cookie，前端只缓存会话状态；退出时会
+清除 QueryClient，避免保留管理数据。
 
 ## 常用命令
 

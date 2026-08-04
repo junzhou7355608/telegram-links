@@ -7,15 +7,22 @@ MTProto，同步选定聊天中的链接，并通过 Prisma 保存到本地 Post
 ## 本地启动
 
 1. 在 <https://my.telegram.org> 创建应用并取得 `api_id`、`api_hash`。
-2. 复制环境文件并填写 Telegram 凭据：
+2. 复制环境文件并填写 Admin 登录和 Telegram 凭据：
 
 ```bash
 cp apps/server/.env.example apps/server/.env
 openssl rand -base64 32
 ```
 
-将生成值写入 `TELEGRAM_SESSION_ENCRYPTION_KEY`。该密钥用于 AES-256-GCM
-加密 Telegram StringSession；丢失后需要重新授权账号。
+分别生成 `ADMIN_AUTH_SESSION_SECRET` 和 `TELEGRAM_SESSION_ENCRYPTION_KEY`。
+前者签名 7 天有效的 Admin HttpOnly Cookie；后者用于 AES-256-GCM 加密 Telegram
+StringSession，丢失后需要重新授权账号。Admin 密码继续使用 Caddy bcrypt 格式：
+
+```bash
+docker run --rm -it caddy:2.10.2-alpine caddy hash-password
+```
+
+将用户名和输出的哈希写入 `BASIC_AUTH_USERNAME`、`BASIC_AUTH_PASSWORD_HASH`。
 
 ```bash
 pnpm db:up
@@ -33,7 +40,10 @@ pnpm --filter server start:dev
 ## 接口分区
 
 - `/api/web/v1`：只读展示未归档且已整理的链接列表、详情和概览。
-- `/api/admin/v1`：Telegram 授权、聊天刷新、同步任务和链接整理。
+- `/api/admin/v1`：登录后使用的 Telegram 授权、聊天刷新、同步任务和链接整理。
+
+Admin 会话接口为 `GET`、`POST`、`DELETE /api/admin/v1/auth/session`。登录 Cookie
+不会写入 JavaScript 可读存储；Web 接口和健康检查始终公开。
 
 首次授权依次调用：
 

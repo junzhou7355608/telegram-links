@@ -45,7 +45,7 @@ Server 使用独立的 PostgreSQL 17 容器，宿主机默认端口为 `5433`。
 
 ```bash
 cp apps/server/.env.example apps/server/.env
-# 在 apps/server/.env 中填写 Telegram API 凭据和会话加密密钥
+# 在 apps/server/.env 中填写 Admin 登录、Telegram 凭据和会话加密密钥
 pnpm db:up
 pnpm dev
 ```
@@ -60,6 +60,9 @@ pnpm dev
 
 接口按 `/api/web/v1` 和 `/api/admin/v1` 分区。更多环境变量、授权和同步说明见
 [Server README](./apps/server/README.md)。
+
+Web 及 `/api/web/v1/**` 无需登录；Admin 使用 `/admin/login` 登录，服务端会保护
+所有 `/api/admin/v1/**` 业务接口。
 
 ## 免费部署
 

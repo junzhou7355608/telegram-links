@@ -1,15 +1,15 @@
 # Koyeb + Neon 部署指南
 
 本指南将 Web、Admin 和 Server 打包到一个生产容器，并使用 Neon PostgreSQL 保存
-数据。Koyeb 提供外部 HTTPS，容器内部由 Caddy 提供静态资源、Basic Auth 和 API
-反向代理。
+数据。Koyeb 提供外部 HTTPS，容器内部由 Caddy 提供静态资源和 API 反向代理，
+Server 负责 Admin Cookie 会话。
 
 生产地址布局：
 
 - `/`：Web 查询端。
-- `/admin/`：Admin 管理端。
+- `/admin/`：需要页面登录的 Admin 管理端。
 - `/api/**`：NestJS API。
-- `/api/healthz`：Koyeb 健康检查，不访问数据库且不要求 Basic Auth。
+- `/api/healthz`：Koyeb 健康检查，不访问数据库且不要求登录。
 
 ## 账号和资源
 
@@ -44,8 +44,9 @@ Koyeb 服务使用以下设置：
 | `TELEGRAM_API_ID`                 | Telegram 应用 ID                    |
 | `TELEGRAM_API_HASH`               | Telegram 应用 Hash                  |
 | `TELEGRAM_SESSION_ENCRYPTION_KEY` | 现有 32 字节 Base64 会话密钥        |
-| `BASIC_AUTH_USERNAME`             | 全站 Basic Auth 用户名              |
-| `BASIC_AUTH_PASSWORD_HASH`        | Caddy bcrypt 密码哈希，不是明文密码 |
+| `BASIC_AUTH_USERNAME`             | Admin 登录用户名                    |
+| `BASIC_AUTH_PASSWORD_HASH`        | Admin bcrypt 密码哈希，不是明文密码 |
+| `ADMIN_AUTH_SESSION_SECRET`       | 32 字节 Base64 Cookie 签名密钥      |
 
 普通环境变量固定为：
 
@@ -66,7 +67,8 @@ Render 部署应让 `PORT` 与平台配置的公网端口一致；Koyeb 继续�
 docker run --rm -it caddy:2.10.2-alpine caddy hash-password
 ```
 
-将输出保存为 `BASIC_AUTH_PASSWORD_HASH`，明文密码只交给站点使用者保管。
+将输出保存为 `BASIC_AUTH_PASSWORD_HASH`，明文密码只交给站点使用者保管。再运行一次
+`openssl rand -base64 32`，将输出保存为 `ADMIN_AUTH_SESSION_SECRET`。
 
 ## 迁移本地数据
 
@@ -96,9 +98,9 @@ export DIRECT_DATABASE_URL='<NEON_DIRECT_URL>'
 
 上线后依次验证：
 
-1. `/api/healthz` 无认证返回 `200`。
-2. 其他页面和 API 无认证返回 `401`。
-3. 登录后 `/links`、`/admin/links/pending` 和只读 API 正常。
+1. `/api/healthz`、`/`、`/links` 和 `/api/web/v1/**` 无认证正常访问。
+2. `/admin/` 显示登录页，Admin API 无 Cookie 返回 `401`。
+3. 页面登录后 `/admin/links/pending` 和 Admin API 正常。
 4. Telegram 会话恢复；若 Telegram 拒绝旧会话，再从 Admin 重新授权。
 5. 创建小范围同步任务，确认数据写入和任务轮询正常。
 6. 触发一次重新部署，确认数据库数据和 Telegram 加密会话仍可恢复。
