@@ -4,6 +4,16 @@ export type ClientOptions = {
   baseURL: string;
 };
 
+export type AdminSessionResponseDto = {
+  authenticated: boolean;
+  username?: string;
+};
+
+export type AdminLoginDto = {
+  username: string;
+  password: string;
+};
+
 export type ApiErrorResponseDto = {
   statusCode: number;
   code: string;
@@ -20,7 +30,6 @@ export type OverviewCountResponseDto = {
 };
 
 export type WebOverviewCountsResponseDto = {
-  pending: number;
   recent: number;
   total: number;
 };
@@ -40,6 +49,7 @@ export type WebOverviewResponseDto = {
   categories: Array<OverviewCountResponseDto>;
   counts: WebOverviewCountsResponseDto;
   latestSync: WebLatestSyncResponseDto | null;
+  tags: Array<OverviewCountResponseDto>;
 };
 
 export type TaxonomyReferenceResponseDto = {
@@ -321,6 +331,59 @@ export type VerifyPasswordDtoWritable = {
   password: string;
 };
 
+export type AdminAuthControllerLogoutData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/auth/session';
+};
+
+export type AdminAuthControllerLogoutResponses = {
+  /**
+   * 管理端会话已清除。
+   */
+  204: void;
+};
+
+export type AdminAuthControllerLogoutResponse =
+  AdminAuthControllerLogoutResponses[keyof AdminAuthControllerLogoutResponses];
+
+export type AdminAuthControllerSessionData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/auth/session';
+};
+
+export type AdminAuthControllerSessionResponses = {
+  200: AdminSessionResponseDto;
+};
+
+export type AdminAuthControllerSessionResponse =
+  AdminAuthControllerSessionResponses[keyof AdminAuthControllerSessionResponses];
+
+export type AdminAuthControllerLoginData = {
+  body: AdminLoginDto;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/auth/session';
+};
+
+export type AdminAuthControllerLoginErrors = {
+  401: ApiErrorResponseDto;
+  429: ApiErrorResponseDto;
+};
+
+export type AdminAuthControllerLoginError =
+  AdminAuthControllerLoginErrors[keyof AdminAuthControllerLoginErrors];
+
+export type AdminAuthControllerLoginResponses = {
+  200: AdminSessionResponseDto;
+};
+
+export type AdminAuthControllerLoginResponse =
+  AdminAuthControllerLoginResponses[keyof AdminAuthControllerLoginResponses];
+
 export type AdminLinksControllerOverviewData = {
   body?: never;
   path?: never;
@@ -330,6 +393,7 @@ export type AdminLinksControllerOverviewData = {
 
 export type AdminLinksControllerOverviewErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -365,6 +429,7 @@ export type AdminLinksControllerListData = {
 
 export type AdminLinksControllerListErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -389,6 +454,7 @@ export type AdminLinksControllerBatchData = {
 
 export type AdminLinksControllerBatchErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -413,6 +479,7 @@ export type AdminLinksControllerBatchArchiveData = {
 
 export type AdminLinksControllerBatchArchiveErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -439,6 +506,7 @@ export type AdminLinksControllerArchiveData = {
 
 export type AdminLinksControllerArchiveErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -468,6 +536,7 @@ export type AdminLinksControllerFindOneData = {
 
 export type AdminLinksControllerFindOneErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -494,6 +563,7 @@ export type AdminLinksControllerUpdateData = {
 
 export type AdminLinksControllerUpdateErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -520,6 +590,7 @@ export type AdminLinksControllerRestoreData = {
 
 export type AdminLinksControllerRestoreErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -632,6 +703,7 @@ export type AdminTaxonomyControllerListData = {
 
 export type AdminTaxonomyControllerListErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -658,6 +730,7 @@ export type AdminTaxonomyControllerCreateData = {
 
 export type AdminTaxonomyControllerCreateErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -685,6 +758,7 @@ export type AdminTaxonomyControllerRemoveData = {
 
 export type AdminTaxonomyControllerRemoveErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;
@@ -715,6 +789,7 @@ export type AdminTaxonomyControllerRenameData = {
 
 export type AdminTaxonomyControllerRenameErrors = {
   400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
   404: ApiErrorResponseDto;
   409: ApiErrorResponseDto;
   500: ApiErrorResponseDto;

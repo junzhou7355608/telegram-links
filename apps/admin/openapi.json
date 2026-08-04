@@ -1,6 +1,88 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/admin/v1/auth/session": {
+      "get": {
+        "operationId": "AdminAuthController_session",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Auth"
+        ]
+      },
+      "post": {
+        "operationId": "AdminAuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Auth"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminAuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "管理端会话已清除。"
+          }
+        },
+        "tags": [
+          "Admin - Auth"
+        ]
+      }
+    },
     "/api/admin/v1/overview": {
       "get": {
         "operationId": "AdminLinksController_overview",
@@ -17,6 +99,16 @@
             }
           },
           "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
             "description": "",
             "content": {
               "application/json": {
@@ -57,6 +149,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -194,6 +291,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -225,6 +332,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -265,6 +377,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -296,6 +418,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -336,6 +463,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -367,6 +504,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -406,6 +548,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -437,6 +589,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -484,6 +641,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -515,6 +682,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -545,6 +717,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -576,6 +758,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -615,6 +802,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -646,6 +843,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Links"
         ]
@@ -747,6 +949,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Sync jobs"
         ]
@@ -858,6 +1065,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Sync jobs"
         ]
@@ -958,6 +1170,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Sync jobs"
         ]
@@ -1004,6 +1221,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -1035,6 +1262,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Taxonomy"
         ]
@@ -1086,6 +1318,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -1117,6 +1359,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Taxonomy"
         ]
@@ -1178,6 +1425,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -1209,6 +1466,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Taxonomy"
         ]
@@ -1251,6 +1513,16 @@
               }
             }
           },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "",
             "content": {
@@ -1282,6 +1554,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Taxonomy"
         ]
@@ -1373,6 +1650,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -1474,6 +1756,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -1575,6 +1862,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -1676,6 +1968,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -1760,6 +2057,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -1851,6 +2153,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -1986,6 +2293,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -2077,6 +2389,11 @@
             }
           }
         },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "tags": [
           "Admin - Telegram"
         ]
@@ -2092,7 +2409,49 @@
   "tags": [],
   "servers": [],
   "components": {
+    "securitySchemes": {
+      "adminSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "telegram_links_admin_session"
+      }
+    },
     "schemas": {
+      "AdminSessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "authenticated": {
+            "type": "boolean",
+            "example": true
+          },
+          "username": {
+            "type": "string",
+            "example": "admin"
+          }
+        },
+        "required": [
+          "authenticated"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "admin",
+            "maxLength": 128
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
       "ApiErrorResponseDto": {
         "type": "object",
         "properties": {
@@ -2154,9 +2513,6 @@
       "WebOverviewCountsResponseDto": {
         "type": "object",
         "properties": {
-          "pending": {
-            "type": "number"
-          },
           "recent": {
             "type": "number"
           },
@@ -2165,7 +2521,6 @@
           }
         },
         "required": [
-          "pending",
           "recent",
           "total"
         ]
@@ -2215,12 +2570,19 @@
                 "$ref": "#/components/schemas/WebLatestSyncResponseDto"
               }
             ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OverviewCountResponseDto"
+            }
           }
         },
         "required": [
           "categories",
           "counts",
-          "latestSync"
+          "latestSync",
+          "tags"
         ]
       },
       "TaxonomyReferenceResponseDto": {

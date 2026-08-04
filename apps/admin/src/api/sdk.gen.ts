@@ -9,6 +9,13 @@ import type {
 } from './client';
 import { client } from './client.gen';
 import type {
+  AdminAuthControllerLoginData,
+  AdminAuthControllerLoginErrors,
+  AdminAuthControllerLoginResponses,
+  AdminAuthControllerLogoutData,
+  AdminAuthControllerLogoutResponses,
+  AdminAuthControllerSessionData,
+  AdminAuthControllerSessionResponses,
   AdminLinksControllerArchiveData,
   AdminLinksControllerArchiveErrors,
   AdminLinksControllerArchiveResponses,
@@ -80,6 +87,9 @@ import type {
   AdminTelegramControllerVerifyPasswordResponses,
 } from './types.gen';
 import {
+  zAdminAuthControllerLoginResponse,
+  zAdminAuthControllerLogoutResponse,
+  zAdminAuthControllerSessionResponse,
   zAdminLinksControllerArchiveResponse,
   zAdminLinksControllerBatchArchiveResponse,
   zAdminLinksControllerBatchResponse,
@@ -123,6 +133,60 @@ export type Options<
   meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
+export const adminAuthControllerLogout = <ThrowOnError extends boolean = false>(
+  options?: Options<AdminAuthControllerLogoutData, ThrowOnError>,
+): RequestResult<AdminAuthControllerLogoutResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).delete<
+    AdminAuthControllerLogoutResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseValidator: async (data) =>
+      await zAdminAuthControllerLogoutResponse.parseAsync(data),
+    url: '/api/admin/v1/auth/session',
+    ...options,
+  });
+
+export const adminAuthControllerSession = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<AdminAuthControllerSessionData, ThrowOnError>,
+): RequestResult<AdminAuthControllerSessionResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    AdminAuthControllerSessionResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminAuthControllerSessionResponse.parseAsync(data),
+    url: '/api/admin/v1/auth/session',
+    ...options,
+  });
+
+export const adminAuthControllerLogin = <ThrowOnError extends boolean = false>(
+  options: Options<AdminAuthControllerLoginData, ThrowOnError>,
+): RequestResult<
+  AdminAuthControllerLoginResponses,
+  AdminAuthControllerLoginErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    AdminAuthControllerLoginResponses,
+    AdminAuthControllerLoginErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminAuthControllerLoginResponse.parseAsync(data),
+    url: '/api/admin/v1/auth/session',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
 export const adminLinksControllerOverview = <
   ThrowOnError extends boolean = false,
 >(
@@ -140,6 +204,13 @@ export const adminLinksControllerOverview = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerOverviewResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/overview',
     ...options,
   });
@@ -159,6 +230,13 @@ export const adminLinksControllerList = <ThrowOnError extends boolean = false>(
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerListResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links',
     ...options,
   });
@@ -178,6 +256,13 @@ export const adminLinksControllerBatch = <ThrowOnError extends boolean = false>(
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerBatchResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links/batch',
     ...options,
     headers: {
@@ -203,6 +288,13 @@ export const adminLinksControllerBatchArchive = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerBatchArchiveResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links/batch/archive',
     ...options,
     headers: {
@@ -227,6 +319,13 @@ export const adminLinksControllerArchive = <
   >({
     responseValidator: async (data) =>
       await zAdminLinksControllerArchiveResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links/{id}',
     ...options,
   });
@@ -248,6 +347,13 @@ export const adminLinksControllerFindOne = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerFindOneResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links/{id}',
     ...options,
   });
@@ -269,6 +375,13 @@ export const adminLinksControllerUpdate = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerUpdateResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links/{id}',
     ...options,
     headers: {
@@ -294,6 +407,13 @@ export const adminLinksControllerRestore = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminLinksControllerRestoreResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/links/{id}/restore',
     ...options,
   });
@@ -313,6 +433,13 @@ export const adminSyncControllerList = <ThrowOnError extends boolean = false>(
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminSyncControllerListResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/sync-jobs',
     ...options,
   });
@@ -332,6 +459,13 @@ export const adminSyncControllerCreate = <ThrowOnError extends boolean = false>(
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminSyncControllerCreateResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/sync-jobs',
     ...options,
     headers: {
@@ -357,6 +491,13 @@ export const adminSyncControllerFindOne = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminSyncControllerFindOneResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/sync-jobs/{id}',
     ...options,
   });
@@ -378,6 +519,13 @@ export const adminTaxonomyControllerList = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTaxonomyControllerListResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/taxonomy/{kind}',
     ...options,
   });
@@ -399,6 +547,13 @@ export const adminTaxonomyControllerCreate = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTaxonomyControllerCreateResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/taxonomy/{kind}',
     ...options,
     headers: {
@@ -423,6 +578,13 @@ export const adminTaxonomyControllerRemove = <
   >({
     responseValidator: async (data) =>
       await zAdminTaxonomyControllerRemoveResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/taxonomy/{kind}/{id}',
     ...options,
   });
@@ -444,6 +606,13 @@ export const adminTaxonomyControllerRename = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTaxonomyControllerRenameResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/taxonomy/{kind}/{id}',
     ...options,
     headers: {
@@ -469,6 +638,13 @@ export const adminTelegramControllerAccount = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerAccountResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/account',
     ...options,
   });
@@ -490,6 +666,13 @@ export const adminTelegramControllerSendCode = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerSendCodeResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/auth/code',
     ...options,
     headers: {
@@ -515,6 +698,13 @@ export const adminTelegramControllerVerifyCode = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerVerifyCodeResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/auth/code/verify',
     ...options,
     headers: {
@@ -540,6 +730,13 @@ export const adminTelegramControllerVerifyPassword = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerVerifyPasswordResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/auth/password/verify',
     ...options,
     headers: {
@@ -564,6 +761,13 @@ export const adminTelegramControllerLogOut = <
   >({
     responseValidator: async (data) =>
       await zAdminTelegramControllerLogOutResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/session',
     ...options,
   });
@@ -585,6 +789,13 @@ export const adminTelegramControllerRefreshChats = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerRefreshChatsResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/chats/refresh',
     ...options,
   });
@@ -606,6 +817,13 @@ export const adminTelegramControllerListChats = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerListChatsResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/chats',
     ...options,
   });
@@ -627,6 +845,13 @@ export const adminTelegramControllerScanOptions = <
     responseType: 'json',
     responseValidator: async (data) =>
       await zAdminTelegramControllerScanOptionsResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
     url: '/api/admin/v1/telegram/chats/scan-options',
     ...options,
   });

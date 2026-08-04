@@ -2,6 +2,16 @@
 
 import * as z from 'zod';
 
+export const zAdminSessionResponseDto = z.object({
+  authenticated: z.boolean(),
+  username: z.string().optional(),
+});
+
+export const zAdminLoginDto = z.object({
+  username: z.string().max(128),
+  password: z.string().max(512),
+});
+
 export const zApiErrorResponseDto = z.object({
   statusCode: z.number(),
   code: z.string(),
@@ -18,7 +28,6 @@ export const zOverviewCountResponseDto = z.object({
 });
 
 export const zWebOverviewCountsResponseDto = z.object({
-  pending: z.number(),
   recent: z.number(),
   total: z.number(),
 });
@@ -39,6 +48,7 @@ export const zWebOverviewResponseDto = z.object({
   categories: z.array(zOverviewCountResponseDto),
   counts: zWebOverviewCountsResponseDto,
   latestSync: zWebLatestSyncResponseDto.nullable(),
+  tags: z.array(zOverviewCountResponseDto),
 });
 
 export const zTaxonomyReferenceResponseDto = z.object({
@@ -317,6 +327,17 @@ export const zVerifyPasswordDtoWritable = z.object({
   challengeId: z.uuid(),
   password: z.string(),
 });
+
+/**
+ * 管理端会话已清除。
+ */
+export const zAdminAuthControllerLogoutResponse = z.void();
+
+export const zAdminAuthControllerSessionResponse = zAdminSessionResponseDto;
+
+export const zAdminAuthControllerLoginBody = zAdminLoginDto;
+
+export const zAdminAuthControllerLoginResponse = zAdminSessionResponseDto;
 
 export const zAdminLinksControllerOverviewResponse = zAdminOverviewResponseDto;
 
