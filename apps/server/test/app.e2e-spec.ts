@@ -323,6 +323,10 @@ describe('Server API (e2e)', () => {
           );
         });
       await request(server)
+        .post('/api/admin/v1/links')
+        .send({ title: '未授权链接', url: 'https://unauthorized.example' })
+        .expect(401);
+      await request(server)
         .get('/api/admin/v1/auth/session')
         .expect(200, { authenticated: false });
       await request(server)
@@ -359,6 +363,142 @@ describe('Server API (e2e)', () => {
         .get('/api/admin/v1/auth/session')
         .expect(200, { authenticated: false });
       await api.get('/api/admin/v1/overview').expect(401);
+    } finally {
+      await closeApplication(app);
+    }
+  });
+
+  it('creates manual links and only exposes organized records to Web', async () => {
+    const app = await createTestApplication(false);
+    try {
+      const api = await createAdminAgent(app.getHttpServer());
+      const category = await api
+        .post('/api/admin/v1/taxonomy/categories')
+        .send({ name: '手动分类' })
+        .expect(201);
+      const tag = await api
+        .post('/api/admin/v1/taxonomy/tags')
+        .send({ name: '手动标签' })
+        .expect(201);
+      const categoryId = responseBody<{ id: string }>(category).id;
+      const tagId = responseBody<{ id: string }>(tag).id;
+
+      const pending = await api
+        .post('/api/admin/v1/links')
+        .send({
+          purpose: '稍后整理',
+          status: 'pending',
+          tagIds: [tagId],
+          title: '手动草稿',
+          url: 'https://Manual-Pending.Example/path/#section',
+        })
+        .expect(201);
+      expect(pending.body).toMatchObject({
+        category: null,
+        domain: 'manual-pending.example',
+        latestSource: null,
+        purpose: '稍后整理',
+        sourceCount: 0,
+        sources: [],
+        status: 'pending',
+        tags: [{ id: tagId, name: '手动标签' }],
+        title: '手动草稿',
+        url: 'https://manual-pending.example/path',
+      });
+      expect(
+        typeof responseBody<{ createdAt: string }>(pending).createdAt,
+      ).toBe('string');
+      await api
+        .get('/api/web/v1/links?q=manual-pending')
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<{ pagination: { total: number } }>(response).pagination
+              .total,
+          ).toBe(0);
+        });
+
+      const organized = await api
+        .post('/api/admin/v1/links')
+        .send({
+          categoryId,
+          purpose: '公开查询',
+          status: 'organized',
+          tagIds: [tagId],
+          title: '手动完成链接',
+          url: 'https://manual-organized.example/docs/#intro',
+        })
+        .expect(201);
+      const organizedBody = responseBody<{
+        category: { id: string; name: string };
+        id: string;
+        sourceCount: number;
+        status: string;
+      }>(organized);
+      expect(organizedBody).toMatchObject({
+        category: { id: categoryId, name: '手动分类' },
+        sourceCount: 0,
+        status: 'organized',
+      });
+      await api
+        .get('/api/web/v1/links?q=manual-organized')
+        .expect(200)
+        .expect((response) => {
+          const body = responseBody<{
+            items: Array<{ id: string }>;
+            pagination: { total: number };
+          }>(response);
+          expect(body.pagination.total).toBe(1);
+          expect(body.items[0]?.id).toBe(organizedBody.id);
+        });
+
+      await api
+        .post('/api/admin/v1/links')
+        .send({ title: '无效链接', url: 'not-a-url' })
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'INVALID_URL' }),
+          );
+        });
+      await api
+        .post('/api/admin/v1/links')
+        .send({
+          status: 'organized',
+          title: '缺少分类',
+          url: 'https://missing-category.example',
+        })
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'LINK_INCOMPLETE' }),
+          );
+        });
+      await api
+        .post('/api/admin/v1/links')
+        .send({
+          categoryId: '00000000-0000-4000-8000-000000000001',
+          title: '无效分类',
+          url: 'https://invalid-taxonomy.example',
+        })
+        .expect(400)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'INVALID_TAXONOMY_REFERENCE' }),
+          );
+        });
+      await api
+        .post('/api/admin/v1/links')
+        .send({
+          title: '重复域名',
+          url: 'https://manual-pending.example/another-page',
+        })
+        .expect(409)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'LINK_DOMAIN_CONFLICT' }),
+          );
+        });
     } finally {
       await closeApplication(app);
     }

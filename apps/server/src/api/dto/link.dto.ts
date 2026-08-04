@@ -6,6 +6,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -21,6 +22,10 @@ import {
 import { PaginationQueryDto } from '../../common/pagination.dto';
 import { SyncJobStatusDtoValue } from './sync.dto';
 import { PaginationMetaResponseDto } from './pagination.dto';
+
+function trimString(value: unknown): unknown {
+  return typeof value === 'string' ? value.trim() : value;
+}
 
 export class LinkQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ type: String })
@@ -106,6 +111,47 @@ export class WebLinkQueryDto extends PaginationQueryDto {
         ? input.split(',').filter(Boolean)
         : undefined;
   })
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  tagIds?: string[];
+}
+
+export class CreateLinkDto {
+  @ApiProperty({ maxLength: 4096, type: String })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(4096)
+  url!: string;
+
+  @ApiProperty({ maxLength: 500, type: String })
+  @Transform(({ value }) => trimString(value))
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  title!: string;
+
+  @ApiPropertyOptional({ maxLength: 4000, nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  purpose?: string | null;
+
+  @ApiPropertyOptional({
+    default: OrganizationStatusValue.Pending,
+    enum: OrganizationStatusValue,
+  })
+  @IsOptional()
+  @IsEnum(OrganizationStatusValue)
+  status?: OrganizationStatusValue;
+
+  @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid', isArray: true, type: String })
+  @IsOptional()
   @IsArray()
   @ArrayUnique()
   @IsUUID('4', { each: true })

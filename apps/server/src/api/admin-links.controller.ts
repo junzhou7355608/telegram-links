@@ -10,7 +10,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { LinksService } from '../links/links.service';
 import {
   AdminLinkResponseDto,
@@ -18,6 +23,7 @@ import {
   BatchArchiveLinksDto,
   BatchUpdateLinksResponseDto,
   BatchUpdateLinksDto,
+  CreateLinkDto,
   LinkQueryDto,
   PaginatedLinksResponseDto,
   UpdateLinkDto,
@@ -52,6 +58,12 @@ export class AdminLinksController {
       tagIds: query.tagIds,
       view: query.view,
     });
+  }
+
+  @Post('links')
+  @ApiCreatedResponse({ type: AdminLinkResponseDto })
+  create(@Body() body: CreateLinkDto) {
+    return this.links.create(body);
   }
 
   @Patch('links/batch')

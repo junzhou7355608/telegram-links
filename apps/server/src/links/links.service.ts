@@ -14,7 +14,7 @@ import {
   requireHttpUrl,
   toOrganizationStatus,
   WebLinkViewValue,
-  type OrganizationStatusValue,
+  OrganizationStatusValue,
 } from '../common/link-values';
 import { paginationMeta } from '../common/pagination.dto';
 
@@ -54,6 +54,15 @@ export interface UpdateLinkInput {
   tagIds?: string[];
   title?: string;
   url?: string;
+}
+
+export interface CreateLinkInput {
+  categoryId?: string | null;
+  purpose?: string | null;
+  status?: OrganizationStatusValue;
+  tagIds?: string[];
+  title: string;
+  url: string;
 }
 
 export interface BatchUpdateLinkInput extends UpdateLinkInput {
@@ -108,6 +117,66 @@ export class LinksService {
       });
     }
     return this.toResponse(link, true);
+  }
+
+  async create(input: CreateLinkInput) {
+    const normalized = requireHttpUrl(input.url);
+    const title = input.title.trim();
+    if (!title) {
+      throw new BadRequestException({
+        code: 'LINK_TITLE_REQUIRED',
+        message: '请输入链接标题。',
+      });
+    }
+
+    const next = {
+      categoryId: input.categoryId ?? null,
+      purpose: input.purpose?.trim() || null,
+      status: toOrganizationStatus(
+        input.status ?? OrganizationStatusValue.Pending,
+      ),
+      title,
+      url: normalized.url,
+    };
+    if (next.status === OrganizationStatus.ORGANIZED) {
+      this.assertCanOrganize(next);
+    }
+    await this.assertTaxonomy(next.categoryId, input.tagIds);
+
+    const existing = await this.prisma.link.findUnique({
+      select: { id: true },
+      where: { domain: normalized.domain },
+    });
+    if (existing) {
+      throw this.linkDomainConflict();
+    }
+
+    try {
+      const created = await this.prisma.link.create({
+        data: {
+          categoryId: next.categoryId,
+          domain: normalized.domain,
+          normalizedUrl: normalized.normalizedUrl,
+          purpose: next.purpose,
+          status: next.status,
+          tags: input.tagIds
+            ? { create: input.tagIds.map((tagId) => ({ tagId })) }
+            : undefined,
+          title: next.title,
+          url: next.url,
+        },
+        select: { id: true },
+      });
+      return this.findOne(created.id);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw this.linkDomainConflict();
+      }
+      throw error;
+    }
   }
 
   async webOverview() {
@@ -482,6 +551,13 @@ export class LinksService {
         message: '完成整理需要标题、URL 和分类。',
       });
     }
+  }
+
+  private linkDomainConflict(): ConflictException {
+    return new ConflictException({
+      code: 'LINK_DOMAIN_CONFLICT',
+      message: '该域名已存在。',
+    });
   }
 
   private async assertTaxonomy(
