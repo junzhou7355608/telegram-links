@@ -1,4 +1,5 @@
 import {
+  adminLinksControllerCreateMutation,
   adminLinksControllerArchiveMutation,
   adminLinksControllerBatchArchiveMutation,
   adminLinksControllerBatchMutation,
@@ -11,10 +12,12 @@ import {
 } from '@/api/@tanstack/react-query.gen';
 import type {
   BatchLinkPatchDto,
+  CreateLinkDto,
   TaxonomyItemResponseDto,
   UpdateLinkDto,
 } from '@/api/types.gen';
 import { BulkActions } from '@/components/features/bulk-actions';
+import { LinkCreateSheet } from '@/components/features/link-create-sheet';
 import { LinkEditSheet } from '@/components/features/link-edit-sheet';
 import { LinkFiltersBar } from '@/components/features/link-filters';
 import { LinkList } from '@/components/features/link-list';
@@ -31,6 +34,7 @@ import {
 import type { LinksSearch } from '@/lib/admin-search';
 import { getAdminApiError } from '@/lib/api-error';
 import { Badge } from '@repo/ui/components/badge';
+import { Button } from '@repo/ui/components/button';
 import {
   keepPreviousData,
   useMutation,
@@ -38,6 +42,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SearchUpdater = (current: LinksSearch) => LinksSearch;
@@ -63,6 +68,7 @@ export function LinksPage({
   onSearchChange,
 }: LinksPageProps) {
   const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchDraft, setSearchDraft] = useState({
     source: search.q,
@@ -85,6 +91,7 @@ export function LinksPage({
     enabled: Boolean(search.linkId),
   });
   const updateMutation = useMutation(adminLinksControllerUpdateMutation());
+  const createMutation = useMutation(adminLinksControllerCreateMutation());
   const createTaxonomyMutation = useMutation(
     adminTaxonomyControllerCreateMutation(),
   );
@@ -98,6 +105,7 @@ export function LinksPage({
   useApiErrorToast(taxonomyQuery.error);
   useApiErrorToast(detailQuery.error);
   const mutationPending =
+    createMutation.isPending ||
     updateMutation.isPending ||
     createTaxonomyMutation.isPending ||
     batchMutation.isPending ||
@@ -205,6 +213,11 @@ export function LinksPage({
     await invalidateLinks(queryClient, id);
   }
 
+  async function createLink(body: CreateLinkDto) {
+    await createMutation.mutateAsync({ body });
+    await invalidateLinks(queryClient);
+  }
+
   async function createTaxonomy(kind: TaxonomyKind, name: string) {
     const created = await createTaxonomyMutation.mutateAsync({
       body: { name },
@@ -256,7 +269,13 @@ export function LinksPage({
               : '检索并维护服务端保存的链接。'}
           </p>
         </div>
-        <Badge variant="outline">{pagination?.total ?? 0} 条结果</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{pagination?.total ?? 0} 条结果</Badge>
+          <Button type="button" onClick={() => setCreateOpen(true)}>
+            <Plus />
+            新增链接
+          </Button>
+        </div>
       </div>
 
       <LinkFiltersBar
@@ -305,6 +324,16 @@ export function LinksPage({
           onSearchChange((current) => ({ ...current, page }));
         }}
       />
+
+      {createOpen ? (
+        <LinkCreateSheet
+          isPending={mutationPending}
+          taxonomy={taxonomyQuery.taxonomy}
+          onCreateTaxonomy={createTaxonomy}
+          onOpenChange={setCreateOpen}
+          onSave={createLink}
+        />
+      ) : null}
 
       {detailQuery.data ? (
         <LinkEditSheet

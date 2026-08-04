@@ -349,7 +349,7 @@ export function LinkEditSheet({
                 </div>
               ) : (
                 <p className="p-4 text-sm text-muted-foreground">
-                  暂无来源信息
+                  手动添加，无 Telegram 来源
                 </p>
               )}
             </section>
