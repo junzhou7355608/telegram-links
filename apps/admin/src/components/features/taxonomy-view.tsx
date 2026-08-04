@@ -160,9 +160,7 @@ function SortableTaxonomyItem({
           }}
         />
       ) : (
-        <span className="min-w-0 flex-1 truncate font-medium">
-          {item.name}
-        </span>
+        <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
       )}
       <Badge variant="outline">{item.referenceCount} 条引用</Badge>
       {isEditing ? (
@@ -256,7 +254,9 @@ function TaxonomySection({
   const items = taxonomy[kind];
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   async function addItem(event: React.FormEvent<HTMLFormElement>) {

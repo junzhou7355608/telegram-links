@@ -226,8 +226,10 @@ export function LinksPage({
     const queryKey = adminTaxonomyControllerListQueryKey({ path: { kind } });
     queryClient.setQueryData<TaxonomyItemResponseDto[]>(
       queryKey,
-      (current = []) =>
-        [...current.filter((item) => item.id !== created.id), created],
+      (current = []) => [
+        ...current.filter((item) => item.id !== created.id),
+        created,
+      ],
     );
     void queryClient.invalidateQueries({ queryKey });
     return created;

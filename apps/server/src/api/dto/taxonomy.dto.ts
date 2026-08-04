@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export enum TaxonomyKindDtoValue {
   Categories = 'categories',
