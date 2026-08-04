@@ -47,7 +47,7 @@ interface FilterFieldsProps {
   stacked?: boolean;
 }
 
-const desktopFilterWidth = 'w-36';
+const desktopFilterClassName = 'min-w-36 max-w-full';
 
 function FilterFields({
   search,
@@ -68,7 +68,7 @@ function FilterFields({
     { label: '标题排序', value: 'title' },
   ];
   const fieldClassName = stacked ? 'grid gap-2' : 'contents';
-  const triggerClassName = stacked ? 'w-full' : desktopFilterWidth;
+  const triggerClassName = stacked ? 'w-full' : desktopFilterClassName;
 
   function updateFilter<Key extends keyof WebLinksSearch>(
     key: Key,
@@ -131,7 +131,7 @@ function FilterFields({
           </span>
         ) : null}
         <TagFilter
-          className={stacked ? 'w-full' : desktopFilterWidth}
+          className={stacked ? 'w-full' : desktopFilterClassName}
           options={overview.tags}
           value={search.tagIds ?? []}
           onChange={(value) =>

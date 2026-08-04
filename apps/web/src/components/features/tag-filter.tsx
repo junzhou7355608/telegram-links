@@ -59,7 +59,7 @@ export function TagFilter({
           />
         }
       >
-        <span className="min-w-0 flex-1 truncate text-left">
+        <span className="min-w-0 truncate text-left">
           {selectedNames.length > 0 ? selectedNames.join('、') : '全部标签'}
         </span>
         <ChevronsUpDown className="shrink-0 text-muted-foreground" />
