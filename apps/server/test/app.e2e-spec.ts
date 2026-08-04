@@ -368,6 +368,193 @@ describe('Server API (e2e)', () => {
     }
   });
 
+  it('persists independent taxonomy orders and exposes them to Web', async () => {
+    const app = await createTestApplication(false);
+    try {
+      const server = app.getHttpServer();
+      await request(server)
+        .put('/api/admin/v1/taxonomy/categories/order')
+        .send({ ids: [] })
+        .expect(401);
+      const api = await createAdminAgent(server);
+
+      const categoryOne = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/categories')
+          .send({ name: '乙分类' })
+          .expect(201),
+      );
+      const categoryTwo = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/categories')
+          .send({ name: '甲分类' })
+          .expect(201),
+      );
+      const tagOne = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '第二标签' })
+          .expect(201),
+      );
+      const tagTwo = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '第一标签' })
+          .expect(201),
+      );
+      const tagThree = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '第三标签' })
+          .expect(201),
+      );
+
+      await api
+        .get('/api/admin/v1/taxonomy/categories')
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<Array<{ id: string }>>(response).map(
+              (item) => item.id,
+            ),
+          ).toEqual([categoryOne.id, categoryTwo.id]);
+        });
+
+      const categoryIds = [categoryTwo.id, categoryOne.id];
+      const tagIds = [tagThree.id, tagOne.id, tagTwo.id];
+      await api
+        .put('/api/admin/v1/taxonomy/categories/order')
+        .send({ ids: categoryIds })
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<Array<{ id: string }>>(response).map(
+              (item) => item.id,
+            ),
+          ).toEqual(categoryIds);
+        });
+      await api
+        .put('/api/admin/v1/taxonomy/tags/order')
+        .send({ ids: tagIds })
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<Array<{ id: string }>>(response).map(
+              (item) => item.id,
+            ),
+          ).toEqual(tagIds);
+        });
+
+      const invalidOrders = [
+        [tagThree.id, tagOne.id],
+        [tagThree.id, tagThree.id, tagTwo.id],
+        [tagThree.id, '00000000-0000-4000-8000-000000000999', tagTwo.id],
+      ];
+      for (const ids of invalidOrders) {
+        await api
+          .put('/api/admin/v1/taxonomy/tags/order')
+          .send({ ids })
+          .expect(400)
+          .expect((response) => {
+            expect(response.body).toEqual(
+              expect.objectContaining({ code: 'INVALID_TAXONOMY_ORDER' }),
+            );
+          });
+      }
+
+      await api
+        .put('/api/admin/v1/taxonomy/categories/order')
+        .send({ ids: [categoryOne.id, categoryTwo.id] })
+        .expect(200);
+      await api
+        .get('/api/admin/v1/taxonomy/tags')
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<Array<{ id: string }>>(response).map(
+              (item) => item.id,
+            ),
+          ).toEqual(tagIds);
+        });
+      await api
+        .put('/api/admin/v1/taxonomy/categories/order')
+        .send({ ids: categoryIds })
+        .expect(200);
+
+      const appendedCategory = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/categories')
+          .send({ name: '新增分类' })
+          .expect(201),
+      );
+      const appendedTag = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '新增标签' })
+          .expect(201),
+      );
+      const expectedCategoryIds = [...categoryIds, appendedCategory.id];
+      const expectedTagIds = [...tagIds, appendedTag.id];
+
+      const organized = responseBody<{
+        id: string;
+        tags: Array<{ id: string }>;
+      }>(
+        await api
+          .post('/api/admin/v1/links')
+          .send({
+            categoryId: categoryTwo.id,
+            status: 'organized',
+            tagIds: [tagTwo.id, tagOne.id, tagThree.id],
+            title: '排序验证链接',
+            url: 'https://taxonomy-order.example/docs',
+          })
+          .expect(201),
+      );
+      expect(organized.tags.map((tag) => tag.id)).toEqual(tagIds);
+
+      await request(server)
+        .get('/api/web/v1/overview')
+        .expect(200)
+        .expect((response) => {
+          const body = responseBody<{
+            categories: Array<{ id: string }>;
+            tags: Array<{ id: string }>;
+          }>(response);
+          expect(body.categories.map((item) => item.id)).toEqual(
+            expectedCategoryIds,
+          );
+          expect(body.tags.map((item) => item.id)).toEqual(expectedTagIds);
+        });
+      await request(server)
+        .get(`/api/web/v1/links/${organized.id}`)
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<{ tags: Array<{ id: string }> }>(response).tags.map(
+              (tag) => tag.id,
+            ),
+          ).toEqual(tagIds);
+        });
+
+      const prisma = app.get(PrismaService);
+      const persistedCategories = await prisma.category.findMany({
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true },
+      });
+      const persistedTags = await prisma.tag.findMany({
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true },
+      });
+      expect(persistedCategories.map((item) => item.id)).toEqual(
+        expectedCategoryIds,
+      );
+      expect(persistedTags.map((item) => item.id)).toEqual(expectedTagIds);
+    } finally {
+      await closeApplication(app);
+    }
+  });
+
   it('creates manual links and only exposes organized records to Web', async () => {
     const app = await createTestApplication(false);
     try {
