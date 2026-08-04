@@ -8,6 +8,7 @@ import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/app.setup';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 import { SyncRangeMode } from '../src/generated/prisma/client';
+import { LinksService } from '../src/links/links.service';
 import { SyncJobsService } from '../src/sync/sync-jobs.service';
 import {
   type GatewayChat,
@@ -686,6 +687,117 @@ describe('Server API (e2e)', () => {
             expect.objectContaining({ code: 'LINK_DOMAIN_CONFLICT' }),
           );
         });
+    } finally {
+      await closeApplication(app);
+    }
+  });
+
+  it('replaces link tags atomically when organizing and editing', async () => {
+    const app = await createTestApplication(false);
+    try {
+      const api = await createAdminAgent(app.getHttpServer());
+      const prisma = app.get(PrismaService);
+      const links = app.get(LinksService);
+      const category = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/categories')
+          .send({ name: '标签更新分类' })
+          .expect(201),
+      );
+      const tagOne = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '标签一' })
+          .expect(201),
+      );
+      const tagTwo = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '标签二' })
+          .expect(201),
+      );
+      const link = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/links')
+          .send({
+            status: 'pending',
+            title: '标签更新链接',
+            url: 'https://tag-update.example',
+          })
+          .expect(201),
+      );
+
+      await api
+        .patch(`/api/admin/v1/links/${link.id}`)
+        .send({
+          categoryId: category.id,
+          status: 'organized',
+          tagIds: [tagOne.id],
+        })
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({
+              status: 'organized',
+              tags: [expect.objectContaining({ id: tagOne.id })],
+            }),
+          );
+        });
+
+      for (const tagIds of [[tagTwo.id], [tagTwo.id]]) {
+        await api
+          .patch(`/api/admin/v1/links/${link.id}`)
+          .send({ tagIds })
+          .expect(200)
+          .expect((response) => {
+            expect(
+              responseBody<{ tags: Array<{ id: string }> }>(response).tags.map(
+                (tag) => tag.id,
+              ),
+            ).toEqual([tagTwo.id]);
+          });
+      }
+
+      await api
+        .patch(`/api/admin/v1/links/${link.id}`)
+        .send({ purpose: '未提交标签字段' })
+        .expect(200)
+        .expect((response) => {
+          expect(
+            responseBody<{ tags: Array<{ id: string }> }>(response).tags.map(
+              (tag) => tag.id,
+            ),
+          ).toEqual([tagTwo.id]);
+        });
+
+      await expect(
+        links.update(link.id, {
+          tagIds: [tagOne.id, tagOne.id],
+          title: '事务失败时不应保存',
+        }),
+      ).rejects.toThrow();
+      await expect(
+        prisma.link.findUniqueOrThrow({
+          include: { tags: true },
+          where: { id: link.id },
+        }),
+      ).resolves.toMatchObject({
+        tags: [{ tagId: tagTwo.id }],
+        title: '标签更新链接',
+      });
+
+      await api
+        .patch(`/api/admin/v1/links/${link.id}`)
+        .send({ tagIds: [] })
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ status: 'organized', tags: [] }),
+          );
+        });
+      await expect(
+        prisma.linkTag.count({ where: { linkId: link.id } }),
+      ).resolves.toBe(0);
     } finally {
       await closeApplication(app);
     }

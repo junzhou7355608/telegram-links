@@ -312,23 +312,27 @@ export class LinksService {
     }
     await this.assertTaxonomy(next.categoryId, input.tagIds);
 
-    await this.prisma.link.update({
-      data: {
-        categoryId: next.categoryId,
-        domain: normalized?.domain,
-        normalizedUrl: normalized?.normalizedUrl,
-        purpose: next.purpose,
-        status: next.status,
-        tags: input.tagIds
-          ? {
-              create: input.tagIds.map((tagId) => ({ tagId })),
-              deleteMany: {},
-            }
-          : undefined,
-        title: next.title,
-        url: next.url,
-      },
-      where: { id },
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.link.update({
+        data: {
+          categoryId: next.categoryId,
+          domain: normalized?.domain,
+          normalizedUrl: normalized?.normalizedUrl,
+          purpose: next.purpose,
+          status: next.status,
+          title: next.title,
+          url: next.url,
+        },
+        where: { id },
+      });
+      if (input.tagIds !== undefined) {
+        await transaction.linkTag.deleteMany({ where: { linkId: id } });
+        if (input.tagIds.length > 0) {
+          await transaction.linkTag.createMany({
+            data: input.tagIds.map((tagId) => ({ linkId: id, tagId })),
+          });
+        }
+      }
     });
     return this.findOne(id);
   }
