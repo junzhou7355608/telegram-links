@@ -22,7 +22,7 @@ function LinkFavicon({
   ...props
 }: Omit<React.ComponentProps<'span'>, 'children'> & {
   url: string;
-  size?: 'default' | 'sm';
+  size?: 'default' | 'lg' | 'sm';
 }) {
   const source = faviconSource(url);
   const [failedSource, setFailedSource] = React.useState<string | null>(null);
@@ -35,7 +35,7 @@ function LinkFavicon({
       data-size={size}
       aria-hidden="true"
       className={cn(
-        'flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/50 text-muted-foreground data-[size=sm]:size-6 data-[size=sm]:rounded-md [&>img]:size-4 [&>img]:object-contain [&>svg]:size-3.5 data-[size=sm]:[&>img]:size-3.5 data-[size=sm]:[&>svg]:size-3',
+        'flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/50 text-muted-foreground data-[size=lg]:size-12 data-[size=lg]:rounded-xl data-[size=sm]:size-6 data-[size=sm]:rounded-md [&>img]:size-4 [&>img]:object-contain [&>svg]:size-3.5 data-[size=lg]:[&>img]:size-6 data-[size=lg]:[&>svg]:size-5 data-[size=sm]:[&>img]:size-3.5 data-[size=sm]:[&>svg]:size-3',
         className,
       )}
       {...props}
