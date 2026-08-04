@@ -66,7 +66,8 @@ function FilterFields({
     { label: '标题排序', value: 'title' },
   ];
   const fieldClassName = stacked ? 'grid gap-2' : 'contents';
-  const triggerClassName = stacked ? 'w-full' : 'min-w-32';
+  const categoryTriggerClassName = stacked ? 'w-full' : 'min-w-48';
+  const sortTriggerClassName = stacked ? 'w-full' : 'min-w-32';
 
   function updateFilter<Key extends keyof WebLinksSearch>(
     key: Key,
@@ -104,7 +105,10 @@ function FilterFields({
             )
           }
         >
-          <SelectTrigger aria-label="按分类筛选" className={triggerClassName}>
+          <SelectTrigger
+            aria-label="按分类筛选"
+            className={categoryTriggerClassName}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent align="start">
@@ -147,7 +151,10 @@ function FilterFields({
             updateFilter('sort', (value ?? 'newest') as WebLinksSearch['sort'])
           }
         >
-          <SelectTrigger aria-label="选择排序方式" className={triggerClassName}>
+          <SelectTrigger
+            aria-label="选择排序方式"
+            className={sortTriggerClassName}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent align="start">
