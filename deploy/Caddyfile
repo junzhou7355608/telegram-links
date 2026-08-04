@@ -3,11 +3,11 @@
 	auto_https off
 }
 
-:{$PUBLIC_PORT:8000} {
+:{$PORT:8000} {
 	route {
 		@health path /api/healthz
 		handle @health {
-			reverse_proxy 127.0.0.1:{$PORT:3000}
+			reverse_proxy 127.0.0.1:{$INTERNAL_PORT:3000}
 		}
 
 		basic_auth {
@@ -15,7 +15,7 @@
 		}
 
 		handle /api/* {
-			reverse_proxy 127.0.0.1:{$PORT:3000}
+			reverse_proxy 127.0.0.1:{$INTERNAL_PORT:3000}
 		}
 
 		@admin_root path /admin

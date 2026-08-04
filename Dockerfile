@@ -45,9 +45,9 @@ RUN setcap -r /usr/bin/caddy \
   && chmod 755 /app/deploy/entrypoint.sh
 
 ENV HOST=127.0.0.1 \
+  INTERNAL_PORT=3000 \
   NODE_ENV=production \
-  PORT=3000 \
-  PUBLIC_PORT=8000 \
+  PORT=8000 \
   SWAGGER_ENABLED=false
 
 EXPOSE 8000

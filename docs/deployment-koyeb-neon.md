@@ -52,10 +52,13 @@ Koyeb 服务使用以下设置：
 ```text
 HOST=127.0.0.1
 NODE_ENV=production
-PORT=3000
-PUBLIC_PORT=8000
+INTERNAL_PORT=3000
+PORT=8000
 SWAGGER_ENABLED=false
 ```
+
+`PORT` 是 Caddy 对外监听端口，`INTERNAL_PORT` 是 NestJS 仅在容器内监听的端口。
+Render 部署应将 `PORT` 设为平台默认的 `10000`；Koyeb 继续使用 `8000`。
 
 使用交互式命令生成密码哈希，密码不会显示在终端或写入 shell 历史：
 

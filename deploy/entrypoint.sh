@@ -11,12 +11,14 @@ cd /app
 
 ./node_modules/.bin/prisma migrate deploy --config prisma.config.ts
 
-node dist/src/main.js &
+internal_port="${INTERNAL_PORT:-3000}"
+
+PORT="$internal_port" node dist/src/main.js &
 server_pid=$!
 
 attempt=0
 until wget --quiet --output-document=/dev/null \
-  "http://127.0.0.1:${PORT:-3000}/api/healthz"; do
+  "http://127.0.0.1:${internal_port}/api/healthz"; do
   if ! kill -0 "$server_pid" 2>/dev/null; then
     wait "$server_pid"
     exit $?
