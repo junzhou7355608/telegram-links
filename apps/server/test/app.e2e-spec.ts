@@ -1007,7 +1007,125 @@ describe('Server API (e2e)', () => {
       await api.post(`/api/admin/v1/links/${linkId}/restore`).expect(200);
       await api
         .delete(`/api/admin/v1/taxonomy/categories/${categoryBody.id}`)
-        .expect(409);
+        .expect(204);
+    } finally {
+      await closeApplication(app);
+    }
+  });
+
+  it('deletes referenced taxonomy and cleans up link associations', async () => {
+    const app = await createTestApplication(false);
+    try {
+      const api = await createAdminAgent(app.getHttpServer());
+      const prisma = app.get(PrismaService);
+      const category = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/categories')
+          .send({ name: '待删除分类' })
+          .expect(201),
+      );
+      const tag = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '待删除标签' })
+          .expect(201),
+      );
+      const unusedTag = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/taxonomy/tags')
+          .send({ name: '未引用标签' })
+          .expect(201),
+      );
+      const activeLink = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/links')
+          .send({
+            categoryId: category.id,
+            status: 'organized',
+            tagIds: [tag.id],
+            title: '活跃链接',
+            url: 'https://active-taxonomy.example',
+          })
+          .expect(201),
+      );
+      const archivedLink = responseBody<{ id: string }>(
+        await api
+          .post('/api/admin/v1/links')
+          .send({
+            categoryId: category.id,
+            status: 'organized',
+            tagIds: [tag.id],
+            title: '已归档链接',
+            url: 'https://archived-taxonomy.example',
+          })
+          .expect(201),
+      );
+
+      await api.delete(`/api/admin/v1/links/${archivedLink.id}`).expect(204);
+      const archivedAtBeforeDelete = await prisma.link.findUniqueOrThrow({
+        select: { archivedAt: true },
+        where: { id: archivedLink.id },
+      });
+
+      await api.delete(`/api/admin/v1/taxonomy/tags/${tag.id}`).expect(204);
+      await expect(
+        prisma.tag.findUnique({ where: { id: tag.id } }),
+      ).resolves.toBeNull();
+      await expect(
+        prisma.linkTag.count({ where: { tagId: tag.id } }),
+      ).resolves.toBe(0);
+      await expect(
+        prisma.link.findUniqueOrThrow({ where: { id: activeLink.id } }),
+      ).resolves.toMatchObject({
+        archivedAt: null,
+        status: 'ORGANIZED',
+      });
+
+      await api
+        .delete(`/api/admin/v1/taxonomy/categories/${category.id}`)
+        .expect(204);
+      await expect(
+        prisma.category.findUnique({ where: { id: category.id } }),
+      ).resolves.toBeNull();
+      const persistedActiveLink = await prisma.link.findUniqueOrThrow({
+        where: { id: activeLink.id },
+      });
+      expect(persistedActiveLink).toMatchObject({
+        categoryId: null,
+        status: 'PENDING',
+      });
+      expect(persistedActiveLink.archivedAt).toBeInstanceOf(Date);
+      await expect(
+        prisma.link.findUniqueOrThrow({ where: { id: archivedLink.id } }),
+      ).resolves.toMatchObject({
+        archivedAt: archivedAtBeforeDelete.archivedAt,
+        categoryId: null,
+        status: 'PENDING',
+      });
+
+      await api
+        .post(`/api/admin/v1/links/${activeLink.id}/restore`)
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({
+              archivedAt: null,
+              category: null,
+              status: 'pending',
+            }),
+          );
+        });
+      await api.get(`/api/web/v1/links/${activeLink.id}`).expect(404);
+
+      await api
+        .delete(`/api/admin/v1/taxonomy/tags/${unusedTag.id}`)
+        .expect(204);
+      await api
+        .delete(`/api/admin/v1/taxonomy/tags/${unusedTag.id}`)
+        .expect(404);
+      await api
+        .delete(`/api/admin/v1/taxonomy/categories/${category.id}`)
+        .expect(404);
     } finally {
       await closeApplication(app);
     }

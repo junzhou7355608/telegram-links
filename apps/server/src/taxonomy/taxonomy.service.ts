@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { OrganizationStatus } from '../generated/prisma/client';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 
 export type TaxonomyKind = 'categories' | 'tags';
@@ -157,22 +158,36 @@ export class TaxonomyService {
   }
 
   async remove(kind: TaxonomyKind, id: string): Promise<void> {
-    await this.ensureExists(kind, id);
-    const references =
-      kind === 'categories'
-        ? await this.prisma.link.count({ where: { categoryId: id } })
-        : await this.prisma.linkTag.count({ where: { tagId: id } });
-    if (references > 0) {
-      throw new ConflictException({
-        code: 'TAXONOMY_IN_USE',
-        message: `该条目仍被 ${references} 条链接引用。`,
-      });
-    }
-    if (kind === 'categories') {
-      await this.prisma.category.delete({ where: { id } });
-    } else {
-      await this.prisma.tag.delete({ where: { id } });
-    }
+    await this.prisma.$transaction(async (transaction) => {
+      const exists =
+        kind === 'categories'
+          ? await transaction.category.count({ where: { id } })
+          : await transaction.tag.count({ where: { id } });
+      if (exists === 0) {
+        throw new NotFoundException({
+          code: 'TAXONOMY_NOT_FOUND',
+          message: '未找到基础资料条目。',
+        });
+      }
+
+      if (kind === 'categories') {
+        await transaction.link.updateMany({
+          data: { archivedAt: new Date() },
+          where: { archivedAt: null, categoryId: id },
+        });
+        await transaction.link.updateMany({
+          data: {
+            categoryId: null,
+            status: OrganizationStatus.PENDING,
+          },
+          where: { categoryId: id },
+        });
+        await transaction.category.delete({ where: { id } });
+      } else {
+        await transaction.linkTag.deleteMany({ where: { tagId: id } });
+        await transaction.tag.delete({ where: { id } });
+      }
+    });
   }
 
   private requireName(value: string): string {

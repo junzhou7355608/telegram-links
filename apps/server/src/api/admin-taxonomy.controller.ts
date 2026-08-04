@@ -82,7 +82,9 @@ export class AdminTaxonomyController {
   @Delete(':kind/:id')
   @HttpCode(204)
   @ApiParam({ enum: TaxonomyKindDtoValue, name: 'kind' })
-  @ApiNoContentResponse({ description: '删除未被引用的基础资料。' })
+  @ApiNoContentResponse({
+    description: '删除基础资料，并归档或解除关联的链接。',
+  })
   remove(
     @Param('kind') kind: string,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
