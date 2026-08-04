@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@repo/ui/components/card';
+import { LinkFavicon } from '@repo/ui/components/link-favicon';
 import { ScrollArea } from '@repo/ui/components/scroll-area';
 import {
   Sheet,
@@ -71,12 +72,17 @@ export function LinkDetailSheet({
               <div className="mb-2 flex flex-wrap gap-1.5">
                 <CategoryBadge category={link.category} />
               </div>
-              <SheetTitle className="text-lg">
-                {displayLinkTitle(link)}
-              </SheetTitle>
-              <SheetDescription className="break-all font-mono text-xs">
-                {link.url}
-              </SheetDescription>
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                <LinkFavicon url={link.url} size="lg" />
+                <div className="min-w-0">
+                  <SheetTitle className="text-lg">
+                    {displayLinkTitle(link)}
+                  </SheetTitle>
+                  <SheetDescription className="mt-1 break-all font-mono text-xs">
+                    {link.url}
+                  </SheetDescription>
+                </div>
+              </div>
             </SheetHeader>
 
             <ScrollArea className="min-h-0 flex-1">
