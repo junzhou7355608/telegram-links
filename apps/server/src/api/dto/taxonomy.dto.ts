@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export enum TaxonomyKindDtoValue {
   Categories = 'categories',
@@ -12,6 +12,13 @@ export class TaxonomyNameDto {
   @IsNotEmpty()
   @MaxLength(100)
   name!: string;
+}
+
+export class TaxonomyOrderDto {
+  @ApiProperty({ format: 'uuid', isArray: true, type: String })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  ids!: string[];
 }
 
 export class TaxonomyItemResponseDto {

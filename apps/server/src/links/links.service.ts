@@ -200,7 +200,7 @@ export class LinksService {
             select: { links: { where: active } },
           },
         },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
       this.prisma.tag.findMany({
         include: {
@@ -208,7 +208,7 @@ export class LinksService {
             select: { links: { where: { link: active } } },
           },
         },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
     ]);
     return {
@@ -530,10 +530,12 @@ export class LinksService {
       sources: includeAllSources ? sources : undefined,
       status: fromOrganizationStatus(link.status),
       tags: link.tags
-        .map(({ tag }) => ({ id: tag.id, name: tag.name }))
-        .toSorted((left, right) =>
-          left.name.localeCompare(right.name, 'zh-CN'),
-        ),
+        .toSorted(
+          (left, right) =>
+            left.tag.sortOrder - right.tag.sortOrder ||
+            left.tag.name.localeCompare(right.tag.name, 'zh-CN'),
+        )
+        .map(({ tag }) => ({ id: tag.id, name: tag.name })),
       title: link.title,
       updatedAt: link.updatedAt.toISOString(),
       url: link.url,

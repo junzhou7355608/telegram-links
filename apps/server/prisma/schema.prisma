@@ -109,18 +109,24 @@ model Category {
   id             String   @id @default(uuid()) @db.Uuid
   name           String
   normalizedName String   @unique
+  sortOrder      Int
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   links          Link[]
+
+  @@index([sortOrder, name])
 }
 
 model Tag {
   id             String    @id @default(uuid()) @db.Uuid
   name           String
   normalizedName String    @unique
+  sortOrder      Int
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   links          LinkTag[]
+
+  @@index([sortOrder, name])
 }
 
 model Link {

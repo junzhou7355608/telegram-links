@@ -20,7 +20,7 @@ export class TaxonomyService {
     if (kind === 'categories') {
       const items = await this.prisma.category.findMany({
         include: { _count: { select: { links: true } } },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       });
       return items.map((item) => ({
         id: item.id,
@@ -30,7 +30,7 @@ export class TaxonomyService {
     }
     const items = await this.prisma.tag.findMany({
       include: { _count: { select: { links: true } } },
-      orderBy: { name: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
     return items.map((item) => ({
       id: item.id,
@@ -44,15 +44,89 @@ export class TaxonomyService {
     const normalizedName = normalizeName(name);
     await this.ensureUnique(kind, normalizedName);
     if (kind === 'categories') {
-      const item = await this.prisma.category.create({
-        data: { name, normalizedName },
+      const item = await this.prisma.$transaction(async (transaction) => {
+        const aggregate = await transaction.category.aggregate({
+          _max: { sortOrder: true },
+        });
+        return transaction.category.create({
+          data: {
+            name,
+            normalizedName,
+            sortOrder: (aggregate._max.sortOrder ?? -1) + 1,
+          },
+        });
       });
       return { id: item.id, name: item.name, referenceCount: 0 };
     }
-    const item = await this.prisma.tag.create({
-      data: { name, normalizedName },
+    const item = await this.prisma.$transaction(async (transaction) => {
+      const aggregate = await transaction.tag.aggregate({
+        _max: { sortOrder: true },
+      });
+      return transaction.tag.create({
+        data: {
+          name,
+          normalizedName,
+          sortOrder: (aggregate._max.sortOrder ?? -1) + 1,
+        },
+      });
     });
     return { id: item.id, name: item.name, referenceCount: 0 };
+  }
+
+  async reorder(kind: TaxonomyKind, ids: string[]) {
+    return this.prisma.$transaction(async (transaction) => {
+      if (kind === 'categories') {
+        const current = await transaction.category.findMany({
+          select: { id: true },
+        });
+        this.assertCompleteOrder(
+          ids,
+          current.map((item) => item.id),
+        );
+        await Promise.all(
+          ids.map((id, sortOrder) =>
+            transaction.category.update({
+              data: { sortOrder },
+              where: { id },
+            }),
+          ),
+        );
+        const items = await transaction.category.findMany({
+          include: { _count: { select: { links: true } } },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        });
+        return items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          referenceCount: item._count.links,
+        }));
+      }
+
+      const current = await transaction.tag.findMany({
+        select: { id: true },
+      });
+      this.assertCompleteOrder(
+        ids,
+        current.map((item) => item.id),
+      );
+      await Promise.all(
+        ids.map((id, sortOrder) =>
+          transaction.tag.update({
+            data: { sortOrder },
+            where: { id },
+          }),
+        ),
+      );
+      const items = await transaction.tag.findMany({
+        include: { _count: { select: { links: true } } },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      });
+      return items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        referenceCount: item._count.links,
+      }));
+    });
   }
 
   async rename(kind: TaxonomyKind, id: string, value: string) {
@@ -110,6 +184,22 @@ export class TaxonomyService {
       });
     }
     return name;
+  }
+
+  private assertCompleteOrder(ids: string[], currentIds: string[]): void {
+    const received = new Set(ids);
+    const current = new Set(currentIds);
+    if (
+      received.size !== ids.length ||
+      ids.length !== currentIds.length ||
+      ids.some((id) => !current.has(id)) ||
+      currentIds.some((id) => !received.has(id))
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_TAXONOMY_ORDER',
+        message: '排序必须包含当前类型的全部条目且不能重复。',
+      });
+    }
   }
 
   private async ensureUnique(

@@ -9,6 +9,7 @@ import {
   Patch,
   ParseUUIDPipe,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -26,6 +27,7 @@ import {
   TaxonomyItemResponseDto,
   TaxonomyKindDtoValue,
   TaxonomyNameDto,
+  TaxonomyOrderDto,
 } from './dto/taxonomy.dto';
 
 function taxonomyKind(value: string): TaxonomyKind {
@@ -57,6 +59,13 @@ export class AdminTaxonomyController {
   @ApiCreatedResponse({ type: TaxonomyItemResponseDto })
   create(@Param('kind') kind: string, @Body() body: TaxonomyNameDto) {
     return this.taxonomy.create(taxonomyKind(kind), body.name);
+  }
+
+  @Put(':kind/order')
+  @ApiParam({ enum: TaxonomyKindDtoValue, name: 'kind' })
+  @ApiOkResponse({ isArray: true, type: TaxonomyItemResponseDto })
+  reorder(@Param('kind') kind: string, @Body() body: TaxonomyOrderDto) {
+    return this.taxonomy.reorder(taxonomyKind(kind), body.ids);
   }
 
   @Patch(':kind/:id')
