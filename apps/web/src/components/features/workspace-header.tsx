@@ -1,6 +1,6 @@
 import type { WebOverviewResponseDto } from '@/api/types.gen';
-import { ModeToggle } from '@/components/features/mode-toggle';
 import { Badge } from '@repo/ui/components/badge';
+import { ModeToggle } from '@repo/ui/components/mode-toggle';
 import { SidebarTrigger } from '@repo/ui/components/sidebar';
 
 interface WorkspaceHeaderProps {
