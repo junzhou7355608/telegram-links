@@ -11,7 +11,7 @@ cd /app
 
 ./node_modules/.bin/prisma migrate deploy --config prisma.config.ts
 
-internal_port="${INTERNAL_PORT:-3000}"
+internal_port="${INTERNAL_PORT:-3001}"
 
 PORT="$internal_port" node dist/src/main.js &
 server_pid=$!
