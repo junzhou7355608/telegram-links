@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@repo/ui/components/card';
+import { LinkFavicon } from '@repo/ui/components/link-favicon';
 import { Copy, ExternalLink } from 'lucide-react';
 
 interface LinkCardProps {
@@ -26,7 +27,8 @@ export function LinkCard({ link, onSelect, onCopy }: LinkCardProps) {
       className="h-full cursor-pointer transition-colors hover:bg-muted/20 focus-within:ring-2 focus-within:ring-ring/30"
       onClick={() => onSelect(link)}
     >
-      <CardHeader>
+      <CardHeader className="grid-cols-[auto_1fr] items-start gap-3">
+        <LinkFavicon url={link.url} />
         <div className="min-w-0">
           <CardTitle className="truncate">
             <button

@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@repo/ui/components/card';
 import { Checkbox } from '@repo/ui/components/checkbox';
+import { LinkFavicon } from '@repo/ui/components/link-favicon';
 import {
   Table,
   TableBody,
@@ -22,7 +23,6 @@ import {
   ArrowUpRight,
   ExternalLink,
   FileQuestion,
-  Link2,
   Pencil,
 } from 'lucide-react';
 
@@ -126,7 +126,8 @@ export function LinkList({
                   aria-label={`选择 ${titleFor(link)}`}
                 />
               </div>
-              <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
+                <LinkFavicon url={link.url} size="sm" />
                 <div className="flex min-w-0 items-center gap-1">
                   <CardTitle className="min-w-0 truncate font-mono">
                     <a
@@ -252,9 +253,7 @@ export function LinkList({
                 </TableCell>
                 <TableCell className="min-w-0 py-3 whitespace-normal">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50">
-                      <Link2 className="size-3.5" aria-hidden="true" />
-                    </span>
+                    <LinkFavicon url={link.url} />
                     <div className="flex min-w-0 items-center gap-1">
                       <a
                         href={link.url}
