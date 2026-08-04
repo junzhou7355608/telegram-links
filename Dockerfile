@@ -29,7 +29,7 @@ FROM caddy:2.10.2-alpine AS caddy
 
 FROM node:24-alpine AS runtime
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init libcap
 
 WORKDIR /app
 
@@ -40,7 +40,9 @@ COPY --from=build /workspace/apps/admin/dist /srv/admin
 COPY --from=build /workspace/deploy/Caddyfile /app/deploy/Caddyfile
 COPY --from=build /workspace/deploy/entrypoint.sh /app/deploy/entrypoint.sh
 
-RUN chmod 755 /app/deploy/entrypoint.sh
+RUN setcap -r /usr/bin/caddy \
+  && apk del libcap \
+  && chmod 755 /app/deploy/entrypoint.sh
 
 ENV HOST=127.0.0.1 \
   NODE_ENV=production \
