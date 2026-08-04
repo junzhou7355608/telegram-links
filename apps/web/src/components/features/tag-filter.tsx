@@ -14,16 +14,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@repo/ui/components/popover';
+import { cn } from '@repo/ui/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 
 interface TagFilterProps {
+  className?: string;
   options: OverviewCountResponseDto[];
   value: string[];
   onChange: (value: string[]) => void;
 }
 
-export function TagFilter({ options, value, onChange }: TagFilterProps) {
+export function TagFilter({
+  className,
+  options,
+  value,
+  onChange,
+}: TagFilterProps) {
   const [open, setOpen] = useState(false);
   const selectedNames = options
     .filter((option) => value.includes(option.id))
@@ -44,12 +51,15 @@ export function TagFilter({ options, value, onChange }: TagFilterProps) {
           <Button
             type="button"
             variant="outline"
-            className="h-8 min-w-36 justify-between font-normal"
+            className={cn(
+              'h-8 justify-between font-normal',
+              className ?? 'min-w-36',
+            )}
             aria-label="按标签筛选"
           />
         }
       >
-        <span className="max-w-36 truncate">
+        <span className="min-w-0 flex-1 truncate text-left">
           {selectedNames.length > 0 ? selectedNames.join('、') : '全部标签'}
         </span>
         <ChevronsUpDown className="shrink-0 text-muted-foreground" />

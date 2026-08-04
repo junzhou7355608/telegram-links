@@ -47,6 +47,8 @@ interface FilterFieldsProps {
   stacked?: boolean;
 }
 
+const desktopFilterWidth = 'w-36';
+
 function FilterFields({
   search,
   overview,
@@ -66,8 +68,7 @@ function FilterFields({
     { label: '标题排序', value: 'title' },
   ];
   const fieldClassName = stacked ? 'grid gap-2' : 'contents';
-  const categoryTriggerClassName = stacked ? 'w-full' : 'min-w-48';
-  const sortTriggerClassName = stacked ? 'w-full' : 'min-w-32';
+  const triggerClassName = stacked ? 'w-full' : desktopFilterWidth;
 
   function updateFilter<Key extends keyof WebLinksSearch>(
     key: Key,
@@ -105,13 +106,13 @@ function FilterFields({
             )
           }
         >
-          <SelectTrigger
-            aria-label="按分类筛选"
-            className={categoryTriggerClassName}
-          >
+          <SelectTrigger aria-label="按分类筛选" className={triggerClassName}>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent align="start">
+          <SelectContent
+            align="start"
+            className={stacked ? undefined : 'w-64'}
+          >
             <SelectGroup>
               {categoryItems.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
@@ -130,6 +131,7 @@ function FilterFields({
           </span>
         ) : null}
         <TagFilter
+          className={stacked ? 'w-full' : desktopFilterWidth}
           options={overview.tags}
           value={search.tagIds ?? []}
           onChange={(value) =>
@@ -151,10 +153,7 @@ function FilterFields({
             updateFilter('sort', (value ?? 'newest') as WebLinksSearch['sort'])
           }
         >
-          <SelectTrigger
-            aria-label="选择排序方式"
-            className={sortTriggerClassName}
-          >
+          <SelectTrigger aria-label="选择排序方式" className={triggerClassName}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent align="start">
