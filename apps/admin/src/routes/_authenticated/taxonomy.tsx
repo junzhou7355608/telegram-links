@@ -1,6 +1,5 @@
 import {
   adminTaxonomyControllerCreateMutation,
-  adminTaxonomyControllerListQueryKey,
   adminTaxonomyControllerRemoveMutation,
   adminTaxonomyControllerRenameMutation,
   adminTaxonomyControllerReorderMutation,
@@ -12,7 +11,8 @@ import { useTaxonomy } from '@/hooks/use-taxonomy';
 import {
   invalidateLinks,
   invalidateTaxonomy,
-  orderTaxonomyItems,
+  optimisticallyOrderTaxonomy,
+  rollbackTaxonomyOrder,
   type TaxonomyKind,
 } from '@/lib/admin-api';
 import { taxonomySearchSchema } from '@/lib/admin-search';
@@ -35,24 +35,17 @@ function TaxonomyRoute() {
   const removeMutation = useMutation(adminTaxonomyControllerRemoveMutation());
   const reorderMutation = useMutation({
     ...adminTaxonomyControllerReorderMutation(),
-    onMutate: async ({ body, path }) => {
-      const queryKey = adminTaxonomyControllerListQueryKey({
-        path: { kind: path.kind },
-      });
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (current = []) =>
-        orderTaxonomyItems(current, body.ids),
-      );
-      return { previous, queryKey };
-    },
+    onMutate: ({ body, path }) =>
+      optimisticallyOrderTaxonomy(queryClient, path.kind, body.ids),
     onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(context.queryKey, context.previous);
+      if (context) {
+        rollbackTaxonomyOrder(queryClient, context);
       }
     },
     onSuccess: async (items, _variables, context) => {
-      queryClient.setQueryData(context.queryKey, items);
+      if (context) {
+        queryClient.setQueryData(context.queryKey, items);
+      }
       await invalidateLinks(queryClient);
     },
   });

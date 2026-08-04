@@ -38,6 +38,31 @@ export function orderTaxonomyItems(
   });
 }
 
+export async function optimisticallyOrderTaxonomy(
+  queryClient: QueryClient,
+  kind: TaxonomyKind,
+  ids: string[],
+) {
+  const queryKey = adminTaxonomyControllerListQueryKey({ path: { kind } });
+  await queryClient.cancelQueries({ queryKey });
+  const previous =
+    queryClient.getQueryData<TaxonomyItemResponseDto[]>(queryKey);
+  queryClient.setQueryData<TaxonomyItemResponseDto[]>(
+    queryKey,
+    (current = []) => orderTaxonomyItems(current, ids),
+  );
+  return { previous, queryKey };
+}
+
+export function rollbackTaxonomyOrder(
+  queryClient: QueryClient,
+  snapshot: Awaited<ReturnType<typeof optimisticallyOrderTaxonomy>>,
+): void {
+  if (snapshot.previous !== undefined) {
+    queryClient.setQueryData(snapshot.queryKey, snapshot.previous);
+  }
+}
+
 export function createLinksQuery(
   search: LinksSearch,
   pendingOnly: boolean,
