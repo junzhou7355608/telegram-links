@@ -45,11 +45,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@repo/ui/components/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@repo/ui/components/tooltip';
 import { Check, GripVertical, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -80,6 +75,19 @@ const labels: Record<
     description: '补充可自由组合的检索维度。',
   },
 };
+
+function deleteDescription(
+  kind: TaxonomyKind,
+  item: TaxonomyItemResponseDto,
+): string {
+  if (item.referenceCount === 0) {
+    return `这个${labels[kind].singular}没有被任何链接引用。删除后无法恢复。`;
+  }
+  if (kind === 'categories') {
+    return `仍有 ${item.referenceCount} 条链接引用这个分类。删除后，这些链接将被归档、清空分类并退回待整理；分类本身无法恢复。`;
+  }
+  return `仍有 ${item.referenceCount} 条链接引用这个标签。删除后，将从这些链接中移除标签，链接本身不会被归档；标签本身无法恢复。`;
+}
 
 interface TaxonomySectionProps extends Omit<
   TaxonomyViewProps,
@@ -198,37 +206,16 @@ function SortableTaxonomyItem({
           >
             <Pencil />
           </Button>
-          {item.referenceCount > 0 ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={<span className="inline-flex" tabIndex={0} />}
-              >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled
-                  aria-label={`${item.name} 正在被引用，无法删除`}
-                >
-                  <Trash2 />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                仍有 {item.referenceCount} 条链接引用，无法删除
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`删除 ${item.name}`}
-              disabled={isPending}
-              onClick={onDelete}
-            >
-              <Trash2 />
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`删除 ${item.name}`}
+            disabled={isPending}
+            onClick={onDelete}
+          >
+            <Trash2 />
+          </Button>
         </>
       )}
     </div>
@@ -373,7 +360,7 @@ function TaxonomySection({
           <AlertDialogHeader>
             <AlertDialogTitle>删除“{deleteItem?.name}”？</AlertDialogTitle>
             <AlertDialogDescription>
-              这个{copy.singular}没有被任何链接引用。删除后无法恢复。
+              {deleteItem ? deleteDescription(kind, deleteItem) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

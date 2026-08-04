@@ -81,7 +81,7 @@ function TaxonomyRoute() {
 
   async function remove(kind: TaxonomyKind, id: string) {
     await removeMutation.mutateAsync({ path: { id, kind } });
-    await invalidateTaxonomy(queryClient);
+    await invalidateLinks(queryClient);
   }
 
   async function reorder(kind: TaxonomyKind, ids: string[]) {
