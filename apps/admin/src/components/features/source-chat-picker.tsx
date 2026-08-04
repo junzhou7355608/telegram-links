@@ -63,7 +63,7 @@ export function SourceChatPicker({
           />
         }
       >
-        <span className="max-w-32 truncate">
+        <span className="min-w-0 truncate">
           {selected?.title ?? (value ? '已选择来源' : '全部来源')}
         </span>
         <ChevronsUpDown className="shrink-0 text-muted-foreground" />

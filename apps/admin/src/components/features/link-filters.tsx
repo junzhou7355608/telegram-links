@@ -43,7 +43,7 @@ interface FilterSelectProps {
   onChange: (value: string | undefined) => void;
 }
 
-const desktopFilterWidth = 'w-36';
+const desktopFilterClassName = 'min-w-36 max-w-full';
 
 function FilterSelect({
   contentClassName,
@@ -69,7 +69,7 @@ function FilterSelect({
         }
       >
         <SelectTrigger
-          className={stacked ? 'w-full' : desktopFilterWidth}
+          className={stacked ? 'w-full' : desktopFilterClassName}
           aria-label={`按${label}筛选`}
         >
           <SelectValue>{displayValue}</SelectValue>
@@ -135,7 +135,7 @@ function FilterFields({
           </span>
         ) : null}
         <SourceChatPicker
-          className={stacked ? 'w-full' : desktopFilterWidth}
+          className={stacked ? 'w-full' : desktopFilterClassName}
           value={filters.sourceChatId}
           onChange={(value) => update('sourceChatId', value)}
         />
@@ -173,21 +173,20 @@ function FilterFields({
             标签
           </span>
         ) : null}
-        <div className={stacked ? undefined : desktopFilterWidth}>
-          <TagPicker
-            options={taxonomy.tags}
-            value={filters.tagIds ?? []}
-            onChange={(value) =>
-              update('tagIds', value.length ? value : undefined)
-            }
-            placeholder="全部标签"
-          />
-        </div>
+        <TagPicker
+          className={stacked ? 'w-full' : desktopFilterClassName}
+          options={taxonomy.tags}
+          value={filters.tagIds ?? []}
+          onChange={(value) =>
+            update('tagIds', value.length ? value : undefined)
+          }
+          placeholder="全部标签"
+        />
       </label>
       <Button
         type="button"
         variant={filters.includeArchived ? 'secondary' : 'outline'}
-        className={stacked ? 'w-full' : desktopFilterWidth}
+        className={stacked ? 'w-full' : desktopFilterClassName}
         onClick={() => update('includeArchived', !filters.includeArchived)}
       >
         <Archive />

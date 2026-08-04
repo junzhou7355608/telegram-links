@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@repo/ui/components/popover';
+import { cn } from '@repo/ui/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,6 +22,7 @@ interface TagOption {
 }
 
 interface TagPickerProps {
+  className?: string;
   id?: string;
   options: TagOption[];
   value: string[];
@@ -29,6 +31,7 @@ interface TagPickerProps {
 }
 
 export function TagPicker({
+  className,
   id,
   options,
   value,
@@ -56,7 +59,10 @@ export function TagPicker({
           <Button
             type="button"
             variant="outline"
-            className="h-auto min-h-8 w-full justify-between font-normal"
+            className={cn(
+              'h-auto min-h-8 justify-between font-normal',
+              className ?? 'w-full',
+            )}
           />
         }
       >
