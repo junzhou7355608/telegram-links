@@ -23,10 +23,11 @@ function LinkFavicon({
 }: Omit<React.ComponentProps<'span'>, 'children'> & {
   url: string;
   size?: 'default' | 'sm';
-  }) {
+}) {
   const source = faviconSource(url);
   const [failedSource, setFailedSource] = React.useState<string | null>(null);
-  const imageSource = source !== null && failedSource !== source ? source : null;
+  const imageSource =
+    source !== null && failedSource !== source ? source : null;
 
   return (
     <span

@@ -19,12 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@repo/ui/components/table';
-import {
-  ArrowUpRight,
-  ExternalLink,
-  FileQuestion,
-  Pencil,
-} from 'lucide-react';
+import { ArrowUpRight, ExternalLink, FileQuestion, Pencil } from 'lucide-react';
 
 interface LinkListProps {
   links: LinkResponseDto[];
