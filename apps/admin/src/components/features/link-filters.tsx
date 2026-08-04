@@ -35,6 +35,7 @@ interface FilterOption {
 }
 
 interface FilterSelectProps {
+  contentClassName?: string;
   label: string;
   value?: string;
   options: FilterOption[];
@@ -42,7 +43,10 @@ interface FilterSelectProps {
   onChange: (value: string | undefined) => void;
 }
 
+const desktopFilterWidth = 'w-36';
+
 function FilterSelect({
+  contentClassName,
   label,
   value,
   options,
@@ -65,12 +69,12 @@ function FilterSelect({
         }
       >
         <SelectTrigger
-          className={stacked ? 'w-full' : 'min-w-28'}
+          className={stacked ? 'w-full' : desktopFilterWidth}
           aria-label={`按${label}筛选`}
         >
           <SelectValue>{displayValue}</SelectValue>
         </SelectTrigger>
-        <SelectContent align="start">
+        <SelectContent align="start" className={contentClassName}>
           <SelectItem value="all">全部{label}</SelectItem>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
@@ -114,6 +118,7 @@ function FilterFields({
       }
     >
       <FilterSelect
+        contentClassName={stacked ? undefined : 'w-64'}
         label="分类"
         value={filters.categoryId}
         options={taxonomy.categories.map((item) => ({
@@ -130,6 +135,7 @@ function FilterFields({
           </span>
         ) : null}
         <SourceChatPicker
+          className={stacked ? 'w-full' : desktopFilterWidth}
           value={filters.sourceChatId}
           onChange={(value) => update('sourceChatId', value)}
         />
@@ -167,7 +173,7 @@ function FilterFields({
             标签
           </span>
         ) : null}
-        <div className={stacked ? undefined : 'min-w-36'}>
+        <div className={stacked ? undefined : desktopFilterWidth}>
           <TagPicker
             options={taxonomy.tags}
             value={filters.tagIds ?? []}
@@ -181,6 +187,7 @@ function FilterFields({
       <Button
         type="button"
         variant={filters.includeArchived ? 'secondary' : 'outline'}
+        className={stacked ? 'w-full' : desktopFilterWidth}
         onClick={() => update('includeArchived', !filters.includeArchived)}
       >
         <Archive />

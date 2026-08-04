@@ -15,16 +15,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@repo/ui/components/popover';
+import { cn } from '@repo/ui/lib/utils';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Check, ChevronLeft, ChevronRight, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 
 interface SourceChatPickerProps {
+  className?: string;
   value?: string;
   onChange: (value: string | undefined) => void;
 }
 
-export function SourceChatPicker({ value, onChange }: SourceChatPickerProps) {
+export function SourceChatPicker({
+  className,
+  value,
+  onChange,
+}: SourceChatPickerProps) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -50,7 +56,10 @@ export function SourceChatPicker({ value, onChange }: SourceChatPickerProps) {
           <Button
             type="button"
             variant="outline"
-            className="min-w-28 justify-between font-normal"
+            className={cn(
+              'justify-between font-normal',
+              className ?? 'min-w-28',
+            )}
           />
         }
       >
