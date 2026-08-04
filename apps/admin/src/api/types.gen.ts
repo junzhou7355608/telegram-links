@@ -260,6 +260,10 @@ export type TaxonomyNameDto = {
   name: string;
 };
 
+export type TaxonomyOrderDto = {
+  ids: Array<string>;
+};
+
 export type TelegramAccountProfileResponseDto = {
   displayName: string | null;
   phoneNumber: string | null;
@@ -779,6 +783,33 @@ export type AdminTaxonomyControllerCreateResponses = {
 
 export type AdminTaxonomyControllerCreateResponse =
   AdminTaxonomyControllerCreateResponses[keyof AdminTaxonomyControllerCreateResponses];
+
+export type AdminTaxonomyControllerReorderData = {
+  body: TaxonomyOrderDto;
+  path: {
+    kind: 'categories' | 'tags';
+  };
+  query?: never;
+  url: '/api/admin/v1/taxonomy/{kind}/order';
+};
+
+export type AdminTaxonomyControllerReorderErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminTaxonomyControllerReorderError =
+  AdminTaxonomyControllerReorderErrors[keyof AdminTaxonomyControllerReorderErrors];
+
+export type AdminTaxonomyControllerReorderResponses = {
+  200: Array<TaxonomyItemResponseDto>;
+};
+
+export type AdminTaxonomyControllerReorderResponse =
+  AdminTaxonomyControllerReorderResponses[keyof AdminTaxonomyControllerReorderResponses];
 
 export type AdminTaxonomyControllerRemoveData = {
   body?: never;

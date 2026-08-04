@@ -30,6 +30,7 @@ import {
   adminTaxonomyControllerList,
   adminTaxonomyControllerRemove,
   adminTaxonomyControllerRename,
+  adminTaxonomyControllerReorder,
   adminTelegramControllerAccount,
   adminTelegramControllerListChats,
   adminTelegramControllerLogOut,
@@ -96,6 +97,9 @@ import type {
   AdminTaxonomyControllerRenameData,
   AdminTaxonomyControllerRenameError,
   AdminTaxonomyControllerRenameResponse,
+  AdminTaxonomyControllerReorderData,
+  AdminTaxonomyControllerReorderError,
+  AdminTaxonomyControllerReorderResponse,
   AdminTelegramControllerAccountData,
   AdminTelegramControllerAccountError,
   AdminTelegramControllerAccountResponse,
@@ -695,6 +699,30 @@ export const adminTaxonomyControllerCreateMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await adminTaxonomyControllerCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const adminTaxonomyControllerReorderMutation = (
+  options?: Partial<Options<AdminTaxonomyControllerReorderData>>,
+): UseMutationOptions<
+  AdminTaxonomyControllerReorderResponse,
+  AxiosError<AdminTaxonomyControllerReorderError>,
+  Options<AdminTaxonomyControllerReorderData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AdminTaxonomyControllerReorderResponse,
+    AxiosError<AdminTaxonomyControllerReorderError>,
+    Options<AdminTaxonomyControllerReorderData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await adminTaxonomyControllerReorder({
         ...options,
         ...fnOptions,
         throwOnError: true,

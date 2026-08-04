@@ -64,6 +64,9 @@ import type {
   AdminTaxonomyControllerRenameData,
   AdminTaxonomyControllerRenameErrors,
   AdminTaxonomyControllerRenameResponses,
+  AdminTaxonomyControllerReorderData,
+  AdminTaxonomyControllerReorderErrors,
+  AdminTaxonomyControllerReorderResponses,
   AdminTelegramControllerAccountData,
   AdminTelegramControllerAccountErrors,
   AdminTelegramControllerAccountResponses,
@@ -109,6 +112,7 @@ import {
   zAdminTaxonomyControllerListResponse,
   zAdminTaxonomyControllerRemoveResponse,
   zAdminTaxonomyControllerRenameResponse,
+  zAdminTaxonomyControllerReorderResponse,
   zAdminTelegramControllerAccountResponse,
   zAdminTelegramControllerListChatsResponse,
   zAdminTelegramControllerLogOutResponse,
@@ -591,6 +595,38 @@ export const adminTaxonomyControllerCreate = <
       },
     ],
     url: '/api/admin/v1/taxonomy/{kind}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+export const adminTaxonomyControllerReorder = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<AdminTaxonomyControllerReorderData, ThrowOnError>,
+): RequestResult<
+  AdminTaxonomyControllerReorderResponses,
+  AdminTaxonomyControllerReorderErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    AdminTaxonomyControllerReorderResponses,
+    AdminTaxonomyControllerReorderErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminTaxonomyControllerReorderResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
+    url: '/api/admin/v1/taxonomy/{kind}/order',
     ...options,
     headers: {
       'Content-Type': 'application/json',

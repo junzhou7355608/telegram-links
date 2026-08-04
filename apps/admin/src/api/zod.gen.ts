@@ -257,6 +257,10 @@ export const zTaxonomyNameDto = z.object({
   name: z.string(),
 });
 
+export const zTaxonomyOrderDto = z.object({
+  ids: z.array(z.uuid()),
+});
+
 export const zTelegramAccountProfileResponseDto = z.object({
   displayName: z.string().nullable(),
   phoneNumber: z.string().nullable(),
@@ -439,6 +443,16 @@ export const zAdminTaxonomyControllerCreatePath = z.object({
 });
 
 export const zAdminTaxonomyControllerCreateResponse = zTaxonomyItemResponseDto;
+
+export const zAdminTaxonomyControllerReorderBody = zTaxonomyOrderDto;
+
+export const zAdminTaxonomyControllerReorderPath = z.object({
+  kind: z.enum(['categories', 'tags']),
+});
+
+export const zAdminTaxonomyControllerReorderResponse = z.array(
+  zTaxonomyItemResponseDto,
+);
 
 export const zAdminTaxonomyControllerRemovePath = z.object({
   kind: z.enum(['categories', 'tags']),

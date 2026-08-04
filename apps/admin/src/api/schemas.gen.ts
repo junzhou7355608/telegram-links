@@ -939,6 +939,20 @@ export const TaxonomyNameDtoSchema = {
   required: ['name'],
 } as const;
 
+export const TaxonomyOrderDtoSchema = {
+  type: 'object',
+  properties: {
+    ids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+  },
+  required: ['ids'],
+} as const;
+
 export const TelegramAccountProfileResponseDtoSchema = {
   type: 'object',
   properties: {
