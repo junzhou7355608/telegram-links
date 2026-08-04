@@ -1,11 +1,15 @@
 import {
   BadRequestException,
-  INestApplication,
   ValidationError,
   ValidationPipe,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  ADMIN_AUTH_SECURITY_NAME,
+  ADMIN_SESSION_COOKIE_NAME,
+} from './auth/admin-auth.constants';
 import { ApiExceptionFilter } from './common/api-exception.filter';
 
 function validationDetails(errors: ValidationError[], parent = ''): string[] {
@@ -18,9 +22,10 @@ function validationDetails(errors: ValidationError[], parent = ''): string[] {
   });
 }
 
-export function configureApplication(app: INestApplication): void {
+export function configureApplication(app: NestExpressApplication): void {
   const configService = app.get(ConfigService);
 
+  app.set('trust proxy', 'loopback');
   app.enableShutdownHooks();
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new ApiExceptionFilter());
@@ -46,6 +51,11 @@ export function configureApplication(app: INestApplication): void {
     .setTitle('Telegram Links API')
     .setDescription('Telegram Links 服务端 API 文档')
     .setVersion('1.0')
+    .addCookieAuth(
+      ADMIN_SESSION_COOKIE_NAME,
+      { in: 'cookie', type: 'apiKey' },
+      ADMIN_AUTH_SECURITY_NAME,
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
 

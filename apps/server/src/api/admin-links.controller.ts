@@ -22,9 +22,10 @@ import {
   PaginatedLinksResponseDto,
   UpdateLinkDto,
 } from './dto/link.dto';
-import { ApiCommonErrorResponses } from './dto/error.dto';
+import { ApiAdminAuth, ApiCommonErrorResponses } from './dto/error.dto';
 
 @ApiTags('Admin - Links')
+@ApiAdminAuth()
 @ApiCommonErrorResponses()
 @Controller('admin/v1')
 export class AdminLinksController {

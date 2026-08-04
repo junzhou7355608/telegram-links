@@ -1,5 +1,7 @@
 import { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
+import { hashSync } from 'bcryptjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
@@ -21,6 +23,11 @@ const testDatabaseUrl =
   process.env.DATABASE_URL ??
   'postgresql://telegram_links:telegram_links@localhost:5433/telegram_links?schema=telegram_links_test';
 const testEncryptionKey = Buffer.alloc(32, 3).toString('base64');
+const testAdminPassword = 'test-admin-password';
+const testAdminUsername = 'test-admin';
+const testAdminPasswordHash = hashSync(testAdminPassword, 4);
+const testAdminSessionSecret = Buffer.alloc(32, 5).toString('base64');
+type TestAgent = ReturnType<typeof request.agent>;
 
 function assertIsolatedTestSchema(): void {
   const schema = new URL(testDatabaseUrl).searchParams.get('schema');
@@ -182,10 +189,13 @@ class FakeTelegramGateway extends TelegramGateway {
 describe('Server API (e2e)', () => {
   async function createTestApplication(
     swaggerEnabled: boolean,
-  ): Promise<INestApplication<App>> {
+  ): Promise<NestExpressApplication> {
     assertIsolatedTestSchema();
     process.env.DATABASE_URL = testDatabaseUrl;
     process.env.SWAGGER_ENABLED = String(swaggerEnabled);
+    process.env.BASIC_AUTH_USERNAME = testAdminUsername;
+    process.env.BASIC_AUTH_PASSWORD_HASH = testAdminPasswordHash;
+    process.env.ADMIN_AUTH_SESSION_SECRET = testAdminSessionSecret;
     process.env.TELEGRAM_API_ID = '12345';
     process.env.TELEGRAM_API_HASH = 'test-api-hash';
     process.env.TELEGRAM_SESSION_ENCRYPTION_KEY = testEncryptionKey;
@@ -196,7 +206,7 @@ describe('Server API (e2e)', () => {
       .overrideProvider(TelegramGateway)
       .useClass(FakeTelegramGateway)
       .compile();
-    const app = moduleFixture.createNestApplication();
+    const app = moduleFixture.createNestApplication<NestExpressApplication>();
     configureApplication(app);
     await app.init();
     const prisma = app.get(PrismaService);
@@ -223,7 +233,7 @@ describe('Server API (e2e)', () => {
     await prisma.telegramAccount.deleteMany();
   }
 
-  async function closeApplication(app: INestApplication<App>): Promise<void> {
+  async function closeApplication(app: INestApplication): Promise<void> {
     await clearDatabase(app.get(PrismaService));
     await app.close();
   }
@@ -256,6 +266,7 @@ describe('Server API (e2e)', () => {
       });
       expect(document.paths).toHaveProperty('/api/web/v1/links');
       expect(document.paths).toHaveProperty('/api/admin/v1/links');
+      expect(document.paths).toHaveProperty('/api/admin/v1/auth/session');
       expect(document.paths).not.toHaveProperty('/api/admin/v1/ai/settings');
       expect(document.paths).toHaveProperty('/api/admin/v1/telegram/auth/code');
       expect(document.paths).toHaveProperty(
@@ -287,8 +298,67 @@ describe('Server API (e2e)', () => {
         }
       }
       expect(document.components.schemas).toHaveProperty('ApiErrorResponseDto');
+      expect(document.components).toHaveProperty(
+        'securitySchemes.adminSession',
+      );
       await request(app.getHttpServer()).get('/docs').expect(200);
       await request(app.getHttpServer()).get('/').expect(404);
+    } finally {
+      await closeApplication(app);
+    }
+  });
+
+  it('keeps Web public and protects Admin with a cookie session', async () => {
+    const app = await createTestApplication(false);
+    try {
+      const server = app.getHttpServer();
+      await request(server).get('/api/healthz').expect(200);
+      await request(server).get('/api/web/v1/overview').expect(200);
+      await request(server)
+        .get('/api/admin/v1/overview')
+        .expect(401)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'ADMIN_AUTH_REQUIRED' }),
+          );
+        });
+      await request(server)
+        .get('/api/admin/v1/auth/session')
+        .expect(200, { authenticated: false });
+      await request(server)
+        .post('/api/admin/v1/auth/session')
+        .send({ username: testAdminUsername, password: 'wrong-password' })
+        .expect(401)
+        .expect((response) => {
+          expect(response.body).toEqual(
+            expect.objectContaining({ code: 'INVALID_ADMIN_CREDENTIALS' }),
+          );
+        });
+
+      const api = request.agent(server);
+      const login = await api
+        .post('/api/admin/v1/auth/session')
+        .send({
+          username: testAdminUsername,
+          password: testAdminPassword,
+        })
+        .expect(200)
+        .expect({ authenticated: true, username: testAdminUsername });
+      expect(login.headers['set-cookie']?.[0]).toMatch(/HttpOnly/u);
+      expect(login.headers['set-cookie']?.[0]).toMatch(
+        /Path=\/api\/admin\/v1/u,
+      );
+      expect(login.headers['set-cookie']?.[0]).toMatch(/SameSite=Strict/u);
+
+      await api
+        .get('/api/admin/v1/auth/session')
+        .expect(200, { authenticated: true, username: testAdminUsername });
+      await api.get('/api/admin/v1/overview').expect(200);
+      await api.delete('/api/admin/v1/auth/session').expect(204);
+      await api
+        .get('/api/admin/v1/auth/session')
+        .expect(200, { authenticated: false });
+      await api.get('/api/admin/v1/overview').expect(401);
     } finally {
       await closeApplication(app);
     }
@@ -298,29 +368,26 @@ describe('Server API (e2e)', () => {
     const app = await createTestApplication(false);
     try {
       const server = app.getHttpServer();
-      const codeResponse = await request(server)
+      const api = await createAdminAgent(server);
+      const codeResponse = await api
         .post('/api/admin/v1/telegram/auth/code')
         .send({ phoneNumber: '+8613800000000' })
         .expect(202);
       const code = responseBody<{ challengeId: string }>(codeResponse);
       expect(codeResponse.body).not.toHaveProperty('phoneCodeHash');
-      await request(server)
+      await api
         .post('/api/admin/v1/telegram/auth/code/verify')
         .send({ challengeId: code.challengeId, code: '12345' })
         .expect(200)
         .expect({ status: 'passwordRequired' });
-      await request(server)
+      await api
         .post('/api/admin/v1/telegram/auth/password/verify')
         .send({ challengeId: code.challengeId, password: 'local-test-only' })
         .expect(200)
         .expect({ status: 'authorized' });
 
-      await request(server)
-        .post('/api/admin/v1/telegram/chats/refresh')
-        .expect(200);
-      const chats = await request(server)
-        .get('/api/admin/v1/telegram/chats')
-        .expect(200);
+      await api.post('/api/admin/v1/telegram/chats/refresh').expect(200);
+      const chats = await api.get('/api/admin/v1/telegram/chats').expect(200);
       const chatItems = responseBody<{
         items: Array<{ id: string; title: string }>;
       }>(chats).items;
@@ -336,7 +403,7 @@ describe('Server API (e2e)', () => {
         data: { isAvailable: false },
         where: { id: unavailableChat.id },
       });
-      const scanOptions = await request(server)
+      const scanOptions = await api
         .get('/api/admin/v1/telegram/chats/scan-options')
         .expect(200);
       const optionItems = responseBody<{
@@ -350,15 +417,15 @@ describe('Server API (e2e)', () => {
         where: { id: unavailableChat.id },
       });
 
-      const category = await request(server)
+      const category = await api
         .post('/api/admin/v1/taxonomy/categories')
         .send({ name: '代码仓库' })
         .expect(201);
-      const tag = await request(server)
+      const tag = await api
         .post('/api/admin/v1/taxonomy/tags')
         .send({ name: '后端' })
         .expect(201);
-      const unusedTag = await request(server)
+      const unusedTag = await api
         .post('/api/admin/v1/taxonomy/tags')
         .send({ name: '未使用标签' })
         .expect(201);
@@ -366,15 +433,15 @@ describe('Server API (e2e)', () => {
       const tagBody = responseBody<{ id: string }>(tag);
       const unusedTagBody = responseBody<{ id: string }>(unusedTag);
 
-      await request(server)
+      await api
         .post('/api/admin/v1/sync-jobs')
         .send({ rangeMode: 'allHistory' })
         .expect(400);
-      await request(server)
+      await api
         .post('/api/admin/v1/sync-jobs')
         .send({ chatIds: [], rangeMode: 'allHistory' })
         .expect(400);
-      await request(server)
+      await api
         .post('/api/admin/v1/sync-jobs')
         .send({
           chatIds: ['00000000-0000-4000-8000-000000000001'],
@@ -390,7 +457,7 @@ describe('Server API (e2e)', () => {
         data: { isAvailable: false },
         where: { id: chatId },
       });
-      await request(server)
+      await api
         .post('/api/admin/v1/sync-jobs')
         .send({ chatIds: [chatId], rangeMode: 'allHistory' })
         .expect(400)
@@ -404,7 +471,7 @@ describe('Server API (e2e)', () => {
         where: { id: chatId },
       });
 
-      const createdJob = await request(server)
+      const createdJob = await api
         .post('/api/admin/v1/sync-jobs')
         .send({
           chatIds: [chatId],
@@ -414,7 +481,7 @@ describe('Server API (e2e)', () => {
         })
         .expect(202);
       const job = await waitForJob(
-        server,
+        api,
         responseBody<{ id: string }>(createdJob).id,
       );
       expect(job).toMatchObject({
@@ -423,7 +490,7 @@ describe('Server API (e2e)', () => {
         newCount: 2,
         status: 'succeeded',
       });
-      const partialJob = await request(server)
+      const partialJob = await api
         .post('/api/admin/v1/sync-jobs')
         .send({
           chatIds: chatItems.map((chat) => chat.id),
@@ -438,7 +505,7 @@ describe('Server API (e2e)', () => {
           status: string;
         }>;
         status: string;
-      }>(server, responseBody<{ id: string }>(partialJob).id);
+      }>(api, responseBody<{ id: string }>(partialJob).id);
       expect(partialResult.status).toBe('partiallySucceeded');
       expect(partialResult.chats).toEqual(
         expect.arrayContaining([
@@ -467,14 +534,12 @@ describe('Server API (e2e)', () => {
         where: { domain: 'github.com' },
       });
       const linkId = githubLink.id;
-      await request(server)
-        .get('/api/web/v1/links?q=github')
-        .expect(200, {
-          items: [],
-          pagination: { page: 1, pageSize: 8, total: 0, totalPages: 1 },
-        });
-      await request(server).get(`/api/web/v1/links/${linkId}`).expect(404);
-      await request(server)
+      await api.get('/api/web/v1/links?q=github').expect(200, {
+        items: [],
+        pagination: { page: 1, pageSize: 8, total: 0, totalPages: 1 },
+      });
+      await api.get(`/api/web/v1/links/${linkId}`).expect(404);
+      await api
         .get('/api/web/v1/links?status=pending')
         .expect(400)
         .expect((response) => {
@@ -482,7 +547,7 @@ describe('Server API (e2e)', () => {
             expect.objectContaining({ code: 'VALIDATION_ERROR' }),
           );
         });
-      await request(server)
+      await api
         .patch(`/api/admin/v1/links/${linkId}`)
         .send({
           purpose: '项目代码仓库',
@@ -491,25 +556,21 @@ describe('Server API (e2e)', () => {
         })
         .expect(200);
 
-      const webLinks = await request(server)
-        .get('/api/web/v1/links?q=github')
-        .expect(200);
+      const webLinks = await api.get('/api/web/v1/links?q=github').expect(200);
       const linksBody = responseBody<{
         items: [{ id: string }];
         pagination: { total: number };
       }>(webLinks);
       expect(linksBody.pagination.total).toBe(1);
       expect(linksBody.items[0].id).toBe(linkId);
-      const taggedLinks = await request(server)
+      const taggedLinks = await api
         .get(`/api/web/v1/links?tagIds=${tagBody.id},${unusedTagBody.id}`)
         .expect(200);
       expect(
         responseBody<{ pagination: { total: number } }>(taggedLinks).pagination
           .total,
       ).toBe(1);
-      const detail = await request(server)
-        .get(`/api/web/v1/links/${linkId}`)
-        .expect(200);
+      const detail = await api.get(`/api/web/v1/links/${linkId}`).expect(200);
       const detailBody = responseBody<{
         sourceCount: number;
         sources: Array<{ rawUrl: string }>;
@@ -522,7 +583,7 @@ describe('Server API (e2e)', () => {
       expect(detailBody.sources.map(({ rawUrl }) => rawUrl)).toContain(
         'https://github.com/example/project?tab=readme',
       );
-      await request(server)
+      await api
         .patch(`/api/admin/v1/links/${linkId}`)
         .send({ url: 'https://github.com/example/project?manual=1' })
         .expect(200)
@@ -531,7 +592,7 @@ describe('Server API (e2e)', () => {
             'https://github.com/example/project?manual=1',
           );
         });
-      await request(server)
+      await api
         .get(`/api/admin/v1/links?sourceChatId=${chatId}`)
         .expect(200)
         .expect((response) => {
@@ -543,7 +604,7 @@ describe('Server API (e2e)', () => {
       const docsLink = await app.get(PrismaService).link.findUniqueOrThrow({
         where: { domain: 'docs.example.com' },
       });
-      await request(server)
+      await api
         .patch(`/api/admin/v1/links/${linkId}`)
         .send({ url: `${docsLink.url}?conflict=1` })
         .expect(409)
@@ -553,15 +614,13 @@ describe('Server API (e2e)', () => {
           );
         });
       expect(detail.body).not.toHaveProperty('isFavorite');
-      const adminDetail = await request(server)
+      const adminDetail = await api
         .get(`/api/admin/v1/links/${linkId}`)
         .expect(200);
       expect(adminDetail.body).not.toHaveProperty('aiAnalysis');
       expect(adminDetail.body).not.toHaveProperty('project');
       expect(adminDetail.body).not.toHaveProperty('environment');
-      const overview = await request(server)
-        .get('/api/web/v1/overview')
-        .expect(200);
+      const overview = await api.get('/api/web/v1/overview').expect(200);
       const overviewBody = responseBody<{
         categories: Array<{ count: number; id: string }>;
         counts: { recent: number; total: number };
@@ -579,11 +638,11 @@ describe('Server API (e2e)', () => {
         ]),
       );
       expect(overviewBody.counts).not.toHaveProperty('favorites');
-      await request(server)
+      await api
         .patch(`/api/web/v1/links/${linkId}`)
         .send({ title: 'Web 不应允许编辑' })
         .expect(404);
-      await request(server)
+      await api
         .patch(`/api/admin/v1/links/${linkId}`)
         .send({ isFavorite: true })
         .expect(400)
@@ -592,7 +651,7 @@ describe('Server API (e2e)', () => {
             expect.objectContaining({ code: 'VALIDATION_ERROR' }),
           );
         });
-      const allLinks = await request(server)
+      const allLinks = await api
         .get('/api/admin/v1/links?pageSize=100')
         .expect(200);
       const allLinkItems = responseBody<{ items: Array<{ id: string }> }>(
@@ -602,7 +661,7 @@ describe('Server API (e2e)', () => {
       if (!otherLink) {
         throw new Error('Expected a second synchronized link');
       }
-      await request(server)
+      await api
         .patch(`/api/admin/v1/links/${otherLink.id}`)
         .send({ url: 'https://github.com/example/project/' })
         .expect(409)
@@ -616,12 +675,10 @@ describe('Server API (e2e)', () => {
           );
         });
 
-      await request(server).delete(`/api/admin/v1/links/${linkId}`).expect(204);
-      await request(server).get(`/api/web/v1/links/${linkId}`).expect(404);
-      await request(server)
-        .post(`/api/admin/v1/links/${linkId}/restore`)
-        .expect(200);
-      await request(server)
+      await api.delete(`/api/admin/v1/links/${linkId}`).expect(204);
+      await api.get(`/api/web/v1/links/${linkId}`).expect(404);
+      await api.post(`/api/admin/v1/links/${linkId}/restore`).expect(200);
+      await api
         .delete(`/api/admin/v1/taxonomy/categories/${categoryBody.id}`)
         .expect(409);
     } finally {
@@ -633,9 +690,10 @@ describe('Server API (e2e)', () => {
     const app = await createTestApplication(false);
     try {
       const server = app.getHttpServer();
-      await request(server).get('/docs').expect(404);
-      await request(server).get('/docs-json').expect(404);
-      const validationResponse = await request(server)
+      const api = await createAdminAgent(server);
+      await api.get('/docs').expect(404);
+      await api.get('/docs-json').expect(404);
+      const validationResponse = await api
         .post('/api/admin/v1/telegram/auth/code')
         .send({ phoneNumber: '+8613800000000', unexpected: true })
         .expect(400);
@@ -655,7 +713,7 @@ describe('Server API (e2e)', () => {
       });
       expect(Array.isArray(validationBody.details)).toBe(true);
       expect(typeof validationBody.timestamp).toBe('string');
-      await request(server)
+      await api
         .post('/api/admin/v1/sync-jobs')
         .send({
           chatIds: ['00000000-0000-4000-8000-000000000001'],
@@ -685,11 +743,9 @@ async function waitForJob<
   Result extends { status: string } = Record<string, unknown> & {
     status: string;
   },
->(server: App, id: string): Promise<Result> {
+>(api: TestAgent, id: string): Promise<Result> {
   for (let attempt = 0; attempt < 50; attempt += 1) {
-    const response = await request(server)
-      .get(`/api/admin/v1/sync-jobs/${id}`)
-      .expect(200);
+    const response = await api.get(`/api/admin/v1/sync-jobs/${id}`).expect(200);
     const job = responseBody<Result>(response);
     if (!['queued', 'running'].includes(job.status)) {
       return job;
@@ -697,6 +753,15 @@ async function waitForJob<
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error('Timed out waiting for sync job');
+}
+
+async function createAdminAgent(server: App): Promise<TestAgent> {
+  const api = request.agent(server);
+  await api
+    .post('/api/admin/v1/auth/session')
+    .send({ username: testAdminUsername, password: testAdminPassword })
+    .expect(200);
+  return api;
 }
 
 function responseBody<T>(response: { text: string }): T {

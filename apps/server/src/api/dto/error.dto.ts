@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiCookieAuth,
   ApiConflictResponse,
   ApiGoneResponse,
   ApiInternalServerErrorResponse,
@@ -10,6 +11,7 @@ import {
   ApiServiceUnavailableResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { ADMIN_AUTH_SECURITY_NAME } from '../../auth/admin-auth.constants';
 
 export class ApiErrorResponseDto {
   @ApiProperty({ example: 400, type: Number })
@@ -46,5 +48,12 @@ export function ApiTelegramErrorResponses() {
     ApiUnauthorizedResponse({ type: ApiErrorResponseDto }),
     ApiGoneResponse({ type: ApiErrorResponseDto }),
     ApiServiceUnavailableResponse({ type: ApiErrorResponseDto }),
+  );
+}
+
+export function ApiAdminAuth() {
+  return applyDecorators(
+    ApiCookieAuth(ADMIN_AUTH_SECURITY_NAME),
+    ApiUnauthorizedResponse({ type: ApiErrorResponseDto }),
   );
 }

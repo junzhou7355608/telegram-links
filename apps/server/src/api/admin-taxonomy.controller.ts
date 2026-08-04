@@ -21,7 +21,7 @@ import {
   TaxonomyService,
   type TaxonomyKind,
 } from '../taxonomy/taxonomy.service';
-import { ApiCommonErrorResponses } from './dto/error.dto';
+import { ApiAdminAuth, ApiCommonErrorResponses } from './dto/error.dto';
 import {
   TaxonomyItemResponseDto,
   TaxonomyKindDtoValue,
@@ -39,6 +39,7 @@ function taxonomyKind(value: string): TaxonomyKind {
 }
 
 @ApiTags('Admin - Taxonomy')
+@ApiAdminAuth()
 @ApiCommonErrorResponses()
 @Controller('admin/v1/taxonomy')
 export class AdminTaxonomyController {

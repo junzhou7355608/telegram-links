@@ -2,6 +2,9 @@
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
   "globalEnv": [
+    "ADMIN_AUTH_SESSION_SECRET",
+    "BASIC_AUTH_PASSWORD_HASH",
+    "BASIC_AUTH_USERNAME",
     "DATABASE_URL",
     "DIRECT_DATABASE_URL",
     "HOST",

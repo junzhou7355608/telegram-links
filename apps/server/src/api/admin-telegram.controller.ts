@@ -15,7 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { TelegramAuthService } from '../telegram/telegram-auth.service';
 import { TelegramChatsService } from '../telegram/telegram-chats.service';
-import { ApiTelegramErrorResponses } from './dto/error.dto';
+import { ApiAdminAuth, ApiTelegramErrorResponses } from './dto/error.dto';
 import {
   ChatQueryDto,
   PaginatedTelegramChatsResponseDto,
@@ -30,6 +30,7 @@ import {
 } from './dto/telegram.dto';
 
 @ApiTags('Admin - Telegram')
+@ApiAdminAuth()
 @ApiTelegramErrorResponses()
 @Controller('admin/v1/telegram')
 export class AdminTelegramController {

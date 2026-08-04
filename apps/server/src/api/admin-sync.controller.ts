@@ -11,7 +11,7 @@ import {
 import { ApiAcceptedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../common/pagination.dto';
 import { SyncJobsService } from '../sync/sync-jobs.service';
-import { ApiTelegramErrorResponses } from './dto/error.dto';
+import { ApiAdminAuth, ApiTelegramErrorResponses } from './dto/error.dto';
 import {
   CreateSyncJobDto,
   PaginatedSyncJobsResponseDto,
@@ -19,6 +19,7 @@ import {
 } from './dto/sync.dto';
 
 @ApiTags('Admin - Sync jobs')
+@ApiAdminAuth()
 @ApiTelegramErrorResponses()
 @Controller('admin/v1/sync-jobs')
 export class AdminSyncController {
