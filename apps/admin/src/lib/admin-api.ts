@@ -27,6 +27,17 @@ export interface TaxonomyCollections {
   tags: TaxonomyItemResponseDto[];
 }
 
+export function orderTaxonomyItems(
+  items: TaxonomyItemResponseDto[],
+  ids: string[],
+): TaxonomyItemResponseDto[] {
+  const itemsById = new Map(items.map((item) => [item.id, item]));
+  return ids.flatMap((id) => {
+    const item = itemsById.get(id);
+    return item ? [item] : [];
+  });
+}
+
 export function createLinksQuery(
   search: LinksSearch,
   pendingOnly: boolean,

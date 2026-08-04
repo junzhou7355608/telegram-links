@@ -1,7 +1,9 @@
 import {
   adminTaxonomyControllerCreateMutation,
+  adminTaxonomyControllerListQueryKey,
   adminTaxonomyControllerRemoveMutation,
   adminTaxonomyControllerRenameMutation,
+  adminTaxonomyControllerReorderMutation,
 } from '@/api/@tanstack/react-query.gen';
 import { TaxonomyView } from '@/components/features/taxonomy-view';
 import { PageSkeleton } from '@/components/layouts/api-state';
@@ -10,6 +12,7 @@ import { useTaxonomy } from '@/hooks/use-taxonomy';
 import {
   invalidateLinks,
   invalidateTaxonomy,
+  orderTaxonomyItems,
   type TaxonomyKind,
 } from '@/lib/admin-api';
 import { taxonomySearchSchema } from '@/lib/admin-search';
@@ -30,10 +33,34 @@ function TaxonomyRoute() {
   const createMutation = useMutation(adminTaxonomyControllerCreateMutation());
   const renameMutation = useMutation(adminTaxonomyControllerRenameMutation());
   const removeMutation = useMutation(adminTaxonomyControllerRemoveMutation());
+  const reorderMutation = useMutation({
+    ...adminTaxonomyControllerReorderMutation(),
+    onMutate: async ({ body, path }) => {
+      const queryKey = adminTaxonomyControllerListQueryKey({
+        path: { kind: path.kind },
+      });
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (current = []) =>
+        orderTaxonomyItems(current, body.ids),
+      );
+      return { previous, queryKey };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+    },
+    onSuccess: async (items, _variables, context) => {
+      queryClient.setQueryData(context.queryKey, items);
+      await invalidateLinks(queryClient);
+    },
+  });
   const isPending =
     createMutation.isPending ||
     renameMutation.isPending ||
-    removeMutation.isPending;
+    removeMutation.isPending ||
+    reorderMutation.isPending;
   useApiErrorToast(taxonomyQuery.error);
 
   useEffect(() => {
@@ -64,6 +91,10 @@ function TaxonomyRoute() {
     await invalidateTaxonomy(queryClient);
   }
 
+  async function reorder(kind: TaxonomyKind, ids: string[]) {
+    await reorderMutation.mutateAsync({ body: { ids }, path: { kind } });
+  }
+
   if (taxonomyQuery.isPending) {
     return <PageSkeleton rows={5} />;
   }
@@ -79,6 +110,7 @@ function TaxonomyRoute() {
       onAdd={create}
       onRename={rename}
       onDelete={remove}
+      onReorder={reorder}
     />
   );
 }

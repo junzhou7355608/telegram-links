@@ -227,9 +227,7 @@ export function LinksPage({
     queryClient.setQueryData<TaxonomyItemResponseDto[]>(
       queryKey,
       (current = []) =>
-        [...current.filter((item) => item.id !== created.id), created].toSorted(
-          (left, right) => left.name.localeCompare(right.name, 'zh-CN'),
-        ),
+        [...current.filter((item) => item.id !== created.id), created],
     );
     void queryClient.invalidateQueries({ queryKey });
     return created;

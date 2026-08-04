@@ -2,6 +2,23 @@ import type { TaxonomyItemResponseDto } from '@/api/types.gen';
 import type { TaxonomyCollections, TaxonomyKind } from '@/lib/admin-api';
 import { getAdminApiError } from '@/lib/api-error';
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,7 +50,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@repo/ui/components/tooltip';
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, GripVertical, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -45,6 +62,7 @@ interface TaxonomyViewProps {
   onAdd: (kind: TaxonomyKind, value: string) => Promise<void>;
   onRename: (kind: TaxonomyKind, id: string, value: string) => Promise<void>;
   onDelete: (kind: TaxonomyKind, id: string) => Promise<void>;
+  onReorder: (kind: TaxonomyKind, ids: string[]) => Promise<void>;
 }
 
 const labels: Record<
@@ -70,6 +88,155 @@ interface TaxonomySectionProps extends Omit<
   kind: TaxonomyKind;
 }
 
+interface SortableTaxonomyItemProps {
+  isEditing: boolean;
+  isPending: boolean;
+  item: TaxonomyItemResponseDto;
+  onCancelRename: () => void;
+  onDelete: () => void;
+  onRenameChange: (value: string) => void;
+  onSaveRename: () => void;
+  onStartRename: () => void;
+  renameValue: string;
+}
+
+function SortableTaxonomyItem({
+  isEditing,
+  isPending,
+  item,
+  onCancelRename,
+  onDelete,
+  onRenameChange,
+  onSaveRename,
+  onStartRename,
+  renameValue,
+}: SortableTaxonomyItemProps) {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: item.id, disabled: isPending || isEditing });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative flex min-h-12 items-center gap-2 bg-card px-2 py-2 ${
+        isDragging ? 'z-10 opacity-60 shadow-sm' : ''
+      }`}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="touch-none cursor-grab text-muted-foreground active:cursor-grabbing"
+        disabled={isPending || isEditing}
+        {...attributes}
+        {...listeners}
+        aria-label={`拖动排序 ${item.name}`}
+      >
+        <GripVertical />
+      </Button>
+      {isEditing ? (
+        <Input
+          value={renameValue}
+          disabled={isPending}
+          onChange={(event) => onRenameChange(event.target.value)}
+          aria-label={`重命名 ${item.name}`}
+          autoFocus
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              onSaveRename();
+            }
+            if (event.key === 'Escape') {
+              onCancelRename();
+            }
+          }}
+        />
+      ) : (
+        <span className="min-w-0 flex-1 truncate font-medium">
+          {item.name}
+        </span>
+      )}
+      <Badge variant="outline">{item.referenceCount} 条引用</Badge>
+      {isEditing ? (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="保存重命名"
+            disabled={isPending}
+            onClick={onSaveRename}
+          >
+            <Check />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="取消重命名"
+            disabled={isPending}
+            onClick={onCancelRename}
+          >
+            <X />
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`重命名 ${item.name}`}
+            disabled={isPending}
+            onClick={onStartRename}
+          >
+            <Pencil />
+          </Button>
+          {item.referenceCount > 0 ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={<span className="inline-flex" tabIndex={0} />}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled
+                  aria-label={`${item.name} 正在被引用，无法删除`}
+                >
+                  <Trash2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                仍有 {item.referenceCount} 条链接引用，无法删除
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`删除 ${item.name}`}
+              disabled={isPending}
+              onClick={onDelete}
+            >
+              <Trash2 />
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function TaxonomySection({
   isPending,
   kind,
@@ -77,6 +244,7 @@ function TaxonomySection({
   onAdd,
   onRename,
   onDelete,
+  onReorder,
 }: TaxonomySectionProps) {
   const [newValue, setNewValue] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -85,6 +253,11 @@ function TaxonomySection({
     null,
   );
   const copy = labels[kind];
+  const items = taxonomy[kind];
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   async function addItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,6 +288,26 @@ function TaxonomySection({
     }
   }
 
+  async function reorderItems(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) {
+      return;
+    }
+    try {
+      await onReorder(
+        kind,
+        arrayMove(items, oldIndex, newIndex).map((item) => item.id),
+      );
+    } catch (error) {
+      toast.error(getAdminApiError(error).message);
+    }
+  }
+
   return (
     <Card size="sm">
       <CardHeader>
@@ -140,108 +333,33 @@ function TaxonomySection({
             新增
           </Button>
         </form>
-        <div className="divide-y rounded-xl border">
-          {taxonomy[kind].map((item) => {
-            const isEditing = editingId === item.id;
-            return (
-              <div
-                key={item.id}
-                className="flex min-h-12 items-center gap-2 px-3 py-2"
-              >
-                {isEditing ? (
-                  <Input
-                    value={renameValue}
-                    disabled={isPending}
-                    onChange={(event) => setRenameValue(event.target.value)}
-                    aria-label={`重命名 ${item.name}`}
-                    autoFocus
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        void saveRename();
-                      }
-                      if (event.key === 'Escape') {
-                        setEditingId(null);
-                      }
-                    }}
-                  />
-                ) : (
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {item.name}
-                  </span>
-                )}
-                <Badge variant="outline">{item.referenceCount} 条引用</Badge>
-                {isEditing ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="保存重命名"
-                      disabled={isPending}
-                      onClick={() => void saveRename()}
-                    >
-                      <Check />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="取消重命名"
-                      disabled={isPending}
-                      onClick={() => setEditingId(null)}
-                    >
-                      <X />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`重命名 ${item.name}`}
-                      disabled={isPending}
-                      onClick={() => startRename(item)}
-                    >
-                      <Pencil />
-                    </Button>
-                    {item.referenceCount > 0 ? (
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={<span className="inline-flex" tabIndex={0} />}
-                        >
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            disabled
-                            aria-label={`${item.name} 正在被引用，无法删除`}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          仍有 {item.referenceCount} 条链接引用，无法删除
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`删除 ${item.name}`}
-                        disabled={isPending}
-                        onClick={() => setDeleteItem(item)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => void reorderItems(event)}
+        >
+          <SortableContext
+            items={items.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="divide-y overflow-hidden rounded-xl border">
+              {items.map((item) => (
+                <SortableTaxonomyItem
+                  key={item.id}
+                  isEditing={editingId === item.id}
+                  isPending={isPending}
+                  item={item}
+                  onCancelRename={() => setEditingId(null)}
+                  onDelete={() => setDeleteItem(item)}
+                  onRenameChange={setRenameValue}
+                  onSaveRename={() => void saveRename()}
+                  onStartRename={() => startRename(item)}
+                  renameValue={renameValue}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </CardContent>
       <AlertDialog
         open={deleteItem !== null}
