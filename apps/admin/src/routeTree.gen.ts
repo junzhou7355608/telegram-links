@@ -9,90 +9,107 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root';
-import { Route as IndexRouteImport } from './routes/index';
-import { Route as AiSettingsRouteImport } from './routes/ai-settings';
-import { Route as LinksRouteImport } from './routes/links';
-import { Route as SyncJobsRouteImport } from './routes/sync-jobs';
-import { Route as TaxonomyRouteImport } from './routes/taxonomy';
-import { Route as TelegramRouteImport } from './routes/telegram';
-import { Route as LinksIndexRouteImport } from './routes/links.index';
-import { Route as LinksPendingRouteImport } from './routes/links.pending';
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated';
+import { Route as LoginRouteImport } from './routes/login';
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index';
+import { Route as AuthenticatedAiSettingsRouteImport } from './routes/_authenticated/ai-settings';
+import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links';
+import { Route as AuthenticatedSyncJobsRouteImport } from './routes/_authenticated/sync-jobs';
+import { Route as AuthenticatedTaxonomyRouteImport } from './routes/_authenticated/taxonomy';
+import { Route as AuthenticatedTelegramRouteImport } from './routes/_authenticated/telegram';
+import { Route as AuthenticatedLinksIndexRouteImport } from './routes/_authenticated/links.index';
+import { Route as AuthenticatedLinksPendingRouteImport } from './routes/_authenticated/links.pending';
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any);
-const AiSettingsRoute = AiSettingsRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any);
+const AuthenticatedAiSettingsRoute = AuthenticatedAiSettingsRouteImport.update({
   id: '/ai-settings',
   path: '/ai-settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
-const LinksRoute = LinksRouteImport.update({
+const AuthenticatedLinksRoute = AuthenticatedLinksRouteImport.update({
   id: '/links',
   path: '/links',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
-const SyncJobsRoute = SyncJobsRouteImport.update({
+const AuthenticatedSyncJobsRoute = AuthenticatedSyncJobsRouteImport.update({
   id: '/sync-jobs',
   path: '/sync-jobs',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
-const TaxonomyRoute = TaxonomyRouteImport.update({
+const AuthenticatedTaxonomyRoute = AuthenticatedTaxonomyRouteImport.update({
   id: '/taxonomy',
   path: '/taxonomy',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
-const TelegramRoute = TelegramRouteImport.update({
+const AuthenticatedTelegramRoute = AuthenticatedTelegramRouteImport.update({
   id: '/telegram',
   path: '/telegram',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any);
-const LinksIndexRoute = LinksIndexRouteImport.update({
+const AuthenticatedLinksIndexRoute = AuthenticatedLinksIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LinksRoute,
+  getParentRoute: () => AuthenticatedLinksRoute,
 } as any);
-const LinksPendingRoute = LinksPendingRouteImport.update({
-  id: '/pending',
-  path: '/pending',
-  getParentRoute: () => LinksRoute,
-} as any);
+const AuthenticatedLinksPendingRoute =
+  AuthenticatedLinksPendingRouteImport.update({
+    id: '/pending',
+    path: '/pending',
+    getParentRoute: () => AuthenticatedLinksRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute;
-  '/ai-settings': typeof AiSettingsRoute;
-  '/links': typeof LinksRouteWithChildren;
-  '/sync-jobs': typeof SyncJobsRoute;
-  '/taxonomy': typeof TaxonomyRoute;
-  '/telegram': typeof TelegramRoute;
-  '/links/pending': typeof LinksPendingRoute;
-  '/links/': typeof LinksIndexRoute;
+  '/': typeof AuthenticatedIndexRoute;
+  '/login': typeof LoginRoute;
+  '/ai-settings': typeof AuthenticatedAiSettingsRoute;
+  '/links': typeof AuthenticatedLinksRouteWithChildren;
+  '/sync-jobs': typeof AuthenticatedSyncJobsRoute;
+  '/taxonomy': typeof AuthenticatedTaxonomyRoute;
+  '/telegram': typeof AuthenticatedTelegramRoute;
+  '/links/pending': typeof AuthenticatedLinksPendingRoute;
+  '/links/': typeof AuthenticatedLinksIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute;
-  '/ai-settings': typeof AiSettingsRoute;
-  '/sync-jobs': typeof SyncJobsRoute;
-  '/taxonomy': typeof TaxonomyRoute;
-  '/telegram': typeof TelegramRoute;
-  '/links/pending': typeof LinksPendingRoute;
-  '/links': typeof LinksIndexRoute;
+  '/login': typeof LoginRoute;
+  '/ai-settings': typeof AuthenticatedAiSettingsRoute;
+  '/sync-jobs': typeof AuthenticatedSyncJobsRoute;
+  '/taxonomy': typeof AuthenticatedTaxonomyRoute;
+  '/telegram': typeof AuthenticatedTelegramRoute;
+  '/': typeof AuthenticatedIndexRoute;
+  '/links/pending': typeof AuthenticatedLinksPendingRoute;
+  '/links': typeof AuthenticatedLinksIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
-  '/': typeof IndexRoute;
-  '/ai-settings': typeof AiSettingsRoute;
-  '/links': typeof LinksRouteWithChildren;
-  '/sync-jobs': typeof SyncJobsRoute;
-  '/taxonomy': typeof TaxonomyRoute;
-  '/telegram': typeof TelegramRoute;
-  '/links/pending': typeof LinksPendingRoute;
-  '/links/': typeof LinksIndexRoute;
+  '/_authenticated': typeof AuthenticatedRouteWithChildren;
+  '/login': typeof LoginRoute;
+  '/_authenticated/ai-settings': typeof AuthenticatedAiSettingsRoute;
+  '/_authenticated/links': typeof AuthenticatedLinksRouteWithChildren;
+  '/_authenticated/sync-jobs': typeof AuthenticatedSyncJobsRoute;
+  '/_authenticated/taxonomy': typeof AuthenticatedTaxonomyRoute;
+  '/_authenticated/telegram': typeof AuthenticatedTelegramRoute;
+  '/_authenticated/': typeof AuthenticatedIndexRoute;
+  '/_authenticated/links/pending': typeof AuthenticatedLinksPendingRoute;
+  '/_authenticated/links/': typeof AuthenticatedLinksIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
+    | '/login'
     | '/ai-settings'
     | '/links'
     | '/sync-jobs'
@@ -102,114 +119,146 @@ export interface FileRouteTypes {
     | '/links/';
   fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
+    | '/login'
     | '/ai-settings'
     | '/sync-jobs'
     | '/taxonomy'
     | '/telegram'
+    | '/'
     | '/links/pending'
     | '/links';
   id:
     | '__root__'
-    | '/'
-    | '/ai-settings'
-    | '/links'
-    | '/sync-jobs'
-    | '/taxonomy'
-    | '/telegram'
-    | '/links/pending'
-    | '/links/';
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/ai-settings'
+    | '/_authenticated/links'
+    | '/_authenticated/sync-jobs'
+    | '/_authenticated/taxonomy'
+    | '/_authenticated/telegram'
+    | '/_authenticated/'
+    | '/_authenticated/links/pending'
+    | '/_authenticated/links/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AiSettingsRoute: typeof AiSettingsRoute;
-  LinksRoute: typeof LinksRouteWithChildren;
-  SyncJobsRoute: typeof SyncJobsRoute;
-  TaxonomyRoute: typeof TaxonomyRoute;
-  TelegramRoute: typeof TelegramRoute;
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren;
+  LoginRoute: typeof LoginRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/';
+    '/_authenticated': {
+      id: '/_authenticated';
+      path: '';
+      fullPath: '/';
+      preLoaderRoute: typeof AuthenticatedRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/login': {
+      id: '/login';
+      path: '/login';
+      fullPath: '/login';
+      preLoaderRoute: typeof LoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/_authenticated/': {
+      id: '/_authenticated/';
       path: '/';
       fullPath: '/';
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
-    '/ai-settings': {
-      id: '/ai-settings';
+    '/_authenticated/ai-settings': {
+      id: '/_authenticated/ai-settings';
       path: '/ai-settings';
       fullPath: '/ai-settings';
-      preLoaderRoute: typeof AiSettingsRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthenticatedAiSettingsRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
-    '/links': {
-      id: '/links';
+    '/_authenticated/links': {
+      id: '/_authenticated/links';
       path: '/links';
       fullPath: '/links';
-      preLoaderRoute: typeof LinksRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthenticatedLinksRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
-    '/sync-jobs': {
-      id: '/sync-jobs';
+    '/_authenticated/sync-jobs': {
+      id: '/_authenticated/sync-jobs';
       path: '/sync-jobs';
       fullPath: '/sync-jobs';
-      preLoaderRoute: typeof SyncJobsRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthenticatedSyncJobsRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
-    '/taxonomy': {
-      id: '/taxonomy';
+    '/_authenticated/taxonomy': {
+      id: '/_authenticated/taxonomy';
       path: '/taxonomy';
       fullPath: '/taxonomy';
-      preLoaderRoute: typeof TaxonomyRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthenticatedTaxonomyRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
-    '/telegram': {
-      id: '/telegram';
+    '/_authenticated/telegram': {
+      id: '/_authenticated/telegram';
       path: '/telegram';
       fullPath: '/telegram';
-      preLoaderRoute: typeof TelegramRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthenticatedTelegramRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
     };
-    '/links/': {
-      id: '/links/';
+    '/_authenticated/links/': {
+      id: '/_authenticated/links/';
       path: '/';
       fullPath: '/links/';
-      preLoaderRoute: typeof LinksIndexRouteImport;
-      parentRoute: typeof LinksRoute;
+      preLoaderRoute: typeof AuthenticatedLinksIndexRouteImport;
+      parentRoute: typeof AuthenticatedLinksRoute;
     };
-    '/links/pending': {
-      id: '/links/pending';
+    '/_authenticated/links/pending': {
+      id: '/_authenticated/links/pending';
       path: '/pending';
       fullPath: '/links/pending';
-      preLoaderRoute: typeof LinksPendingRouteImport;
-      parentRoute: typeof LinksRoute;
+      preLoaderRoute: typeof AuthenticatedLinksPendingRouteImport;
+      parentRoute: typeof AuthenticatedLinksRoute;
     };
   }
 }
 
-interface LinksRouteChildren {
-  LinksPendingRoute: typeof LinksPendingRoute;
-  LinksIndexRoute: typeof LinksIndexRoute;
+interface AuthenticatedLinksRouteChildren {
+  AuthenticatedLinksPendingRoute: typeof AuthenticatedLinksPendingRoute;
+  AuthenticatedLinksIndexRoute: typeof AuthenticatedLinksIndexRoute;
 }
 
-const LinksRouteChildren: LinksRouteChildren = {
-  LinksPendingRoute: LinksPendingRoute,
-  LinksIndexRoute: LinksIndexRoute,
+const AuthenticatedLinksRouteChildren: AuthenticatedLinksRouteChildren = {
+  AuthenticatedLinksPendingRoute: AuthenticatedLinksPendingRoute,
+  AuthenticatedLinksIndexRoute: AuthenticatedLinksIndexRoute,
 };
 
-const LinksRouteWithChildren = LinksRoute._addFileChildren(LinksRouteChildren);
+const AuthenticatedLinksRouteWithChildren =
+  AuthenticatedLinksRoute._addFileChildren(AuthenticatedLinksRouteChildren);
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAiSettingsRoute: typeof AuthenticatedAiSettingsRoute;
+  AuthenticatedLinksRoute: typeof AuthenticatedLinksRouteWithChildren;
+  AuthenticatedSyncJobsRoute: typeof AuthenticatedSyncJobsRoute;
+  AuthenticatedTaxonomyRoute: typeof AuthenticatedTaxonomyRoute;
+  AuthenticatedTelegramRoute: typeof AuthenticatedTelegramRoute;
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute;
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAiSettingsRoute: AuthenticatedAiSettingsRoute,
+  AuthenticatedLinksRoute: AuthenticatedLinksRouteWithChildren,
+  AuthenticatedSyncJobsRoute: AuthenticatedSyncJobsRoute,
+  AuthenticatedTaxonomyRoute: AuthenticatedTaxonomyRoute,
+  AuthenticatedTelegramRoute: AuthenticatedTelegramRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+};
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+);
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AiSettingsRoute: AiSettingsRoute,
-  LinksRoute: LinksRouteWithChildren,
-  SyncJobsRoute: SyncJobsRoute,
-  TaxonomyRoute: TaxonomyRoute,
-  TelegramRoute: TelegramRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

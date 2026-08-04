@@ -1,4 +1,5 @@
 import { Badge } from '@repo/ui/components/badge';
+import { Button } from '@repo/ui/components/button';
 import {
   Sidebar,
   SidebarContent,
@@ -20,16 +21,22 @@ import {
   Database,
   Inbox,
   Link2,
+  LoaderCircle,
+  LogOut,
   MessageCircleMore,
   ScanSearch,
   Tags,
+  UserRound,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
   jobCount: number;
+  loggingOut: boolean;
+  onLogout: () => void;
   pendingCount: number;
   serverState: 'connecting' | 'online' | 'offline';
   totalCount: number;
+  username: string;
 }
 
 const navigation = [
@@ -75,6 +82,9 @@ export function AdminSidebar({
   serverState,
   totalCount,
   jobCount,
+  loggingOut,
+  onLogout,
+  username,
 }: AdminSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const pathname = useRouterState({
@@ -140,7 +150,33 @@ export function AdminSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="gap-2 p-3">
+        <div className="flex items-center gap-2 rounded-lg border border-sidebar-border p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:p-0">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sidebar-accent group-data-[collapsible=icon]:hidden">
+            <UserRound className="size-3.5" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <p className="truncate text-xs font-medium">{username}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              管理端已登录
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="退出管理端"
+            title="退出管理端"
+            disabled={loggingOut}
+            onClick={onLogout}
+          >
+            {loggingOut ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <LogOut />
+            )}
+          </Button>
+        </div>
         <div className="flex items-center gap-2 rounded-lg border border-sidebar-border p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:p-0">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sidebar-accent">
             <CheckCircle2 className="size-3.5" aria-hidden="true" />

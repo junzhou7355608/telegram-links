@@ -2,7 +2,7 @@ import { TelegramPage } from '@/components/features/telegram-page';
 import { telegramSearchSchema } from '@/lib/admin-search';
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/telegram')({
+export const Route = createFileRoute('/_authenticated/telegram')({
   validateSearch: telegramSearchSchema,
   component: TelegramRoute,
 });

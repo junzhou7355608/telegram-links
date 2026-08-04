@@ -2,17 +2,17 @@ import { LinksPage } from '@/components/features/links-page';
 import { linksSearchSchema } from '@/lib/admin-search';
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/links/')({
+export const Route = createFileRoute('/_authenticated/links/pending')({
   validateSearch: linksSearchSchema,
-  component: AllLinksRoute,
+  component: PendingLinksRoute,
 });
 
-function AllLinksRoute() {
+function PendingLinksRoute() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
     <LinksPage
-      pendingOnly={false}
+      pendingOnly
       search={search}
       onSearchChange={(updater, options) => {
         void navigate({ replace: options?.replace, search: updater });

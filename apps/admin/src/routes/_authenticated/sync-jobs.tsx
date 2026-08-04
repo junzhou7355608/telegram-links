@@ -10,7 +10,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect } from 'react';
 
-export const Route = createFileRoute('/sync-jobs')({
+export const Route = createFileRoute('/_authenticated/sync-jobs')({
   validateSearch: syncJobsSearchSchema,
   component: SyncJobsRoute,
 });

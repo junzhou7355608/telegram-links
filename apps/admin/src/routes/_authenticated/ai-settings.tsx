@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/ai-settings')({
+export const Route = createFileRoute('/_authenticated/ai-settings')({
   beforeLoad: () => {
     throw redirect({
       to: '/links/pending',

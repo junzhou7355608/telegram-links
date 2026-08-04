@@ -17,7 +17,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect } from 'react';
 
-export const Route = createFileRoute('/taxonomy')({
+export const Route = createFileRoute('/_authenticated/taxonomy')({
   validateSearch: taxonomySearchSchema,
   component: TaxonomyRoute,
 });

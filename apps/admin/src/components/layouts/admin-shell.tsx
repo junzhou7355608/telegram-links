@@ -1,4 +1,6 @@
 import {
+  adminAuthControllerLogoutMutation,
+  adminAuthControllerSessionOptions,
   adminLinksControllerOverviewOptions,
   adminSyncControllerCreateMutation,
   adminSyncControllerListOptions,
@@ -10,6 +12,7 @@ import { ScanDialog } from '@/components/features/scan-dialog';
 import { WorkspaceHeader } from '@/components/features/workspace-header';
 import { useApiErrorToast } from '@/hooks/use-api-error-toast';
 import { invalidateSyncResults } from '@/lib/admin-api';
+import { getAdminApiError } from '@/lib/api-error';
 import {
   formatDateTime,
   isActiveSyncJob,
@@ -77,6 +80,7 @@ export function AdminShell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const overviewQuery = useQuery(adminLinksControllerOverviewOptions());
+  const sessionQuery = useQuery(adminAuthControllerSessionOptions());
   const accountQuery = useQuery(adminTelegramControllerAccountOptions());
   const latestJobQuery = useQuery({
     ...adminSyncControllerListOptions({ query: { page: 1, pageSize: 1 } }),
@@ -87,6 +91,7 @@ export function AdminShell() {
   useApiErrorToast(accountQuery.error);
   useApiErrorToast(latestJobQuery.error);
   const createJobMutation = useMutation(adminSyncControllerCreateMutation());
+  const logoutMutation = useMutation(adminAuthControllerLogoutMutation());
   const latestJob = latestJobQuery.data?.items[0] ?? null;
   const runningJob = isActiveSyncJob(latestJob) ? latestJob : null;
   const previousJobStatus = useRef(latestJob?.status);
@@ -130,6 +135,17 @@ export function AdminShell() {
     toast.success('扫描任务已创建，可继续整理其他链接');
   }
 
+  async function logoutAdmin() {
+    try {
+      await logoutMutation.mutateAsync({});
+      queryClient.clear();
+      await navigate({ to: '/login', replace: true, search: {} });
+      toast.success('已退出管理端');
+    } catch (error) {
+      toast.error(getAdminApiError(error).message);
+    }
+  }
+
   function handleScanAction() {
     if (!authorized) {
       void navigate({ to: '/telegram', search: { page: 1 } });
@@ -144,10 +160,13 @@ export function AdminShell() {
       style={{ '--sidebar-width': '15rem' } as CSSProperties}
     >
       <AdminSidebar
+        loggingOut={logoutMutation.isPending}
         pendingCount={overview?.pending ?? 0}
         totalCount={overview?.total ?? 0}
         jobCount={latestJobQuery.data?.pagination.total ?? 0}
         serverState={serverState}
+        username={sessionQuery.data?.username ?? 'Admin'}
+        onLogout={() => void logoutAdmin()}
       />
       <SidebarInset className="min-w-0">
         <WorkspaceHeader
