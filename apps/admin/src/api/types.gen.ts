@@ -121,6 +121,33 @@ export type AdminOverviewResponseDto = {
   total: number;
 };
 
+export type CreateLinkDto = {
+  url: string;
+  title: string;
+  purpose?: string | null;
+  status?: 'pending' | 'organized';
+  categoryId?: string | null;
+  tagIds?: Array<string>;
+};
+
+export type AdminLinkResponseDto = {
+  id: string;
+  title: string;
+  url: string;
+  domain: string;
+  status: 'pending' | 'organized';
+  category: TaxonomyReferenceResponseDto | null;
+  tags: Array<TaxonomyReferenceResponseDto>;
+  purpose: string | null;
+  sourceCount: number;
+  latestSource: LinkSourceResponseDto | null;
+  sources?: Array<LinkSourceResponseDto>;
+  firstDiscoveredAt: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+};
+
 export type BatchLinkPatchDto = {
   title?: string;
   url?: string;
@@ -149,24 +176,6 @@ export type BatchUpdateLinksResponseDto = {
 
 export type BatchArchiveLinksDto = {
   ids: Array<string>;
-};
-
-export type AdminLinkResponseDto = {
-  id: string;
-  title: string;
-  url: string;
-  domain: string;
-  status: 'pending' | 'organized';
-  category: TaxonomyReferenceResponseDto | null;
-  tags: Array<TaxonomyReferenceResponseDto>;
-  purpose: string | null;
-  sourceCount: number;
-  latestSource: LinkSourceResponseDto | null;
-  sources?: Array<LinkSourceResponseDto>;
-  firstDiscoveredAt: string;
-  createdAt: string;
-  updatedAt: string;
-  archivedAt: string | null;
 };
 
 export type UpdateLinkDto = {
@@ -444,6 +453,31 @@ export type AdminLinksControllerListResponses = {
 
 export type AdminLinksControllerListResponse =
   AdminLinksControllerListResponses[keyof AdminLinksControllerListResponses];
+
+export type AdminLinksControllerCreateData = {
+  body: CreateLinkDto;
+  path?: never;
+  query?: never;
+  url: '/api/admin/v1/links';
+};
+
+export type AdminLinksControllerCreateErrors = {
+  400: ApiErrorResponseDto;
+  401: ApiErrorResponseDto;
+  404: ApiErrorResponseDto;
+  409: ApiErrorResponseDto;
+  500: ApiErrorResponseDto;
+};
+
+export type AdminLinksControllerCreateError =
+  AdminLinksControllerCreateErrors[keyof AdminLinksControllerCreateErrors];
+
+export type AdminLinksControllerCreateResponses = {
+  201: AdminLinkResponseDto;
+};
+
+export type AdminLinksControllerCreateResponse =
+  AdminLinksControllerCreateResponses[keyof AdminLinksControllerCreateResponses];
 
 export type AdminLinksControllerBatchData = {
   body: BatchUpdateLinksDto;

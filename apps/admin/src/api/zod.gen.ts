@@ -121,6 +121,33 @@ export const zAdminOverviewResponseDto = z.object({
   total: z.number(),
 });
 
+export const zCreateLinkDto = z.object({
+  url: z.string().max(4096),
+  title: z.string().max(500),
+  purpose: z.string().max(4000).nullish(),
+  status: z.enum(['pending', 'organized']).optional().default('pending'),
+  categoryId: z.uuid().nullish(),
+  tagIds: z.array(z.uuid()).optional(),
+});
+
+export const zAdminLinkResponseDto = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  url: z.string(),
+  domain: z.string(),
+  status: z.enum(['pending', 'organized']),
+  category: zTaxonomyReferenceResponseDto.nullable(),
+  tags: z.array(zTaxonomyReferenceResponseDto),
+  purpose: z.string().nullable(),
+  sourceCount: z.number(),
+  latestSource: zLinkSourceResponseDto.nullable(),
+  sources: z.array(zLinkSourceResponseDto).optional(),
+  firstDiscoveredAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  archivedAt: z.iso.datetime().nullable(),
+});
+
 export const zBatchLinkPatchDto = z.object({
   title: z.string().optional(),
   url: z.string().optional(),
@@ -149,24 +176,6 @@ export const zBatchUpdateLinksResponseDto = z.object({
 
 export const zBatchArchiveLinksDto = z.object({
   ids: z.array(z.uuid()),
-});
-
-export const zAdminLinkResponseDto = z.object({
-  id: z.uuid(),
-  title: z.string(),
-  url: z.string(),
-  domain: z.string(),
-  status: z.enum(['pending', 'organized']),
-  category: zTaxonomyReferenceResponseDto.nullable(),
-  tags: z.array(zTaxonomyReferenceResponseDto),
-  purpose: z.string().nullable(),
-  sourceCount: z.number(),
-  latestSource: zLinkSourceResponseDto.nullable(),
-  sources: z.array(zLinkSourceResponseDto).optional(),
-  firstDiscoveredAt: z.iso.datetime(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  archivedAt: z.iso.datetime().nullable(),
 });
 
 export const zUpdateLinkDto = z.object({
@@ -355,6 +364,10 @@ export const zAdminLinksControllerListQuery = z.object({
 });
 
 export const zAdminLinksControllerListResponse = zPaginatedLinksResponseDto;
+
+export const zAdminLinksControllerCreateBody = zCreateLinkDto;
+
+export const zAdminLinksControllerCreateResponse = zAdminLinkResponseDto;
 
 export const zAdminLinksControllerBatchBody = zBatchUpdateLinksDto;
 

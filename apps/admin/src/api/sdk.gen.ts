@@ -25,6 +25,9 @@ import type {
   AdminLinksControllerBatchData,
   AdminLinksControllerBatchErrors,
   AdminLinksControllerBatchResponses,
+  AdminLinksControllerCreateData,
+  AdminLinksControllerCreateErrors,
+  AdminLinksControllerCreateResponses,
   AdminLinksControllerFindOneData,
   AdminLinksControllerFindOneErrors,
   AdminLinksControllerFindOneResponses,
@@ -93,6 +96,7 @@ import {
   zAdminLinksControllerArchiveResponse,
   zAdminLinksControllerBatchArchiveResponse,
   zAdminLinksControllerBatchResponse,
+  zAdminLinksControllerCreateResponse,
   zAdminLinksControllerFindOneResponse,
   zAdminLinksControllerListResponse,
   zAdminLinksControllerOverviewResponse,
@@ -239,6 +243,38 @@ export const adminLinksControllerList = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/admin/v1/links',
     ...options,
+  });
+
+export const adminLinksControllerCreate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<AdminLinksControllerCreateData, ThrowOnError>,
+): RequestResult<
+  AdminLinksControllerCreateResponses,
+  AdminLinksControllerCreateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    AdminLinksControllerCreateResponses,
+    AdminLinksControllerCreateErrors,
+    ThrowOnError
+  >({
+    responseType: 'json',
+    responseValidator: async (data) =>
+      await zAdminLinksControllerCreateResponse.parseAsync(data),
+    security: [
+      {
+        in: 'cookie',
+        name: 'telegram_links_admin_session',
+        type: 'apiKey',
+      },
+    ],
+    url: '/api/admin/v1/links',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const adminLinksControllerBatch = <ThrowOnError extends boolean = false>(

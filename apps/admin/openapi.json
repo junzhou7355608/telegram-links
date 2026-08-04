@@ -340,6 +340,90 @@
         "tags": [
           "Admin - Links"
         ]
+      },
+      "post": {
+        "operationId": "AdminLinksController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLinkResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "tags": [
+          "Admin - Links"
+        ]
       }
     },
     "/api/admin/v1/links/batch": {
@@ -2854,6 +2938,143 @@
           "total"
         ]
       },
+      "CreateLinkDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "purpose": {
+            "type": "string",
+            "maxLength": 4000,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "default": "pending",
+            "enum": [
+              "pending",
+              "organized"
+            ]
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "url",
+          "title"
+        ]
+      },
+      "AdminLinkResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "organized"
+            ]
+          },
+          "category": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
+            }
+          },
+          "purpose": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceCount": {
+            "type": "number"
+          },
+          "latestSource": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LinkSourceResponseDto"
+              }
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkSourceResponseDto"
+            }
+          },
+          "firstDiscoveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "url",
+          "domain",
+          "status",
+          "category",
+          "tags",
+          "purpose",
+          "sourceCount",
+          "latestSource",
+          "firstDiscoveredAt",
+          "createdAt",
+          "updatedAt",
+          "archivedAt"
+        ]
+      },
       "BatchLinkPatchDto": {
         "type": "object",
         "properties": {
@@ -2969,101 +3190,6 @@
         },
         "required": [
           "ids"
-        ]
-      },
-      "AdminLinkResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "domain": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "organized"
-            ]
-          },
-          "category": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
-              }
-            ]
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TaxonomyReferenceResponseDto"
-            }
-          },
-          "purpose": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceCount": {
-            "type": "number"
-          },
-          "latestSource": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LinkSourceResponseDto"
-              }
-            ]
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LinkSourceResponseDto"
-            }
-          },
-          "firstDiscoveredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "archivedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "url",
-          "domain",
-          "status",
-          "category",
-          "tags",
-          "purpose",
-          "sourceCount",
-          "latestSource",
-          "firstDiscoveredAt",
-          "createdAt",
-          "updatedAt",
-          "archivedAt"
         ]
       },
       "UpdateLinkDto": {

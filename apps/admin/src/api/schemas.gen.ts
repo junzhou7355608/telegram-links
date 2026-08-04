@@ -400,6 +400,136 @@ export const AdminOverviewResponseDtoSchema = {
   required: ['archived', 'latestSync', 'pending', 'todayAdded', 'total'],
 } as const;
 
+export const CreateLinkDtoSchema = {
+  type: 'object',
+  properties: {
+    url: {
+      type: 'string',
+      maxLength: 4096,
+    },
+    title: {
+      type: 'string',
+      maxLength: 500,
+    },
+    purpose: {
+      type: 'string',
+      maxLength: 4000,
+      nullable: true,
+    },
+    status: {
+      type: 'string',
+      default: 'pending',
+      enum: ['pending', 'organized'],
+    },
+    categoryId: {
+      type: 'string',
+      format: 'uuid',
+      nullable: true,
+    },
+    tagIds: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+  },
+  required: ['url', 'title'],
+} as const;
+
+export const AdminLinkResponseDtoSchema = {
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    url: {
+      type: 'string',
+    },
+    domain: {
+      type: 'string',
+    },
+    status: {
+      type: 'string',
+      enum: ['pending', 'organized'],
+    },
+    category: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+        },
+      ],
+    },
+    tags: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
+      },
+    },
+    purpose: {
+      type: 'string',
+      nullable: true,
+    },
+    sourceCount: {
+      type: 'number',
+    },
+    latestSource: {
+      nullable: true,
+      type: 'object',
+      allOf: [
+        {
+          $ref: '#/components/schemas/LinkSourceResponseDto',
+        },
+      ],
+    },
+    sources: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LinkSourceResponseDto',
+      },
+    },
+    firstDiscoveredAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    createdAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    updatedAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    archivedAt: {
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    },
+  },
+  required: [
+    'id',
+    'title',
+    'url',
+    'domain',
+    'status',
+    'category',
+    'tags',
+    'purpose',
+    'sourceCount',
+    'latestSource',
+    'firstDiscoveredAt',
+    'createdAt',
+    'updatedAt',
+    'archivedAt',
+  ],
+} as const;
+
 export const BatchLinkPatchDtoSchema = {
   type: 'object',
   properties: {
@@ -505,99 +635,6 @@ export const BatchArchiveLinksDtoSchema = {
     },
   },
   required: ['ids'],
-} as const;
-
-export const AdminLinkResponseDtoSchema = {
-  type: 'object',
-  properties: {
-    id: {
-      type: 'string',
-      format: 'uuid',
-    },
-    title: {
-      type: 'string',
-    },
-    url: {
-      type: 'string',
-    },
-    domain: {
-      type: 'string',
-    },
-    status: {
-      type: 'string',
-      enum: ['pending', 'organized'],
-    },
-    category: {
-      nullable: true,
-      type: 'object',
-      allOf: [
-        {
-          $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
-        },
-      ],
-    },
-    tags: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/TaxonomyReferenceResponseDto',
-      },
-    },
-    purpose: {
-      type: 'string',
-      nullable: true,
-    },
-    sourceCount: {
-      type: 'number',
-    },
-    latestSource: {
-      nullable: true,
-      type: 'object',
-      allOf: [
-        {
-          $ref: '#/components/schemas/LinkSourceResponseDto',
-        },
-      ],
-    },
-    sources: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/LinkSourceResponseDto',
-      },
-    },
-    firstDiscoveredAt: {
-      type: 'string',
-      format: 'date-time',
-    },
-    createdAt: {
-      type: 'string',
-      format: 'date-time',
-    },
-    updatedAt: {
-      type: 'string',
-      format: 'date-time',
-    },
-    archivedAt: {
-      type: 'string',
-      format: 'date-time',
-      nullable: true,
-    },
-  },
-  required: [
-    'id',
-    'title',
-    'url',
-    'domain',
-    'status',
-    'category',
-    'tags',
-    'purpose',
-    'sourceCount',
-    'latestSource',
-    'firstDiscoveredAt',
-    'createdAt',
-    'updatedAt',
-    'archivedAt',
-  ],
 } as const;
 
 export const UpdateLinkDtoSchema = {

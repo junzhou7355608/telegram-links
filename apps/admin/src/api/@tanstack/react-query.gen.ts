@@ -17,6 +17,7 @@ import {
   adminLinksControllerArchive,
   adminLinksControllerBatch,
   adminLinksControllerBatchArchive,
+  adminLinksControllerCreate,
   adminLinksControllerFindOne,
   adminLinksControllerList,
   adminLinksControllerOverview,
@@ -56,6 +57,9 @@ import type {
   AdminLinksControllerBatchData,
   AdminLinksControllerBatchError,
   AdminLinksControllerBatchResponse,
+  AdminLinksControllerCreateData,
+  AdminLinksControllerCreateError,
+  AdminLinksControllerCreateResponse,
   AdminLinksControllerFindOneData,
   AdminLinksControllerFindOneError,
   AdminLinksControllerFindOneResponse,
@@ -361,6 +365,30 @@ export const adminLinksControllerListInfiniteOptions = (
       queryKey: adminLinksControllerListInfiniteQueryKey(options),
     },
   );
+
+export const adminLinksControllerCreateMutation = (
+  options?: Partial<Options<AdminLinksControllerCreateData>>,
+): UseMutationOptions<
+  AdminLinksControllerCreateResponse,
+  AxiosError<AdminLinksControllerCreateError>,
+  Options<AdminLinksControllerCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AdminLinksControllerCreateResponse,
+    AxiosError<AdminLinksControllerCreateError>,
+    Options<AdminLinksControllerCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await adminLinksControllerCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const adminLinksControllerBatchMutation = (
   options?: Partial<Options<AdminLinksControllerBatchData>>,
